@@ -1074,6 +1074,25 @@ async def save_programs(request: SaveProgramsRequest):
         prog_data["program_year"] = request.program_year
         prog_data["bonus_cash"] = prog_data.get("bonus_cash", 0)
         prog_data["consumer_cash"] = prog_data.get("consumer_cash", 0)
+
+        # Appliquer les corrections memorisees (de l'import Excel precedent)
+        correction = await db.program_corrections.find_one({
+            "brand": prog_data.get("brand", ""),
+            "model": prog_data.get("model", ""),
+            "trim": prog_data.get("trim", ""),
+            "year": prog_data.get("year", 2026)
+        }, {"_id": 0})
+        if correction and correction.get("corrected_values"):
+            cv = correction["corrected_values"]
+            if cv.get("consumer_cash") is not None:
+                prog_data["consumer_cash"] = cv["consumer_cash"]
+            if cv.get("bonus_cash") is not None:
+                prog_data["bonus_cash"] = cv["bonus_cash"]
+            if cv.get("option1_rates"):
+                prog_data["option1_rates"] = cv["option1_rates"]
+            if cv.get("option2_rates") is not None:
+                prog_data["option2_rates"] = cv["option2_rates"]
+            logger.info(f"[CORRECTION] Appliquee pour {prog_data.get('brand')} {prog_data.get('model')} {prog_data.get('trim')}")
         
         try:
             prog = VehicleProgram(**prog_data)
