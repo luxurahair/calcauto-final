@@ -62,6 +62,12 @@ OCR pour factures, gestion d'inventaire et CRM.
 - New "Excel" tab in Admin panel with export/import UI
 - Delivery Credit values removed from bonus_cash, import wizard updated to ignore them
 
+## Completed - Excel Correction Memory System (Feb 27, 2026)
+- Import Excel now saves corrections to `program_corrections` collection
+- Future PDF imports automatically apply memorized corrections (by brand/model/trim/year)
+- Startup migration script fixes production DB on deploy
+- Email with Excel sent to user for manual correction
+
 ## P1 Backlog
 - Vérifier données "Option 2" sur tous les modèles
 
