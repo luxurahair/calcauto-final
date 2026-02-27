@@ -197,7 +197,8 @@ async def export_programs_excel(month: Optional[int] = None, year: Optional[int]
 
 @router.post("/programs/import-excel")
 async def import_programs_excel(file: UploadFile = File(...), password: str = Form("")):
-    """Importe un Excel corrige pour mettre a jour les programmes existants"""
+    """Importe un Excel corrige pour mettre a jour les programmes existants.
+    Memorise chaque correction pour mieux associer les prochains PDF."""
     if not EXCEL_AVAILABLE:
         raise HTTPException(status_code=500, detail="openpyxl non disponible")
 
@@ -209,6 +210,7 @@ async def import_programs_excel(file: UploadFile = File(...), password: str = Fo
     ws = wb.active
 
     updated = 0
+    corrections_saved = 0
     errors = []
     rows_processed = 0
 
@@ -221,6 +223,10 @@ async def import_programs_excel(file: UploadFile = File(...), password: str = Fo
         prog_id = str(values[0]).strip()
 
         try:
+            brand = str(values[1]).strip() if values[1] else ""
+            model = str(values[2]).strip() if values[2] else ""
+            trim = str(values[3]).strip() if values[3] else ""
+            year = int(values[4]) if values[4] else 2026
             consumer_cash = float(values[5]) if values[5] is not None else 0
             bonus_cash = float(values[6]) if values[6] is not None else 0
 
@@ -244,6 +250,9 @@ async def import_programs_excel(file: UploadFile = File(...), password: str = Fo
             if has_o2:
                 o2_rates = o2_temp
 
+            # Lire les anciennes valeurs AVANT mise a jour
+            old_prog = await db.programs.find_one({"id": prog_id}, {"_id": 0})
+
             update_fields = {
                 "consumer_cash": consumer_cash,
                 "bonus_cash": bonus_cash,
@@ -262,13 +271,46 @@ async def import_programs_excel(file: UploadFile = File(...), password: str = Fo
             if result.modified_count > 0:
                 updated += 1
 
+                # Memoriser les corrections pour les futurs imports PDF
+                changes = {}
+                if old_prog:
+                    if (old_prog.get("consumer_cash") or 0) != consumer_cash:
+                        changes["consumer_cash"] = {"old": old_prog.get("consumer_cash", 0), "new": consumer_cash}
+                    if (old_prog.get("bonus_cash") or 0) != bonus_cash:
+                        changes["bonus_cash"] = {"old": old_prog.get("bonus_cash", 0), "new": bonus_cash}
+                    old_o1 = old_prog.get("option1_rates") or {}
+                    if has_o1 and old_o1 != o1_rates:
+                        changes["option1_rates"] = {"old": old_o1, "new": o1_rates}
+                    old_o2 = old_prog.get("option2_rates")
+                    if old_o2 != o2_rates:
+                        changes["option2_rates"] = {"old": old_o2, "new": o2_rates}
+
+                if changes:
+                    await db.program_corrections.update_one(
+                        {"brand": brand, "model": model, "trim": trim, "year": year},
+                        {"$set": {
+                            "brand": brand, "model": model, "trim": trim, "year": year,
+                            "corrected_values": {
+                                "consumer_cash": consumer_cash,
+                                "bonus_cash": bonus_cash,
+                                "option1_rates": o1_rates if has_o1 else None,
+                                "option2_rates": o2_rates,
+                            },
+                            "changes_history": changes,
+                            "corrected_at": datetime.utcnow()
+                        }},
+                        upsert=True
+                    )
+                    corrections_saved += 1
+
         except Exception as e:
             errors.append(f"Ligne {row_idx}: {str(e)}")
 
     return {
         "success": True,
-        "message": f"Import termine: {updated} programmes mis a jour sur {rows_processed} lignes traitees",
+        "message": f"Import termine: {updated} programmes mis a jour, {corrections_saved} corrections memorisees",
         "updated": updated,
+        "corrections_saved": corrections_saved,
         "rows_processed": rows_processed,
         "errors": errors[:10]
     }
