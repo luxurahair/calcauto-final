@@ -76,6 +76,10 @@ export default function InventoryScreen() {
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [reviewData, setReviewData] = useState<any>(null);
   const [saving, setSaving] = useState(false);
+  // Batch PDF scanning
+  const [scanQueue, setScanQueue] = useState<any[]>([]);  // résultats en attente de révision
+  const [scanProgress, setScanProgress] = useState({ current: 0, total: 0, scanning: false });
+  const [batchErrors, setBatchErrors] = useState<string[]>([]);
   const [filter, setFilter] = useState<'tous' | 'neuf' | 'occasion'>('tous');
   const [statusFilter, setStatusFilter] = useState<'tous' | 'disponible' | 'réservé' | 'vendu'>('tous');
   const [searchQuery, setSearchQuery] = useState('');
@@ -268,7 +272,7 @@ export default function InventoryScreen() {
     }
   };
 
-  // Upload PDF file (web only)
+  // Upload PDF file(s) (web only) - supporte multi-fichiers
   const pickPdfFile = async () => {
     if (Platform.OS !== 'web') {
       Alert.alert('Info', 'Upload PDF disponible uniquement sur le web');
@@ -278,25 +282,103 @@ export default function InventoryScreen() {
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = '.pdf,application/pdf';
+    input.multiple = true;  // Permettre la sélection multiple
     
     input.onchange = async (e: any) => {
-      const file = e.target.files?.[0];
-      if (!file) return;
+      const files = Array.from(e.target.files || []) as File[];
+      if (files.length === 0) return;
       
-      try {
-        const reader = new FileReader();
-        reader.onload = async () => {
-          const base64 = (reader.result as string).split(',')[1];
-          await scanInvoice(base64, true);
-        };
-        reader.readAsDataURL(file);
-      } catch (error) {
-        console.error('Error reading PDF:', error);
-        alert('Erreur lors de la lecture du PDF');
+      if (files.length === 1) {
+        // Un seul fichier: comportement classique
+        try {
+          const reader = new FileReader();
+          reader.onload = async () => {
+            const base64 = (reader.result as string).split(',')[1];
+            await scanInvoice(base64, true);
+          };
+          reader.readAsDataURL(files[0]);
+        } catch (error) {
+          console.error('Error reading PDF:', error);
+          alert('Erreur lors de la lecture du PDF');
+        }
+      } else {
+        // Plusieurs fichiers: batch scanning
+        await batchScanPdfs(files);
       }
     };
     
     input.click();
+  };
+
+  // Batch scan: traiter plusieurs PDFs séquentiellement
+  const batchScanPdfs = async (files: File[]) => {
+    setShowScanModal(false);
+    setScanProgress({ current: 0, total: files.length, scanning: true });
+    setBatchErrors([]);
+    const results: any[] = [];
+    const errors: string[] = [];
+
+    for (let i = 0; i < files.length; i++) {
+      setScanProgress({ current: i + 1, total: files.length, scanning: true });
+      
+      try {
+        const base64 = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve((reader.result as string).split(',')[1]);
+          reader.onerror = reject;
+          reader.readAsDataURL(files[i]);
+        });
+
+        const token = await getToken();
+        const response = await axios.post(
+          `${API_URL}/api/inventory/scan-invoice`,
+          { image_base64: base64, is_pdf: true },
+          { headers: { Authorization: `Bearer ${token}` }, timeout: 90000 }
+        );
+
+        if (response.data.success || response.data.review_required) {
+          const vehicle = response.data.vehicle || {};
+          results.push({
+            filename: files[i].name,
+            stock_no: vehicle.stock_no || '',
+            vin: vehicle.vin || '',
+            brand: vehicle.brand || '',
+            model: vehicle.model || '',
+            trim: vehicle.trim || '',
+            body_style: vehicle.body_style || '',
+            year: vehicle.year || new Date().getFullYear(),
+            type: vehicle.type || 'neuf',
+            ep_cost: vehicle.ep_cost || 0,
+            pdco: vehicle.pdco || 0,
+            holdback: vehicle.holdback || 0,
+            net_cost: vehicle.net_cost || 0,
+            msrp: vehicle.msrp || 0,
+            asking_price: vehicle.asking_price || vehicle.msrp || 0,
+            color: vehicle.color || '',
+            options: vehicle.options || [],
+            parse_method: response.data.parse_method || 'unknown',
+            blocking_errors: response.data.blocking_errors || [],
+          });
+        } else {
+          errors.push(`${files[i].name}: ${response.data.message || 'Scan échoué'}`);
+        }
+      } catch (err: any) {
+        errors.push(`${files[i].name}: ${err.response?.data?.detail || err.message || 'Erreur'}`);
+      }
+    }
+
+    setScanProgress({ current: files.length, total: files.length, scanning: false });
+    setBatchErrors(errors);
+
+    if (results.length > 0) {
+      // Mettre tout sauf le premier dans la file d'attente
+      setScanQueue(results.slice(1));
+      // Ouvrir la révision du premier résultat
+      setReviewData(results[0]);
+      setShowReviewModal(true);
+    } else {
+      alert(`Aucun PDF n'a pu être analysé.\n${errors.join('\n')}`);
+    }
   };
 
   const scanInvoice = async (base64Data: string, isPdf: boolean = false) => {
@@ -383,7 +465,6 @@ export default function InventoryScreen() {
       
       const ep = parseFloat(reviewData.ep_cost) || 0;
       const hb = parseFloat(reviewData.holdback) || 0;
-      // Utiliser le net_cost édité par l'utilisateur, sinon calculer
       const netCost = reviewData.net_cost ? parseFloat(reviewData.net_cost) : (ep - hb);
 
       await axios.post(`${API_URL}/api/inventory`, {
@@ -405,17 +486,43 @@ export default function InventoryScreen() {
         color: reviewData.color,
       }, { headers: { Authorization: `Bearer ${token}` } });
 
-      setShowReviewModal(false);
-      setReviewData(null);
+      // Vérifier s'il y a d'autres véhicules dans la file d'attente
+      if (scanQueue.length > 0) {
+        const next = scanQueue[0];
+        const remaining = scanQueue.slice(1);
+        setScanQueue(remaining);
+        setReviewData(next);
+        // Rester dans le review modal pour le prochain
+        Platform.OS === 'web'
+          ? null  // pas d'alert pour ne pas bloquer le flux
+          : null;
+      } else {
+        setShowReviewModal(false);
+        setReviewData(null);
+        setScanProgress({ current: 0, total: 0, scanning: false });
+        setBatchErrors([]);
+      }
+      
       fetchData();
-      Platform.OS === 'web'
-        ? alert('Véhicule ajouté avec succès!')
-        : Alert.alert('Succès', 'Véhicule ajouté avec succès!');
     } catch (error: any) {
       const msg = error.response?.data?.detail || 'Erreur lors de la sauvegarde';
       Platform.OS === 'web' ? alert(msg) : Alert.alert('Erreur', msg);
     } finally {
       setSaving(false);
+    }
+  };
+
+  // Passer au prochain véhicule sans sauvegarder celui-ci
+  const skipReviewedVehicle = () => {
+    if (scanQueue.length > 0) {
+      const next = scanQueue[0];
+      setScanQueue(scanQueue.slice(1));
+      setReviewData(next);
+    } else {
+      setShowReviewModal(false);
+      setReviewData(null);
+      setScanProgress({ current: 0, total: 0, scanning: false });
+      setBatchErrors([]);
     }
   };
 
@@ -1053,6 +1160,28 @@ export default function InventoryScreen() {
         </View>
       </Modal>
 
+      {/* Batch Scan Progress Overlay */}
+      {scanProgress.scanning && (
+        <Modal visible={true} transparent animationType="fade">
+          <View style={styles.modalOverlay}>
+            <View style={[styles.modalContent, { maxWidth: 400, maxHeight: 250 }]}>
+              <View style={{ alignItems: 'center', padding: 30 }}>
+                <ActivityIndicator size="large" color="#4ECDC4" />
+                <Text style={{ color: '#fff', fontSize: 18, fontWeight: '700', marginTop: 16 }} data-testid="batch-progress-text">
+                  Analyse {scanProgress.current} / {scanProgress.total}
+                </Text>
+                <Text style={{ color: '#aaa', fontSize: 13, marginTop: 8 }}>
+                  Traitement des PDFs en cours...
+                </Text>
+                <View style={{ width: '100%', height: 6, backgroundColor: '#333', borderRadius: 3, marginTop: 16 }}>
+                  <View style={{ width: `${(scanProgress.current / scanProgress.total) * 100}%`, height: 6, backgroundColor: '#4ECDC4', borderRadius: 3 }} />
+                </View>
+              </View>
+            </View>
+          </View>
+        </Modal>
+      )}
+
       {/* Scan Invoice Modal */}
       <Modal visible={showScanModal} animationType="slide" transparent>
         <View style={styles.modalOverlay}>
@@ -1148,8 +1277,8 @@ export default function InventoryScreen() {
                       <Ionicons name="document-text" size={32} color="#FF6B6B" />
                     </View>
                     <View style={styles.scanOptionText}>
-                      <Text style={styles.scanOptionTitle}>Importer un PDF</Text>
-                      <Text style={styles.scanOptionDesc}>Parser structuré rapide</Text>
+                      <Text style={styles.scanOptionTitle}>Importer des PDFs</Text>
+                      <Text style={styles.scanOptionDesc}>Un ou plusieurs PDFs de factures</Text>
                     </View>
                     <Ionicons name="chevron-forward" size={24} color="#666" />
                   </TouchableOpacity>
@@ -1183,8 +1312,18 @@ export default function InventoryScreen() {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>📝 Vérifier et corriger</Text>
-              <TouchableOpacity onPress={() => { setShowReviewModal(false); setReviewData(null); }}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.modalTitle}>Verifier et corriger</Text>
+                {scanQueue.length > 0 && (
+                  <Text style={{ color: '#4ECDC4', fontSize: 12, marginTop: 2 }} data-testid="queue-counter">
+                    + {scanQueue.length} en attente
+                  </Text>
+                )}
+                {reviewData?.filename && (
+                  <Text style={{ color: '#888', fontSize: 11, marginTop: 2 }}>{reviewData.filename}</Text>
+                )}
+              </View>
+              <TouchableOpacity onPress={() => { setShowReviewModal(false); setReviewData(null); setScanQueue([]); setScanProgress({ current: 0, total: 0, scanning: false }); }}>
                 <Ionicons name="close" size={24} color="#fff" />
               </TouchableOpacity>
             </View>
@@ -1399,21 +1538,34 @@ export default function InventoryScreen() {
                     <Ionicons name="document-outline" size={18} color="#fff" />
                     <Text style={styles.exportExcelBtnText}>Excel</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity 
-                    style={styles.cancelBtn} 
-                    onPress={() => { setShowReviewModal(false); setReviewData(null); }}
-                  >
-                    <Text style={styles.cancelBtnText}>Annuler</Text>
-                  </TouchableOpacity>
+                  {scanQueue.length > 0 ? (
+                    <TouchableOpacity 
+                      style={[styles.cancelBtn, { borderColor: '#FFB347' }]} 
+                      onPress={skipReviewedVehicle}
+                      data-testid="skip-vehicle-btn"
+                    >
+                      <Text style={[styles.cancelBtnText, { color: '#FFB347' }]}>Passer</Text>
+                    </TouchableOpacity>
+                  ) : (
+                    <TouchableOpacity 
+                      style={styles.cancelBtn} 
+                      onPress={() => { setShowReviewModal(false); setReviewData(null); }}
+                    >
+                      <Text style={styles.cancelBtnText}>Annuler</Text>
+                    </TouchableOpacity>
+                  )}
                   <TouchableOpacity 
                     style={[styles.submitBtn, saving && styles.submitBtnDisabled]} 
                     onPress={saveReviewedVehicle}
                     disabled={saving}
+                    data-testid="confirm-save-btn"
                   >
                     {saving ? (
                       <ActivityIndicator size="small" color="#1a1a2e" />
                     ) : (
-                      <Text style={styles.submitBtnText}>✓ Confirmer et ajouter</Text>
+                      <Text style={styles.submitBtnText}>
+                        {scanQueue.length > 0 ? `Confirmer (${scanQueue.length} restants)` : 'Confirmer et ajouter'}
+                      </Text>
                     )}
                   </TouchableOpacity>
                 </View>
