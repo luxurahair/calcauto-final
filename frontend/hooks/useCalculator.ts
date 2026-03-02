@@ -131,7 +131,9 @@ export function useCalculator(inputs: CalculatorInputs) {
     let bestOption: string | null = null;
     let savings = 0;
 
-    const montantAvantTaxesO2 = price + totalAccessoires - rabais - valeurEchange + fraisTaxables;
+    // Option 2: Prix - Alternative Consumer Cash - Rabais concess. - valeur echange + frais + dette echange + taxes - comptant
+    const altConsumerCash = selectedProgram.alternative_consumer_cash || 0;
+    const montantAvantTaxesO2 = price + totalAccessoires - altConsumerCash - rabais - valeurEchange + fraisTaxables;
     const taxesO2 = montantAvantTaxesO2 * TAUX_TAXE;
     const principalOption2Brut = montantAvantTaxesO2 + taxesO2 + detteSurEchange;
     const principalOption2 = principalOption2Brut - comptant;

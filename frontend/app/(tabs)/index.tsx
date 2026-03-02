@@ -798,6 +798,8 @@ export default function HomeScreen() {
           `${frequencyText} payment: ${formatCurrencyDecimal(bestLeasePayment)}`;
     }
     
+    const rebateForOption = option === '2' ? (selectedProgram.alternative_consumer_cash || 0) : (selectedProgram.consumer_cash || 0);
+    
     const text = lang === 'fr' 
       ? `SOUMISSION CalcAuto AiPro\n\n` +
         `Véhicule: ${vehicle}\n` +
@@ -807,7 +809,7 @@ export default function HomeScreen() {
         `Terme: ${selectedTerm} mois\n` +
         `Taux: ${rate}%\n` +
         `Paiement ${frequencyText}: ${formatCurrencyDecimal(payment)}\n` +
-        (selectedProgram.consumer_cash > 0 ? `Rabais: ${formatCurrency(selectedProgram.consumer_cash)}\n` : '') +
+        (rebateForOption > 0 ? `Rabais: ${formatCurrency(rebateForOption)}\n` : '') +
         leaseSection +
         `\n\nEnvoyé via CalcAuto AiPro`
       : `CalcAuto AiPro SUBMISSION\n\n` +
@@ -818,7 +820,7 @@ export default function HomeScreen() {
         `Term: ${selectedTerm} months\n` +
         `Rate: ${rate}%\n` +
         `${frequencyText} payment: ${formatCurrencyDecimal(payment)}\n` +
-        (selectedProgram.consumer_cash > 0 ? `Rebate: ${formatCurrency(selectedProgram.consumer_cash)}\n` : '') +
+        (rebateForOption > 0 ? `Rebate: ${formatCurrency(rebateForOption)}\n` : '') +
         leaseSection +
         `\n\nSent via CalcAuto AiPro`;
     
@@ -880,6 +882,7 @@ export default function HomeScreen() {
       const rdprm = parseFloat(fraisRDPRM) || 0;
       const valeurEchange = parseFloat(prixEchange) || 0;
       const comptant = parseFloat(comptantTxInclus) || 0;
+      const altConsumerCash = selectedProgram.alternative_consumer_cash || 0;
       const hasOption2 = selectedProgram.option2_rates !== null && localResult.option2Monthly !== null;
       const payLabel = paymentFrequency === 'biweekly' ? (lang === 'fr' ? 'Aux 2 sem.' : 'Bi-weekly') : paymentFrequency === 'weekly' ? (lang === 'fr' ? 'Hebdo' : 'Weekly') : (lang === 'fr' ? 'Mensuel' : 'Monthly');
 
@@ -959,7 +962,7 @@ export default function HomeScreen() {
               ${hasOption2 ? `
               <div style="flex:1;border:2px solid ${localResult.bestOption === '2' ? '#4CAF50' : '#ddd'};border-radius:10px;padding:12px;">
                 <div style="font-size:14px;font-weight:700;color:#1565C0;margin-bottom:6px;">Option 2 ${localResult.bestOption === '2' ? '<span style="background:#4CAF50;color:#fff;font-size:10px;padding:2px 6px;border-radius:8px;">✓</span>' : ''}</div>
-                <div style="font-size:11px;color:#666;margin-bottom:4px;">${lang === 'fr' ? 'Rabais:' : 'Rebate:'} $0</div>
+                <div style="font-size:11px;color:#666;margin-bottom:4px;">${lang === 'fr' ? 'Rabais:' : 'Rebate:'} ${altConsumerCash > 0 ? '-' + fmt(altConsumerCash) + ' $' : '$0'}</div>
                 <div style="font-size:11px;color:#666;margin-bottom:4px;">${lang === 'fr' ? 'Capital:' : 'Principal:'} ${fmt(localResult.principalOption2)} $</div>
                 <div style="font-size:11px;color:#666;margin-bottom:4px;">${lang === 'fr' ? 'Taux:' : 'Rate:'} <span style="color:#1565C0;">${localResult.option2Rate}%</span></div>
                 <div style="background:#f8f9fa;border-radius:6px;padding:8px;text-align:center;border-top:3px solid #1565C0;margin-top:6px;">
@@ -1184,6 +1187,7 @@ export default function HomeScreen() {
     const rdprm = parseFloat(fraisRDPRM) || 0;
     const valeurEchange = parseFloat(prixEchange) || 0;
     const comptant = parseFloat(comptantTxInclus) || 0;
+    const altConsumerCashPrint = selectedProgram.alternative_consumer_cash || 0;
     const hasOption2 = selectedProgram.option2_rates !== null && localResult.option2Monthly !== null;
     const bestOpt = localResult.bestOption;
     const savingsAmt = localResult.savings || 0;
@@ -1381,8 +1385,8 @@ export default function HomeScreen() {
                 ${hasOption2 ? `
                 <div class="option-card ${bestOpt === '2' ? 'winner' : ''}">
                   <div class="option-title opt2">Option 2 ${bestOpt === '2' ? '<span class="winner-badge">✓</span>' : ''}</div>
-                  <div style="font-size:11px; color:#666; margin-bottom:8px;">$0 ${lang === 'fr' ? 'rabais + Taux réduit' : 'rebate + Reduced rate'}</div>
-                  <div class="option-detail"><span>${lang === 'fr' ? 'Rabais:' : 'Rebate:'}</span><span>$0</span></div>
+                  <div style="font-size:11px; color:#666; margin-bottom:8px;">${altConsumerCashPrint > 0 ? fmt(altConsumerCashPrint) + ' $ ' : '$0 '}${lang === 'fr' ? 'rabais + Taux réduit' : 'rebate + Reduced rate'}</div>
+                  <div class="option-detail"><span>${lang === 'fr' ? 'Rabais:' : 'Rebate:'}</span><span${altConsumerCashPrint > 0 ? ' style="color:#2E7D32; font-weight:600;"' : ''}>${altConsumerCashPrint > 0 ? '-' + fmt(altConsumerCashPrint) + ' $' : '$0'}</span></div>
                   <div class="option-detail"><span>${lang === 'fr' ? 'Capital:' : 'Principal:'}</span><span>${fmt(localResult.principalOption2 || 0)} $</span></div>
                   <div class="option-detail"><span>${lang === 'fr' ? 'Taux:' : 'Rate:'}</span><span style="color:#1565C0;">${localResult.option2Rate}%</span></div>
                   <div class="payment-box opt2">
@@ -1894,8 +1898,14 @@ export default function HomeScreen() {
                 <View style={styles.rebatesSummary}>
                   {selectedProgram.consumer_cash > 0 && (
                     <View style={styles.rebateItem}>
-                      <Text style={styles.rebateLabel}>{t.results.rebate} ({t.results.beforeTax}):</Text>
+                      <Text style={styles.rebateLabel}>{t.results.rebate} Opt.1 ({t.results.beforeTax}):</Text>
                       <Text style={styles.rebateValue}>{formatCurrency(selectedProgram.consumer_cash)}</Text>
+                    </View>
+                  )}
+                  {selectedProgram.alternative_consumer_cash > 0 && (
+                    <View style={styles.rebateItem}>
+                      <Text style={styles.rebateLabel}>{t.results.rebate} Opt.2 ({t.results.beforeTax}):</Text>
+                      <Text style={styles.rebateValue}>{formatCurrency(selectedProgram.alternative_consumer_cash)}</Text>
                     </View>
                   )}
                   {selectedProgram.bonus_cash > 0 && (
@@ -2407,7 +2417,7 @@ export default function HomeScreen() {
                         styles.optionButtonSubtext,
                         selectedOption === '2' && styles.optionButtonTextActive
                       ]}>
-                        $0 + {localResult?.option2Rate || getRateForTerm(selectedProgram.option2_rates, selectedTerm)}%
+                        {selectedProgram.alternative_consumer_cash > 0 ? formatCurrency(selectedProgram.alternative_consumer_cash) : '$0'} + {localResult?.option2Rate || getRateForTerm(selectedProgram.option2_rates, selectedTerm)}%
                       </Text>
                     </TouchableOpacity>
                   ) : (
@@ -2522,7 +2532,7 @@ export default function HomeScreen() {
                     <>
                       <View style={styles.optionDetail}>
                         <Text style={styles.optionDetailLabel}>{t.results.rebate}:</Text>
-                        <Text style={styles.optionDetailValue}>$0</Text>
+                        <Text style={styles.optionDetailValue}>{selectedProgram.alternative_consumer_cash > 0 ? formatCurrency(selectedProgram.alternative_consumer_cash) : '$0'}</Text>
                       </View>
                       <View style={styles.optionDetail}>
                         <Text style={styles.optionDetailLabel}>{t.results.financedCapital}:</Text>

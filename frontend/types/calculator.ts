@@ -16,6 +16,7 @@ export interface VehicleProgram {
   trim: string | null;
   year: number;
   consumer_cash: number;
+  alternative_consumer_cash: number;
   option1_rates: FinancingRates;
   option2_rates: FinancingRates | null;
   bonus_cash: number;

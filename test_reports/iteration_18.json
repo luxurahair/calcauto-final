@@ -1,0 +1,92 @@
+{
+  "summary": "Tested alternative_consumer_cash feature for Option 2 in CalcAuto AiPro. All 8 backend tests passed. Frontend UI correctly displays Option 1 and Option 2 columns in rates table, Option buttons with rebate amounts, and result cards with proper rebate values. The useCalculator hook correctly uses alternative_consumer_cash in the Option 2 principal calculation (deducted before taxes). Currently, all programs have alternative_consumer_cash = 0, so Option 2 shows '$0' for rebate - this is expected as users import corrected values from Excel.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_alternative_consumer_cash.py",
+    "/app/test_reports/pytest/pytest_results_alt_consumer_cash.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "useCalculator.ts line 135-139: Correctly uses altConsumerCash from selectedProgram.alternative_consumer_cash for Option 2 calculation",
+    "index.tsx line 2420: Option 2 button shows alternative_consumer_cash amount or '$0'",
+    "index.tsx line 2535: Option 2 result card shows alternative_consumer_cash as rebate",
+    "index.tsx line 1905-1909: Rebates summary shows 'Rabais Opt.2' when alternative_consumer_cash > 0",
+    "Backend programs.py correctly exports/imports alternative_consumer_cash field"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_alternative_consumer_cash.py"
+  ],
+  "success_rate": {
+    "backend": "100% (8/8 tests passed)",
+    "frontend": "100% - All UI elements verified working"
+  },
+  "test_credentials": {
+    "email": "danielgiroux007@gmail.com",
+    "password": "Liana2018$",
+    "base_url": "https://vehicle-finance-hub-5.preview.emergentagent.com"
+  },
+  "seed_data_creation": "None - tested with existing data",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "The alternative_consumer_cash feature is fully implemented and working. Backend returns the field correctly. Frontend displays it in: 1) Option 2 button subtext (line 2420), 2) Option 2 result card rebate line (line 2535), 3) Rebates summary section 'Rabais Opt.2' (line 1905-1909), 4) Print view HTML (line 965, 1388-1389), 5) SMS share text (line 801). useCalculator.ts correctly deducts altConsumerCash from principal before taxes for Option 2 (line 134-139). All programs currently have alternative_consumer_cash = 0, but the UI and calculation are ready for when values are imported via Excel.",
+  "verified_features": {
+    "backend_api": {
+      "GET /api/programs": "Returns alternative_consumer_cash field for all programs",
+      "Programs with option2_rates": "54 programs have option2_rates, all currently have alternative_consumer_cash = 0"
+    },
+    "frontend_ui": {
+      "rates_table": "Shows Option 1 AND Option 2 columns when program has option2_rates",
+      "option_buttons": "Option 1 shows consumer_cash + rate, Option 2 shows alternative_consumer_cash + rate (currently $0)",
+      "result_cards": "Option 1 shows Rabais: 1000$, Option 2 shows Rabais: $0 (as expected with current data)",
+      "best_option_banner": "Correctly calculates and displays 'Option 2 = Meilleur choix!' when Option 2 is better",
+      "rebates_summary": "Ready to show 'Rabais Opt.2' when alternative_consumer_cash > 0"
+    },
+    "calculation_logic": {
+      "option1_principal": "price + accessories - consumer_cash - rabais - echange + frais + taxes + dette - comptant - bonus",
+      "option2_principal": "price + accessories - alternative_consumer_cash - rabais - echange + frais + taxes + dette - comptant"
+    }
+  },
+  "test_cases_executed": [
+    "Backend: test_programs_endpoint_returns_alternative_consumer_cash - PASSED",
+    "Backend: test_programs_with_option2_rates_structure - PASSED",
+    "Backend: test_chrysler_grand_caravan_2025_has_option2 - PASSED",
+    "Backend: test_login_with_valid_credentials - PASSED",
+    "Backend: test_program_data_for_calculation - PASSED",
+    "Backend: test_all_programs_have_complete_rate_structure - PASSED",
+    "Backend: test_api_ping - PASSED",
+    "Backend: test_periods_endpoint - PASSED",
+    "Frontend: Login with danielgiroux007@gmail.com - PASSED",
+    "Frontend: Select Chrysler Grand Caravan 2025 - PASSED",
+    "Frontend: Rates table shows Option 1 and Option 2 columns - PASSED",
+    "Frontend: Option buttons display rebate amounts correctly - PASSED",
+    "Frontend: Result cards show correct rebate values - PASSED",
+    "Frontend: Best option calculation is correct - PASSED"
+  ],
+  "example_calculation_verified": {
+    "vehicle": "Chrysler Grand Caravan SXT 2025",
+    "price": 50000,
+    "consumer_cash": 1000,
+    "alternative_consumer_cash": 0,
+    "term": 72,
+    "option1": {
+      "rate": "4.99%",
+      "monthly": "914.00 $",
+      "total": "65 808 $"
+    },
+    "option2": {
+      "rate": "2.99%",
+      "monthly": "879.74 $",
+      "total": "63 341 $"
+    },
+    "best_option": "Option 2",
+    "savings": "2 467 $"
+  }
+}
