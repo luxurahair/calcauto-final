@@ -235,6 +235,9 @@ async def export_sci_lease_excel():
         ws.column_dimensions['A'].width = 12
         ws.column_dimensions['B'].width = 55
 
+        # Figer colonnes A-B et ligne 1
+        ws.freeze_panes = 'C2'
+
         for ri, v in enumerate(vehicles, 2):
             std = v.get("standard_rates") or {}
             alt = v.get("alternative_rates") or {}

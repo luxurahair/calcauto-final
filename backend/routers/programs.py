@@ -130,6 +130,9 @@ async def export_programs_excel(month: Optional[int] = None, year: Optional[int]
     ws.column_dimensions['F'].width = 16
     ws.column_dimensions['G'].width = 14
 
+    # Figer colonnes A-D et ligne 1
+    ws.freeze_panes = 'E2'
+
     year_2026_fill = PatternFill(start_color="E3F2FD", end_color="E3F2FD", fill_type="solid")
     year_2025_fill = PatternFill(start_color="FFF3E0", end_color="FFF3E0", fill_type="solid")
 
