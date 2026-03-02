@@ -68,6 +68,14 @@ OCR pour factures, gestion d'inventaire et CRM.
 - Startup migration script fixes production DB on deploy
 - Email with Excel sent to user for manual correction
 
+## Completed - Excel Final Truth Workflow (Mar 2, 2026)
+- Added 'excel-correction' step to import page after PDF extraction
+- User can download Excel, correct, re-upload as final truth
+- 76 January duplicates removed (81 unique programs remain)
+- New column "Rabais Alt. Cash ($)" = alternative_consumer_cash for Option 2
+- All corrections memorized in program_corrections collection
+- Future PDF imports auto-apply memorized corrections
+
 ## P1 Backlog
 - Vérifier données "Option 2" sur tous les modèles
 

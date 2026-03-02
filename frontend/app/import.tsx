@@ -56,7 +56,7 @@ const months = [
 ];
 
 // Steps for the import wizard
-type Step = 'login' | 'choose-type' | 'upload' | 'select-pages' | 'preview' | 'email-sent' | 'success' | 'residual-upload' | 'residual-processing' | 'residual-success';
+type Step = 'login' | 'choose-type' | 'upload' | 'select-pages' | 'preview' | 'email-sent' | 'excel-correction' | 'success' | 'residual-upload' | 'residual-processing' | 'residual-success';
 
 export default function ImportScreen() {
   const router = useRouter();
@@ -100,6 +100,11 @@ export default function ImportScreen() {
 
   // Residual guide state
   const [residualResult, setResidualResult] = useState<any>(null);
+
+  // Excel correction state
+  const [excelImporting, setExcelImporting] = useState(false);
+  const [excelResult, setExcelResult] = useState<string | null>(null);
+  const excelFileRef = React.useRef<HTMLInputElement | null>(null);
 
   const showAlert = (title: string, message: string) => {
     if (Platform.OS === 'web') {
@@ -981,31 +986,38 @@ export default function ImportScreen() {
       <View style={[styles.iconContainer, styles.successIcon]}>
         <Ionicons name="checkmark-circle" size={80} color="#4ECDC4" />
       </View>
-      <Text style={styles.stepTitle}>Importation réussie!</Text>
+      <Text style={styles.stepTitle}>Importation reussie!</Text>
       <Text style={styles.stepDescription}>
-        Les pages {pageStart || '1'} à {pageEnd || totalPages} ont été extraites et sauvegardées.
+        Les pages {pageStart || '1'} a {pageEnd || totalPages} ont ete extraites et sauvegardees.
       </Text>
       <Text style={styles.successNote}>
-        ✅ Programmes sauvegardés dans la base de données
+        {'\u2705'} Programmes sauvegardes dans la base de donnees
       </Text>
       <Text style={styles.successNote}>
-        📧 Fichier Excel envoyé à votre email pour vérification
+        {'\uD83D\uDCE7'} Fichier Excel envoye a votre email pour verification
       </Text>
       <Text style={styles.emailSentNote}>
-        Les nouveaux programmes de {getMonthLabel(selectedMonth)} {selectedYear} sont maintenant disponibles dans l'application.
+        Verifiez l'Excel recu par email. Si des corrections sont necessaires, passez a l'etape suivante.
       </Text>
       
       <TouchableOpacity
-        style={styles.primaryButton}
+        style={[styles.primaryButton, { backgroundColor: '#FFD700' }]}
+        onPress={() => setCurrentStep('excel-correction')}
+      >
+        <Ionicons name="document-text" size={20} color="#1a1a2e" />
+        <Text style={styles.primaryButtonText}>Corriger et importer l'Excel final</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={[styles.primaryButton, { backgroundColor: '#4ECDC4', marginTop: 12 }]}
         onPress={() => {
-          setPdfFile(null);
-          setPdfFileName('');
-          setTotalPages(0);
-          setCurrentStep('upload');
+          if (Platform.OS === 'web') {
+            window.open(`${API_URL}/api/programs/export-excel`, '_blank');
+          }
         }}
       >
-        <Ionicons name="refresh" size={20} color="#1a1a2e" />
-        <Text style={styles.primaryButtonText}>Importer un autre PDF</Text>
+        <Ionicons name="download" size={20} color="#1a1a2e" />
+        <Text style={styles.primaryButtonText}>Telecharger l'Excel</Text>
       </TouchableOpacity>
       
       <TouchableOpacity
@@ -1013,7 +1025,131 @@ export default function ImportScreen() {
         onPress={() => router.replace('/')}
       >
         <Ionicons name="home" size={20} color="#fff" />
-        <Text style={[styles.primaryButtonText, { color: '#fff' }]}>Retour à l'accueil</Text>
+        <Text style={[styles.primaryButtonText, { color: '#fff' }]}>Retour a l'accueil</Text>
+      </TouchableOpacity>
+    </View>
+  );
+
+  // Excel correction handler
+  const handleExcelCorrection = async (event: any) => {
+    const file = event?.target?.files?.[0];
+    if (!file) return;
+    
+    setExcelImporting(true);
+    setExcelResult(null);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('password', password);
+
+      const response = await axios.post(`${API_URL}/api/programs/import-excel`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+        timeout: 60000,
+      });
+
+      const data = response.data;
+      setExcelResult(`${data.updated} programmes mis a jour, ${data.corrections_saved} corrections memorisees`);
+    } catch (e: any) {
+      setExcelResult('Erreur: ' + (e.response?.data?.detail || e.message || 'inconnu'));
+    } finally {
+      setExcelImporting(false);
+      if (excelFileRef.current) excelFileRef.current.value = '';
+    }
+  };
+
+  // Render Excel correction step
+  const renderExcelCorrectionStep = () => (
+    <View style={styles.stepContainer}>
+      <View style={[styles.iconContainer, { backgroundColor: 'rgba(255,215,0,0.15)' }]}>
+        <Ionicons name="create" size={60} color="#FFD700" />
+      </View>
+      <Text style={styles.stepTitle}>Excel final - Source de verite</Text>
+      <Text style={styles.stepDescription}>
+        Importez le fichier Excel corrige. Les valeurs corrigees remplaceront les donnees actuelles
+        et seront memorisees pour les prochains imports PDF.
+      </Text>
+
+      <TouchableOpacity
+        style={[styles.primaryButton, { backgroundColor: '#4ECDC4', marginBottom: 20 }]}
+        onPress={() => {
+          if (Platform.OS === 'web') {
+            window.open(`${API_URL}/api/programs/export-excel`, '_blank');
+          }
+        }}
+      >
+        <Ionicons name="download" size={20} color="#1a1a2e" />
+        <Text style={styles.primaryButtonText}>Telecharger l'Excel actuel</Text>
+      </TouchableOpacity>
+
+      <View style={{ backgroundColor: '#2d2d44', borderRadius: 12, padding: 20, width: '100%', marginBottom: 20 }}>
+        <Text style={{ color: '#FFD700', fontSize: 16, fontWeight: '700', marginBottom: 12, textAlign: 'center' }}>
+          Importer le fichier corrige
+        </Text>
+
+        {Platform.OS === 'web' && (
+          <input
+            ref={(el: any) => { excelFileRef.current = el; }}
+            type="file"
+            accept=".xlsx,.xls"
+            style={{ display: 'none' }}
+            onChange={handleExcelCorrection}
+          />
+        )}
+
+        <TouchableOpacity
+          style={{
+            backgroundColor: excelImporting ? '#555' : '#FFD700',
+            borderRadius: 8, paddingVertical: 16, alignItems: 'center',
+            opacity: excelImporting ? 0.7 : 1,
+          }}
+          onPress={() => {
+            if (Platform.OS === 'web' && excelFileRef.current) {
+              excelFileRef.current.click();
+            }
+          }}
+          disabled={excelImporting}
+        >
+          {excelImporting ? (
+            <ActivityIndicator size="small" color="#1a1a2e" />
+          ) : (
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Ionicons name="cloud-upload" size={20} color="#1a1a2e" />
+              <Text style={{ color: '#1a1a2e', fontWeight: '700', fontSize: 16, marginLeft: 8 }}>
+                Choisir le fichier Excel
+              </Text>
+            </View>
+          )}
+        </TouchableOpacity>
+      </View>
+
+      {excelResult && (
+        <View style={{
+          backgroundColor: excelResult.startsWith('Erreur') ? 'rgba(255,107,107,0.15)' : 'rgba(78,205,196,0.15)',
+          borderRadius: 8, padding: 16, width: '100%', marginBottom: 16,
+          borderWidth: 1, borderColor: excelResult.startsWith('Erreur') ? '#FF6B6B' : '#4ECDC4',
+        }}>
+          <Text style={{ color: excelResult.startsWith('Erreur') ? '#FF6B6B' : '#4ECDC4', fontSize: 14, textAlign: 'center' }}>
+            {excelResult}
+          </Text>
+        </View>
+      )}
+
+      <View style={{ backgroundColor: '#2d2d44', borderRadius: 8, padding: 14, width: '100%', marginBottom: 16 }}>
+        <Text style={{ color: '#aaa', fontSize: 12, lineHeight: 18 }}>
+          {'\u2022'} NE PAS modifier la colonne ID{'\n'}
+          {'\u2022'} Col F: Consumer Cash (Opt 1, avant taxes){'\n'}
+          {'\u2022'} Col N: Rabais Alt. Cash (Opt 2, avant taxes){'\n'}
+          {'\u2022'} Bonus Cash = 0 sauf Fiat 500e ($5,000){'\n'}
+          {'\u2022'} Les corrections sont memorisees pour les futurs PDF
+        </Text>
+      </View>
+
+      <TouchableOpacity
+        style={[styles.primaryButton, { backgroundColor: '#2d2d44' }]}
+        onPress={() => router.replace('/')}
+      >
+        <Ionicons name="home" size={20} color="#fff" />
+        <Text style={[styles.primaryButtonText, { color: '#fff' }]}>Retour a l'accueil</Text>
       </TouchableOpacity>
     </View>
   );
@@ -1198,12 +1334,13 @@ export default function ImportScreen() {
                currentStep === 'choose-type' ? 'Type de document' :
                currentStep === 'upload' ? 'Programmes de financement' :
                currentStep === 'select-pages' ? 'Choix des pages' :
-               currentStep === 'preview' ? 'Vérification des données' :
-               currentStep === 'email-sent' ? 'Email envoyé' :
-               currentStep === 'success' ? 'Terminé' :
-               currentStep === 'residual-upload' ? 'Guide des résiduels' :
+               currentStep === 'preview' ? 'Verification des donnees' :
+               currentStep === 'email-sent' ? 'Extraction terminee' :
+               currentStep === 'excel-correction' ? 'Excel final - Verite' :
+               currentStep === 'success' ? 'Termine' :
+               currentStep === 'residual-upload' ? 'Guide des residuels' :
                currentStep === 'residual-processing' ? 'Traitement en cours...' :
-               currentStep === 'residual-success' ? 'Terminé' : ''}
+               currentStep === 'residual-success' ? 'Termine' : ''}
             </Text>
           </View>
         </View>
@@ -1212,11 +1349,11 @@ export default function ImportScreen() {
         <View style={styles.progressContainer}>
           {(docType === 'residuals' 
             ? ['login', 'choose-type', 'residual-upload', 'residual-success']
-            : ['login', 'choose-type', 'upload', 'email-sent']
+            : ['login', 'choose-type', 'upload', 'email-sent', 'excel-correction']
           ).map((step, index) => {
             const allSteps = docType === 'residuals'
               ? ['login', 'choose-type', 'residual-upload', 'residual-processing', 'residual-success']
-              : ['login', 'choose-type', 'upload', 'select-pages', 'preview', 'email-sent', 'success'];
+              : ['login', 'choose-type', 'upload', 'select-pages', 'preview', 'email-sent', 'excel-correction', 'success'];
             const currentIndex = allSteps.indexOf(currentStep);
             const stepIndex = allSteps.indexOf(step);
             const isActive = currentStep === step || (step === 'residual-upload' && currentStep === 'residual-processing');
@@ -1229,7 +1366,7 @@ export default function ImportScreen() {
                   isActive && styles.progressDotActive,
                   isCompleted && styles.progressDotCompleted
                 ]} />
-                {index < 3 ? <View style={[
+                {index < 4 ? <View style={[
                   styles.progressLine,
                   isCompleted && styles.progressLineCompleted
                 ]} /> : null}
@@ -1249,6 +1386,7 @@ export default function ImportScreen() {
           {currentStep === 'select-pages' ? renderSelectPagesStep() : null}
           {currentStep === 'preview' ? renderPreviewStep() : null}
           {currentStep === 'email-sent' ? renderEmailSentStep() : null}
+          {currentStep === 'excel-correction' ? renderExcelCorrectionStep() : null}
           {currentStep === 'success' ? renderSuccessStep() : null}
           {currentStep === 'residual-upload' ? renderResidualUploadStep() : null}
           {currentStep === 'residual-processing' ? renderResidualProcessingStep() : null}
