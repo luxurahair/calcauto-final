@@ -13,12 +13,16 @@ Application de gestion de financement et location automobile pour concessionnair
 - [x] API gestion corrections (GET /api/corrections, DELETE /api/corrections/all)
 - [x] Upload multiple PDFs + file d'attente revision
 - [x] Force logout apres import
-- [x] Fix modal "Envoyer par email" — layout compact avec header en ligne, scroll fluide, boutons toujours visibles (maxHeight: 60% viewport via Dimensions) — 3 mars 2026
+- [x] Fix modal "Envoyer par email" — layout compact inline, boutons toujours visibles (Dimensions-based maxHeight) — 3 mars 2026
+- [x] Fix SMTP import manquant (SMTP_HOST, SMTP_PASSWORD, SMTP_PORT) — email Excel jamais envoye a cause de NameError — 3 mars 2026
+- [x] Extraction PDF asynchrone — upload immediat + traitement background + polling statut — 3 mars 2026
 
 ## Architecture Notes
 - Frontend: Expo/React Native Web, pre-built to /app/frontend/dist, served by Python HTTP server
 - Backend: FastAPI on port 8001
 - IMPORTANT: Changes to frontend require rebuild via `npx expo export --platform web` + restart expo supervisor
+- Async extraction: POST /api/extract-pdf-async (returns task_id) + GET /api/extract-task/{task_id} (polling)
+- MongoDB collection `extract_tasks` tracks async extraction task status
 
 ## Backlog
 - (P1) Creer UI admin pour gestion des corrections sauvegardees (voir/supprimer via /api/corrections)

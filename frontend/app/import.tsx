@@ -88,6 +88,7 @@ export default function ImportScreen() {
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [extracting, setExtracting] = useState(false);
+  const [extractionStatus, setExtractionStatus] = useState('');
   const [saving, setSaving] = useState(false);
   
   // Programs data
@@ -191,7 +192,7 @@ export default function ImportScreen() {
     }
   };
 
-  // Step 3: Extract selected pages
+  // Step 3: Extract selected pages (async with polling)
   const handleExtractPages = async () => {
     if (!pdfFile) {
       showAlert('Erreur', 'Aucun PDF sélectionné');
@@ -199,6 +200,7 @@ export default function ImportScreen() {
     }
     
     setExtracting(true);
+    setExtractionStatus('Envoi du PDF...');
     
     try {
       // Create FormData for upload
@@ -206,12 +208,10 @@ export default function ImportScreen() {
       
       // Handle file for different platforms
       if (Platform.OS === 'web') {
-        // For web, fetch the file and create a blob
         const response = await fetch(pdfFile.uri);
         const blob = await response.blob();
         formData.append('file', blob, pdfFile.name);
       } else {
-        // For native platforms
         formData.append('file', {
           uri: pdfFile.uri,
           type: 'application/pdf',
@@ -227,34 +227,65 @@ export default function ImportScreen() {
       formData.append('lease_start_page', leasePageStart || '');
       formData.append('lease_end_page', leasePageEnd || '');
       
-      const response = await axios.post(`${API_URL}/api/extract-pdf`, formData, {
+      // Use async endpoint - returns immediately with task_id
+      const uploadResponse = await axios.post(`${API_URL}/api/extract-pdf-async`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
-        timeout: 600000, // 10 minutes timeout for AI processing
+        timeout: 30000, // 30 sec is enough for upload only
       });
       
-      if (response.data.success) {
-        setPrograms(response.data.programs);
-        const leaseCount = response.data.sci_lease_count || 0;
-        const leaseMsg = leaseCount > 0 ? `\n+ ${leaseCount} taux SCI Lease sauvegardés!` : '';
-        setCurrentStep('preview');
-        showAlert('Succès', `${response.data.programs.length} programmes extraits avec succès!${leaseMsg}\n\nUn fichier Excel a été envoyé à votre email pour vérification.`);
-      } else {
-        showAlert('Erreur', response.data.message);
+      const taskId = uploadResponse.data.task_id;
+      setExtractionStatus('Extraction en cours...');
+      
+      // Poll for task completion
+      let attempts = 0;
+      const maxAttempts = 120; // 120 * 3s = 6 minutes max
+      
+      while (attempts < maxAttempts) {
+        await new Promise(resolve => setTimeout(resolve, 3000)); // Wait 3 seconds
+        attempts++;
+        
+        try {
+          const statusResponse = await axios.get(`${API_URL}/api/extract-task/${taskId}`, { timeout: 10000 });
+          const task = statusResponse.data;
+          
+          // Update status message
+          if (task.message) {
+            setExtractionStatus(task.message);
+          }
+          
+          if (task.status === 'complete') {
+            setPrograms(task.programs || []);
+            const leaseCount = task.sci_lease_count || 0;
+            const leaseMsg = leaseCount > 0 ? `\n+ ${leaseCount} taux SCI Lease sauvegardés!` : '';
+            setCurrentStep('preview');
+            showAlert('Succès', `${(task.programs || []).length} programmes extraits avec succès!${leaseMsg}\n\n${task.message}`);
+            return;
+          } else if (task.status === 'error') {
+            showAlert('Erreur', task.message || 'Erreur lors de l\'extraction');
+            return;
+          }
+          // Otherwise, keep polling (status is queued/extracting/ai_processing/saving/etc.)
+        } catch (pollError) {
+          // Network hiccup during polling - just retry
+          console.log('Poll retry...', pollError);
+        }
       }
+      
+      // Max attempts reached
+      showAlert('Info', 'L\'extraction prend plus de temps que prévu. Vérifiez votre email pour le fichier Excel.');
+      
     } catch (error: any) {
       console.error('Upload error:', error);
-      // Even on timeout/error, show a success-like message since the backend likely completed
       if (error.code === 'ECONNABORTED' || error.message?.includes('timeout')) {
-        // Timeout - but the extraction likely completed in the backend
-        setCurrentStep('email-sent' as Step);
+        showAlert('Erreur', 'Le téléversement du PDF a pris trop de temps. Réessayez avec une connexion plus rapide.');
       } else if (error.code === 'ERR_NETWORK' || error.message?.includes('Network')) {
-        // Network error after long wait - likely completed
-        setCurrentStep('email-sent' as Step);
+        showAlert('Erreur', 'Erreur réseau. Vérifiez votre connexion internet.');
       } else {
-        showAlert('Erreur', error.response?.data?.detail || 'Erreur lors de l\'extraction. Vérifiez votre email.');
+        showAlert('Erreur', error.response?.data?.detail || 'Erreur lors du téléversement.');
       }
     } finally {
       setExtracting(false);
+      setExtractionStatus('');
     }
   };
 
@@ -722,9 +753,8 @@ export default function ImportScreen() {
         {extracting ? (
           <View style={styles.extractingContainer}>
             <ActivityIndicator size="large" color="#4ECDC4" />
-            <Text style={styles.extractingText}>Extraction en cours...</Text>
+            <Text style={styles.extractingText}>{extractionStatus || 'Extraction en cours...'}</Text>
             <Text style={styles.extractingSubtext}>Retail: pages {pageStart}-{pageEnd} | SCI Lease: pages {leasePageStart}-{leasePageEnd}</Text>
-            <Text style={styles.extractingSubtext}>Un fichier Excel sera envoyé par email</Text>
             <Text style={styles.extractingWait}>Veuillez patienter (2-4 minutes)</Text>
           </View>
         ) : (
@@ -837,9 +867,8 @@ export default function ImportScreen() {
         {extracting ? (
           <View style={styles.extractingContainer}>
             <ActivityIndicator size="large" color="#4ECDC4" />
-            <Text style={styles.extractingText}>Extraction en cours...</Text>
-            <Text style={styles.extractingSubtext}>⏳ L'IA analyse les pages {pageStart} à {pageEnd}</Text>
-            <Text style={styles.extractingSubtext}>📧 Un fichier Excel sera envoyé par email</Text>
+            <Text style={styles.extractingText}>{extractionStatus || 'Extraction en cours...'}</Text>
+            <Text style={styles.extractingSubtext}>Pages {pageStart} à {pageEnd}</Text>
             <Text style={styles.extractingWait}>Veuillez patienter (2-4 minutes)</Text>
           </View>
         ) : (

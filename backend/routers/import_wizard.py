@@ -5,9 +5,10 @@ import uuid
 import json
 import re
 import io
+import asyncio
 import pypdf
 import pdfplumber
-from database import db, ADMIN_PASSWORD, OPENAI_API_KEY, SMTP_EMAIL, ROOT_DIR, logger
+from database import db, ADMIN_PASSWORD, OPENAI_API_KEY, SMTP_EMAIL, SMTP_PASSWORD, SMTP_HOST, SMTP_PORT, ROOT_DIR, logger
 from models import (
     PDFExtractRequest, ProgramPreview, ExtractedDataResponse,
     SaveProgramsRequest, FinancingRates, VehicleProgram
@@ -754,6 +755,365 @@ EXTRAIS ABSOLUMENT TOUS LES VÉHICULES. JSON valide uniquement."""
     except Exception as e:
         logger.error(f"Error extracting PDF: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Erreur d'extraction: {str(e)}")
+
+# ============ Async PDF Extraction (for environments with short timeouts) ============
+
+async def _run_extraction_task(task_id: str, pdf_content: bytes, password: str,
+                                program_month: int, program_year: int,
+                                start_page: int, end_page: int,
+                                lease_start_page: Optional[int], lease_end_page: Optional[int]):
+    """Background task: extracts PDF, saves programs, sends email, updates task status in MongoDB."""
+    try:
+        await db.extract_tasks.update_one(
+            {"task_id": task_id},
+            {"$set": {"status": "extracting", "message": "Extraction du texte PDF..."}}
+        )
+        
+        import tempfile
+        import os as os_module
+        import base64
+        from openai import OpenAI
+        import PyPDF2
+
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp_file:
+            tmp_file.write(pdf_content)
+            tmp_path = tmp_file.name
+
+        try:
+            # Extract text from specified pages
+            pdf_text = ""
+            with open(tmp_path, 'rb') as pdf_file:
+                reader = PyPDF2.PdfReader(pdf_file)
+                total_pages = len(reader.pages)
+                start_idx = max(0, start_page - 1)
+                end_idx = min(total_pages, end_page)
+                for page_num in range(start_idx, end_idx):
+                    page = reader.pages[page_num]
+                    page_text = page.extract_text()
+                    pdf_text += f"\n--- PAGE {page_num + 1} ---\n{page_text}\n"
+                logger.info(f"[Async] Extracted {end_idx - start_idx} pages, {len(pdf_text)} chars")
+
+            await db.extract_tasks.update_one(
+                {"task_id": task_id},
+                {"$set": {"status": "ai_processing", "message": "Analyse IA en cours (programmes)..."}}
+            )
+
+            # Use OpenAI to extract structured data (reuse the same prompt as sync endpoint)
+            client = OpenAI(api_key=OPENAI_API_KEY)
+            extraction_prompt = f"""EXTRAIS TOUS LES VÉHICULES de ce PDF de programmes de financement FCA Canada.
+
+TEXTE COMPLET DU PDF:
+{pdf_text}
+
+=== FORMAT DES LIGNES DU PDF ===
+Chaque ligne suit ce format:
+VÉHICULE [Consumer Cash $X,XXX] [6 taux Option1] [6 taux Option2] [Bonus Cash]
+
+- Si tu vois "- - - - - -" = option non disponible (null)
+- Si tu vois "P" avant un montant = c'est quand même le montant
+- 6 taux = 36M, 48M, 60M, 72M, 84M, 96M
+
+=== OPTION 2 - RÈGLE CRITIQUE ===
+ATTENTION: BEAUCOUP de véhicules n'ont PAS d'Option 2 (Alternative Consumer Cash Finance Rates).
+- Les colonnes Option 2 dans le PDF sont SOUVENT VIDES (pas de chiffres, pas de tirets)
+- Si les colonnes Option 2 d'un véhicule sont VIDES ou contiennent UNIQUEMENT des tirets "- - - - - -", alors option2_rates = null
+- NE PAS inventer ou copier des taux Option 2 d'un autre véhicule
+- NE PAS supposer qu'un véhicule a Option 2 juste parce qu'un autre véhicule du même modèle l'a
+- Chaque ligne/véhicule doit être traitée INDIVIDUELLEMENT pour Option 2
+- En cas de DOUTE sur l'existence d'Option 2, mettre null
+
+=== BONUS CASH / DELIVERY CREDIT - RÈGLE CRITIQUE ===
+ATTENTION: La dernière colonne du PDF est "Delivery Credit" (code 261Q02).
+Cette colonne est marquée TYPE OF SALE: 'E' Only.
+*** NE JAMAIS IMPORTER LES VALEURS DE DELIVERY CREDIT ***
+bonus_cash doit TOUJOURS être 0 pour TOUS les véhicules.
+
+=== MARQUES À EXTRAIRE ===
+- CHRYSLER: Grand Caravan, Pacifica
+- JEEP: Compass, Cherokee, Wrangler, Gladiator, Grand Cherokee, Grand Wagoneer
+- DODGE: Durango, Charger, Hornet
+- RAM: ProMaster, 1500, 2500, 3500, Chassis Cab
+
+=== ANNÉES ===
+- "2026 MODELS" → year: 2026
+- "2025 MODELS" → year: 2025
+Extrais les véhicules des DEUX sections!
+
+=== JSON REQUIS ===
+{{
+    "programs": [
+        {{
+            "brand": "Chrysler",
+            "model": "Grand Caravan", 
+            "trim": "SXT",
+            "year": 2026,
+            "consumer_cash": 0,
+            "bonus_cash": 0,
+            "option1_rates": {{"rate_36": 4.99, "rate_48": 4.99, "rate_60": 4.99, "rate_72": 4.99, "rate_84": 4.99, "rate_96": 4.99}},
+            "option2_rates": null
+        }}
+    ]
+}}
+
+EXTRAIS ABSOLUMENT TOUS LES VÉHICULES DES SECTIONS 2026 ET 2025. 
+BONUS_CASH = 0 POUR TOUS LES VÉHICULES."""
+
+            response = client.chat.completions.create(
+                model="gpt-4o",
+                messages=[
+                    {"role": "system", "content": "Tu extrais TOUS les véhicules d'un PDF FCA Canada. CHAQUE ligne = 1 entrée. N'oublie AUCUN véhicule. Sections 2026 ET 2025. JSON valide uniquement."},
+                    {"role": "user", "content": extraction_prompt}
+                ],
+                temperature=0.1,
+                max_tokens=16000,
+                response_format={"type": "json_object"}
+            )
+
+            response_text = response.choices[0].message.content.strip()
+            if response_text.startswith("```"):
+                lines = response_text.split("\n")
+                response_text = "\n".join(lines[1:-1] if lines[-1] == "```" else lines[1:])
+                response_text = response_text.strip()
+            if response_text.endswith("```"):
+                response_text = response_text[:-3].strip()
+            response_text = response_text.replace('\n', ' ').replace('\r', '')
+            response_text = re.sub(r',\s*}', '}', response_text)
+            response_text = re.sub(r',\s*]', ']', response_text)
+
+            data = json.loads(response_text)
+            programs = data.get("programs", [])
+
+            # Validate and clean programs
+            valid_programs = []
+            for p in programs:
+                if 'brand' in p and 'model' in p:
+                    if p.get('option1_rates') and isinstance(p['option1_rates'], dict):
+                        for key in ['rate_36', 'rate_48', 'rate_60', 'rate_72', 'rate_84', 'rate_96']:
+                            if key not in p['option1_rates']:
+                                p['option1_rates'][key] = 4.99
+                    if p.get('option2_rates') and isinstance(p['option2_rates'], dict):
+                        opt2 = p['option2_rates']
+                        rate_values = [opt2.get(f'rate_{t}', 0) for t in [36, 48, 60, 72, 84, 96]]
+                        if all(v == 0 or v is None for v in rate_values):
+                            p['option2_rates'] = None
+                        else:
+                            for key in ['rate_36', 'rate_48', 'rate_60', 'rate_72', 'rate_84', 'rate_96']:
+                                if key not in opt2:
+                                    opt2[key] = 0
+                    valid_programs.append(p)
+
+            await db.extract_tasks.update_one(
+                {"task_id": task_id},
+                {"$set": {"status": "saving", "message": f"{len(valid_programs)} programmes extraits. Sauvegarde..."}}
+            )
+
+            # Generate Excel and send email
+            excel_sent = False
+            if EXCEL_AVAILABLE and valid_programs and SMTP_EMAIL:
+                try:
+                    excel_data = generate_excel_from_programs(valid_programs, program_month, program_year)
+                    excel_sent = send_excel_email(excel_data, SMTP_EMAIL, program_month, program_year, len(valid_programs))
+                    logger.info(f"[Async] Excel sent: {excel_sent}")
+                except Exception as excel_error:
+                    logger.error(f"[Async] Excel email error: {str(excel_error)}")
+
+            # Auto-save programs
+            saved_count = 0
+            try:
+                await db.programs.delete_many({"program_month": program_month, "program_year": program_year})
+                default_rates = {"rate_36": 4.99, "rate_48": 4.99, "rate_60": 4.99, "rate_72": 4.99, "rate_84": 4.99, "rate_96": 4.99}
+                for prog in valid_programs:
+                    opt1 = prog.get("option1_rates")
+                    if opt1 is None or not isinstance(opt1, dict):
+                        opt1 = default_rates.copy()
+                    program_doc = {
+                        "id": str(uuid.uuid4()),
+                        "brand": prog.get("brand", ""),
+                        "model": prog.get("model", ""),
+                        "trim": prog.get("trim", ""),
+                        "year": prog.get("year", program_year),
+                        "consumer_cash": prog.get("consumer_cash", 0) or 0,
+                        "bonus_cash": prog.get("bonus_cash", 0) or 0,
+                        "alt_consumer_cash": prog.get("alt_consumer_cash", 0) or 0,
+                        "option1_rates": opt1,
+                        "option2_rates": prog.get("option2_rates"),
+                        "program_month": program_month,
+                        "program_year": program_year,
+                        "created_at": datetime.utcnow().isoformat()
+                    }
+                    await db.programs.insert_one(program_doc)
+                    saved_count += 1
+                logger.info(f"[Async] Saved {saved_count} programs")
+            except Exception as save_error:
+                logger.error(f"[Async] Save error: {str(save_error)}")
+
+            # SCI Lease extraction
+            sci_lease_count = 0
+            if lease_start_page and lease_end_page:
+                try:
+                    await db.extract_tasks.update_one(
+                        {"task_id": task_id},
+                        {"$set": {"status": "ai_processing_lease", "message": "Analyse IA en cours (SCI Lease)..."}}
+                    )
+                    lease_text = ""
+                    with open(tmp_path, 'rb') as pdf_file:
+                        reader = PyPDF2.PdfReader(pdf_file)
+                        total_pages = len(reader.pages)
+                        lease_start_idx = max(0, lease_start_page - 1)
+                        lease_end_idx = min(total_pages, lease_end_page)
+                        for page_num in range(lease_start_idx, lease_end_idx):
+                            page = reader.pages[page_num]
+                            lease_text += f"\n--- PAGE {page_num + 1} ---\n{page.extract_text()}\n"
+
+                    if lease_text.strip():
+                        lease_extraction_prompt = f"""EXTRAIS TOUS les véhicules et leurs taux de LOCATION SCI (SCI Lease) de ce PDF.
+
+TEXTE DU PDF (pages SCI Lease):
+{lease_text}
+
+Ce sont les programmes de LOCATION (lease) SCI Lease Corp pour concessionnaires FCA Canada.
+Les termes de location sont: 24, 27, 36, 39, 42, 48, 51, 54, 60 mois.
+Si un taux montre "- -" ou est vide = null.
+
+=== MARQUES À EXTRAIRE ===
+- CHRYSLER: Grand Caravan, Pacifica
+- JEEP: Compass, Cherokee, Wrangler, Gladiator, Grand Cherokee, Grand Wagoneer
+- DODGE: Durango, Charger, Hornet
+- RAM: ProMaster, 1500, 2500, 3500
+- FIAT: 500e
+
+=== JSON REQUIS ===
+{{
+    "vehicles_2026": [
+        {{
+            "model": "Grand Caravan SXT",
+            "brand": "Chrysler",
+            "lease_cash": 0,
+            "standard_rates": null,
+            "alternative_rates": {{"24": 4.99, "27": 4.99, "36": 5.49, "39": 5.49, "42": 5.49, "48": 6.49, "51": 6.49, "54": 6.49, "60": 6.99}}
+        }}
+    ],
+    "vehicles_2025": []
+}}
+
+EXTRAIS ABSOLUMENT TOUS LES VÉHICULES. JSON valide uniquement."""
+
+                        lease_response = client.chat.completions.create(
+                            model="gpt-4o",
+                            messages=[
+                                {"role": "system", "content": "Tu extrais les taux de location SCI Lease d'un PDF FCA Canada. JSON valide uniquement."},
+                                {"role": "user", "content": lease_extraction_prompt}
+                            ],
+                            temperature=0.1,
+                            max_tokens=16000,
+                            response_format={"type": "json_object"}
+                        )
+                        lease_response_text = lease_response.choices[0].message.content.strip()
+                        if lease_response_text.startswith("```"):
+                            lines_l = lease_response_text.split("\n")
+                            lease_response_text = "\n".join(lines_l[1:-1] if lines_l[-1] == "```" else lines_l[1:])
+                        if lease_response_text.endswith("```"):
+                            lease_response_text = lease_response_text[:-3].strip()
+                        lease_response_text = lease_response_text.replace('\n', ' ').replace('\r', '')
+                        lease_response_text = re.sub(r',\s*}', '}', lease_response_text)
+                        lease_response_text = re.sub(r',\s*]', ']', lease_response_text)
+                        lease_data = json.loads(lease_response_text)
+
+                        vehicles_2026 = lease_data.get("vehicles_2026", [])
+                        vehicles_2025 = lease_data.get("vehicles_2025", [])
+                        sci_lease_count = len(vehicles_2026) + len(vehicles_2025)
+
+                        if sci_lease_count > 0:
+                            month_names_local = ["", "Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
+                                               "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"]
+                            en_month_abbrev = ["", "jan", "feb", "mar", "apr", "may", "jun",
+                                              "jul", "aug", "sep", "oct", "nov", "dec"]
+                            sci_lease_rates = {
+                                "program_period": f"{month_names_local[program_month]} {program_year}",
+                                "source": "FCA Canada QBC Retail Lease Incentive Program",
+                                "terms": [24, 27, 36, 39, 42, 48, 51, 54, 60],
+                                "vehicles_2026": vehicles_2026,
+                                "vehicles_2025": vehicles_2025
+                            }
+                            sci_filename = f"sci_lease_rates_{en_month_abbrev[program_month]}{program_year}.json"
+                            sci_path = ROOT_DIR / "data" / sci_filename
+                            with open(sci_path, 'w', encoding='utf-8') as f:
+                                json.dump(sci_lease_rates, f, indent=2, ensure_ascii=False)
+                            logger.info(f"[Async] SCI Lease saved: {sci_path} ({sci_lease_count} vehicles)")
+                except Exception as lease_error:
+                    logger.error(f"[Async] SCI Lease error: {str(lease_error)}")
+
+            # Mark task as complete
+            lease_msg = f" + {sci_lease_count} taux SCI Lease" if sci_lease_count > 0 else ""
+            email_msg = " - Excel envoyé par email!" if excel_sent else ""
+            await db.extract_tasks.update_one(
+                {"task_id": task_id},
+                {"$set": {
+                    "status": "complete",
+                    "message": f"Extrait et sauvegardé {len(valid_programs)} programmes{lease_msg}{email_msg}",
+                    "programs": valid_programs,
+                    "sci_lease_count": sci_lease_count,
+                    "completed_at": datetime.utcnow().isoformat()
+                }}
+            )
+        finally:
+            os_module.unlink(tmp_path)
+
+    except Exception as e:
+        logger.error(f"[Async] Task {task_id} failed: {str(e)}")
+        await db.extract_tasks.update_one(
+            {"task_id": task_id},
+            {"$set": {"status": "error", "message": f"Erreur: {str(e)}"}}
+        )
+
+
+@router.post("/extract-pdf-async")
+async def extract_pdf_async(
+    file: UploadFile = File(...),
+    password: str = Form(...),
+    program_month: int = Form(...),
+    program_year: int = Form(...),
+    start_page: int = Form(1),
+    end_page: int = Form(9999),
+    lease_start_page: Optional[int] = Form(None),
+    lease_end_page: Optional[int] = Form(None)
+):
+    """Upload PDF and start extraction in background. Returns task_id for polling."""
+    if password != ADMIN_PASSWORD:
+        raise HTTPException(status_code=401, detail="Mot de passe incorrect")
+    if not OPENAI_API_KEY:
+        raise HTTPException(status_code=500, detail="Clé OpenAI non configurée")
+
+    pdf_content = await file.read()
+    task_id = str(uuid.uuid4())
+
+    await db.extract_tasks.insert_one({
+        "task_id": task_id,
+        "status": "queued",
+        "message": "En file d'attente...",
+        "programs": [],
+        "sci_lease_count": 0,
+        "created_at": datetime.utcnow().isoformat()
+    })
+
+    asyncio.create_task(_run_extraction_task(
+        task_id, pdf_content, password,
+        program_month, program_year,
+        start_page, end_page,
+        lease_start_page, lease_end_page
+    ))
+
+    return {"task_id": task_id, "status": "queued", "message": "Extraction démarrée en arrière-plan"}
+
+
+@router.get("/extract-task/{task_id}")
+async def get_extract_task(task_id: str):
+    """Poll extraction task status."""
+    task = await db.extract_tasks.find_one({"task_id": task_id}, {"_id": 0})
+    if not task:
+        raise HTTPException(status_code=404, detail="Tâche non trouvée")
+    return task
+
 
 # ============ Residual Guide PDF Upload ============
 
