@@ -1,157 +1,158 @@
 <analysis>**original_problem_statement:**
-The user's primary goal is to establish a robust and reliable workflow for managing vehicle financing and lease programs. This involves:
-1.  **Correcting Rebate Data:** The application was displaying incorrect rebate information (e.g., Delivery Credits that shouldn't exist, inverted Consumer Cash amounts). The user wants all program data to be accurate.
-2.  **Excel-based Data Management:** The user wants a system to export all financing and lease programs to Excel files, correct them manually, and re-import the corrected file as the single source of truth. This workflow must be reliable across different environments (preview and production).
-3.  **Data Consistency:** After any data-modifying import (programs, lease rates, inventory), all users must be forced to log back in to ensure they are working with the latest, non-cached data.
-4.  **UI/UX Improvements:** The user requested UI improvements for the Excel workflow, such as freezing header rows/columns in the exported files for easier navigation.
+The user's primary goals are to enhance their CRM and data management workflow for their car dealership application.
+1.  **Enhance Offer Management:** The user wants a detailed view for each Offer in the CRM. When an offer is clicked, it should open a modal showing a full comparison between the original deal and a new deal based on current programs. This view must include details like trade-in value, balance due, and the final savings for the customer. This is to allow for detailed verification before sending a new offer.
+2.  **Fix History Tab:** The History tab currently shows an error (données complètes non disponibles) when trying to open a past calculation. This needs to be fixed so that past deals can be reviewed.
+3.  **Standardize Data Extraction:** The user wants to ensure that the structure of the Excel file generated from PDF uploads is permanently fixed and consistent every month. The AI extraction process must not alter the column structure (A-D for vehicle info, E/L/S for rebates) or the 3-line header.
+4.  **Complete Data in Excel Export:** The exported Excel file should contain *all* extracted data, including both sales programs and SCI Lease rates, each in a separate tab.
 
 **PRODUCT REQUIREMENTS:**
-*   **(P0) Fix Excel Import:** The import process reports 0 modifications in production because it incorrectly uses a database  for matching, which is not consistent across environments. This needs to be fixed to use a stable composite key (Make, Model, Trim, Year).
-*   **(P0) Force Logout on Import:** Implement a mechanism to invalidate all user sessions after a data import to force a refresh. (Completed, needs verification).
-*   **(P0) Full Excel Workflow for Programs & Lease:** Create a complete export/import cycle for both financing programs and SCI Lease rates, accessible from the UI. (Completed, but import is bugged).
-*   **(P1) Data Correction & Duplication Removal:** Cleanse the database of incorrect rebates and duplicate entries. (Completed, with a migration script).
-*   **(P1) UI for Import Workflow:** The main Import page should guide the user through the full PDF -> Excel -> Correct -> Upload flow. (Completed).
+*   **(P0) Implement Offer Detail View & Recalculation:** Create a workflow where clicking an offer in the CRM opens a detailed modal. This modal must recalculate the offer using new programs and display a clear comparison of the old vs. new deal, including trade-in, balance, and savings.
+*   **(P0) Fix Open Calculation in History:** Resolve the bug that prevents viewing past calculations from the history tab by ensuring all necessary data is saved and retrieved.
+*   **(P1) Stabilize Excel Export Structure:** Lock the AI prompt and generation logic to produce a consistent, standardized Excel file format every time, with frozen panes as specified.
+*   **(P1) Include SCI Lease Data in Excel Export:** Ensure the automated email sent after PDF extraction contains an Excel file with two tabs: one for Programs and one for SCI Lease.
 
 **User's preferred language**: French. The next agent MUST respond in French.
 
 **what currently exists?**
-The application now has a sophisticated data management system. An **Architecture and Deployment Guide** () was created. A major data cleanup was performed, removing incorrect Delivery Credits, fixing inverted rebate values, and deleting duplicate vehicle programs via a **migration script** that runs on backend startup to ensure consistency even in production.
+The application's data pipeline has been significantly overhauled. The PDF extraction process is now an asynchronous background job to prevent Vercel timeouts, with the frontend polling for real-time status updates. The critical bug preventing email delivery of the extracted Excel file has been fixed. The AI prompt for data extraction has been standardized into a single, robust function to ensure a consistent output structure, and the Excel generation now correctly includes two tabs (Programs and SCI Lease) with frozen panes as requested. The Excel import parser has also been rewritten to handle this new, complex format and can now create new vehicle programs, not just update existing ones.
 
-A complete **Excel Import/Export workflow** has been implemented for both financing programs and SCI lease rates. The UI on the  and  pages supports this flow. When an import occurs, a **force-logout mechanism** invalidates all active user sessions, compelling them to log back in and fetch fresh data. The exported Excel files have also been improved with **frozen panes** for better usability.
+The previous P0 issue, a recurring UI bug with the Send Email modal being too tall, has been definitively resolved using a more robust layout strategy.
 
-However, the core import functionality is currently broken.
+The current focus is on a major feature enhancement for the CRM. The agent has identified that the core issue behind the non-functional Offers and History tabs is that past submissions were not saving the complete  (trade-in, balance, accessories, etc.). While new submissions now save this data correctly, the UI and backend logic to utilize it for detailed offer comparison are still under construction.
 
 **Last working item**:
-*   **Last item agent was working:** The user reported that importing a corrected Excel file resulted in 0 modifications, meaning their changes were not being saved. The agent correctly diagnosed that the import logic was matching records by their unique database , which differs between the preview and production environments. The agent began implementing a fix to use a stable composite key (, , , ) instead.
+*   **Last item agent was working:** Implementing a comprehensive Offer Management System in the CRM (). The goal is to allow the user to click on an offer, view a detailed modal comparing the old deal with a new one based on current financing programs, and see the potential savings before sending an updated quote. This involves fixing data persistence and building new UI components.
 *   **Status:** IN PROGRESS
 *   **Agent Testing Done:** N
-*   **Which testing method agent to use?** backend testing agent. The agent should write a test to export programs, modify the file, re-import it, and assert that the database record was updated and the API response confirms the update count. This test should be performed for both the programs and SCI lease imports.
+*   **Which testing method agent to use?** Frontend testing agent. This is a complex user flow that involves state management, modal interactions, and API calls to a modified backend endpoint. The agent should be instructed to test the full journey: login -> navigate to CRM -> select a client -> view offers -> click an offer -> verify the detail modal appears with correct comparison data (original vs. new program) -> close the modal.
 *   **User Testing Done:** N
 
 **All Pending/In progress Issue list**:
-*   **Issue 1: Excel Import Reports 0 Modifications in Production (P0)**
-    *   **Description:** When the user imports a corrected Excel file, the system fails to find the corresponding programs to update because it's matching by , which is not portable across environments.
-    *   **Attempted fixes:** The agent started modifying  to use a  dictionary containing , , , and  to find the correct document to update.
+*   **Issue 1: Open Calculation in History Tab is Broken (P0)**
+    *   **Description:** When the user clicks Ouvrir le calcul on a submission in the Historique tab, it fails with a données complètes non disponibles error.
+    *   **Attempted fixes:** The agent identified the root cause: past submissions in the MongoDB  collection have  because the full calculator state was not being saved.
     *   **Next debug checklist:**
-        1.  Verify the implementation of the composite key matching in .
-        2.  **Crucially, apply the exact same fix to  for the SCI Lease import function**, which suffers from the same problem.
-        3.  Test the fix for **both** program and SCI lease imports. The test should involve exporting data, modifying it, and re-importing to confirm the changes are saved and the API reports the correct number of updated documents.
-        4.  Confirm the  memory feature also uses this new composite key logic.
-    *   **Why fix this issue and what will be achieved with the fix?** This fix is critical. It will make the entire Excel-based data correction workflow functional and reliable, which is the user's primary requirement.
+        1.  The fix for this is directly tied to the In progress Task. As part of saving the full  for all *new* submissions, the logic for retrieving and re-hydrating the calculator from this state needs to be implemented.
+        2.  When a user clicks Ouvrir le calcul, the app should fetch the  object, check if  exists, and if so, use its contents to populate the main calculator view ().
+    *   **Why fix this issue and what will be achieved with the fix?** This is a core feature for the user to review and resume work on past deals. Fixing it restores essential CRM functionality.
     *   **Status:** IN PROGRESS
     *   **Is recurring issue?** N
-    *   **Should Test frontend/backend/both after fix?** backend
-    *   **Blocked on other issue:** None
+    *   **Should Test frontend/backend/both after fix?** Frontend
+    *   **Blocked on other issue:** This is part of the main In progress Task List item.
 
 **In progress Task List**:
-*   None.
+*   **Task 1: Implement Full-Fledged Offer Management System (P0)**
+    *   **Description:** The user requested a 3-step implementation to make the CRM Offers tab useful.
+        1.  **Fix Data Saving:** Ensure the full calculator state is saved with every submission. (Agent verified this now works for *new* submissions).
+        2.  **Enrich Offer Generation:** Enhance the  endpoint to accept a full  object (with ) and return a detailed comparison against new programs. (Agent started modifications in ).
+        3.  **Create Offer Detail UI:** Build a modal in  that appears when an offer is clicked, showing the detailed comparison. (Agent started this implementation, adding state and ).
+    *   **Where to resume:** Continue the implementation in . The agent had added the  state and was in the process of wrapping the offer cards in  and adding the  component to the render tree. The next step is to fully build out the 's JSX and styling, and ensure it's correctly populated with data from the  state.
+    *   **What will be achieved with this?** The user will be able to efficiently review, compare, and send updated offers to clients, which is a critical business workflow.
+    *   **Status:** IN PROGRESS
+    *   **Should Test frontend/backend/both after fix?** Both
+    *   **Blocked on something:** None
 
 **Upcoming and Future Tasks**
+*   **Upcoming Tasks:**
+    *   **(P1) Create UI for Correction Management:** Implement a frontend interface in the admin panel to interact with the existing backend APIs () for viewing and deleting saved program corrections.
 *   **Future Tasks:**
-    *   **(P1) Enhance Correction Memory:** The  collection was created to memorize manual fixes. This system could be enhanced to be more robustly applied during future PDF imports, potentially suggesting corrections automatically.
-    *   **(P2) Refactor :** This file is still over 3,000 lines and needs to be broken into smaller components and custom hooks.
-    *   **(P2) Refactor :** This large file should also be broken down into smaller components.
+    *   **(P2) Refactor :** This file remains very large and would benefit from being broken down into smaller, more focused components.
+    *   **(P2) Refactor :** This file should also be decomposed into smaller components.
+    *   **(P2) Refactor :** This file is growing in complexity with the addition of the offer detail modal and should be considered for refactoring.
 
 **Completed work in this session**
-- **Full Excel Import/Export Workflow (DONE):** Created backend endpoints and a complete frontend UI for exporting/importing both financing programs and SCI Lease rates.
-- **Data Integrity Migration Script (DONE):** Implemented a script in  that runs on startup to correct rebate data and remove duplicates, ensuring the production database is automatically fixed upon deployment.
-- **Force Logout on Import (DONE):** A system now invalidates all user tokens after a data import, forcing a re-login to load fresh data.
-- **Import Workflow UI (DONE):** The  page now has a 5-step process guiding the user from PDF upload to final Excel correction.
-- **Duplicate Program Deletion (DONE):** Identified and removed dozens of duplicate vehicle programs from the database.
-- **New Data Field (DONE):** Added an Alternative Consumer Cash field () for Option 2 rebates throughout the backend and Excel workflow.
-- **Excel UX Improvement (DONE):** Added freeze panes to the exported Excel files to keep headers and key columns visible during scrolling.
-- **Lease Calculation Fixes (DONE):** Corrected bugs related to weekly payment calculations in the print view and main UI.
-- **Print View Back Button (DONE):** Added a button to exit the print view.
-- **Architecture Documentation (DONE):** Created .
+- **Send Email Modal Layout Bug (RESOLVED):** The recurring P0 bug where the modal buttons were off-screen was fixed by rebuilding the frontend and implementing a robust layout using inline styles and the  API.
+- **PDF Extraction & Email Workflow (OVERHAULED):**
+    - **Asynchronous Processing:** Re-architected PDF extraction into a background job () with frontend polling to prevent Vercel timeouts.
+    - **Email Bug Fix:** Corrected a  that silently prevented emails from being sent by adding missing SMTP variable imports in .
+    - **Excel Parser Rewrite:** The Excel import parser () was completely overhauled to support a new format with multiple headers and formatted values. It can now also create new programs from the Excel file.
+    - **Standardized AI & Excel Format:** The AI extraction prompt and Excel generation logic were centralized and hardened to produce a consistent, two-tab ( and ) Excel file with the correct frozen panes, ensuring data structure stability.
 
 **Earlier issues found/mentioned but not fixed**
 *   None.
 
 **Known issue recurrence from previous fork**
-*   None.
+*   **Send Email Modal Layout Bug:** This issue recurred from the previous fork but was definitively resolved in this session.
+*   **Recurrence count:** 1
+*   **Status:** RESOLVED
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
-*   **Data Migration on Startup:** Running a data cleansing and correction script from  to ensure data integrity across environments (preview/production) on every deployment.
-*   **Composite Key for Data Matching:** Using a combination of business-logic fields (, , , ) instead of a non-portable database  to reliably update records.
-*   **JWT Session Invalidation (Force Logout):** Invalidating all user sessions by updating a secret value, forcing a re-login upon receiving a 401 error.
-*   **Excel Manipulation (openpyxl):** Programmatically creating and styling  files, including freezing header rows and columns.
+*   **Asynchronous Task Processing:** Using  for long-running background jobs (PDF extraction) to avoid HTTP timeouts, coupled with frontend polling to display progress.
+*   **Robust Data Parsing:** Advanced  usage to parse complex Excel files with multiple header rows and formatted data strings (, , ).
+*   **AI Prompt Engineering:** Centralizing an AI prompt into a single reusable function () to enforce a strict, stable JSON output structure.
+*   **Data-Driven UI Development:** Building a new feature () that depends on enriching existing data models ( with ) and API endpoints ().
+*   **React Native Layout:** Using the  API and inline styles as a robust solution for creating responsive modal layouts when standard  approaches fail.
 
 **key DB schema**
-*   ** collection:**
-    *   , , , : string/number (now used as composite key)
-    *   : number
-    *   : number
-    *   : number (NEW)
-*   ** collection (NEW):**
-    *   Stores manual overrides from Excel imports to be referenced by future PDF imports.
-*   ** collection:**
-    *   Stores lease rate data.
+*   ** collection:** The schema includes a  field. The current task revolves around ensuring this field is always populated with a dictionary containing the full calculator state (trade-in, balance, accessories, etc.) upon submission, and then using this data to power the History and Offers tabs.
+*   ** (in-memory dict):** A new, non-persistent in-memory dictionary was introduced on the backend to track the status of asynchronous extraction tasks.
 
 **All files of reference**
-*   : Contains the program import/export logic. The  function is partially fixed.
-*   : Contains the SCI lease import/export logic. **Needs the same fix as **.
-*   : Runs the one-time data migration logic on startup.
-*   : The main UI for the admin panel, including the new Excel management tab.
-*   : The new 5-step user workflow for importing programs.
+*   : **Primary file for the current task.** Contains the UI for the Offers tab and is where the new detail modal is being implemented.
+*   : **Primary backend file for the current task.** Contains the  endpoint that needs to be finalized.
+*   : Defines the Pydantic models, including , which is central to the current task.
+*   : Contains the main calculator, which is the source of the  data that needs to be saved and restored.
+*   : Contains the now-stable async extraction, email, and Excel generation logic.
 
 **Areas that need refactoring**:
-*   : Remains extremely large and complex.
-*   : Also a candidate for being split into smaller components.
+*   : Remains a very large monolithic component.
+*   : Also a candidate for being broken down.
+*   : The addition of the offer detail modal and its logic is increasing its complexity, making it a future candidate for refactoring.
 
 **key api endpoints**
-*   : **(BUGGED)** Imports corrected program data. Needs fix to use composite key.
-*   : Exports all programs to an Excel file.
-*   : **(BUGGED)** Imports corrected SCI lease data. Needs fix to use composite key.
-*   : Exports all SCI lease rates to an Excel file.
-*   : Invalidates all user tokens.
+*   : **(IN PROGRESS)** Being modified to accept a full submission object and return detailed comparison data for the new Offer Detail modal.
+*   : **(WORKING)** The endpoint that saves submissions. It now correctly receives and stores the full  for new submissions.
+*   : **(NEW & COMPLETED)** Asynchronous endpoint for PDF extraction.
+*   : **(NEW & COMPLETED)** Endpoint for polling the status of a background extraction task.
+*   : **(ENHANCED & COMPLETED)** The completely rewritten Excel import endpoint.
 
 **Critical Info for New Agent**
-1.  **Parlez Français:** All user communication must be in French.
-2.  **Priority #1: Fix the Excel Import.** The user's entire workflow depends on being able to import corrected Excel files. The fix involves replacing -based matching with a composite key (, , , ).
-3.  **Apply Fix to Both Imports:** The composite key fix must be applied to **both**  and . Forgetting the second one will lead to a user complaint.
-4.  **Data Migration is Done:** The one-time data correction script in  has already run and fixed the major data issues (rebates, duplicates). You can focus solely on the import logic.
+1.  **Parlez Français:** All user communication MUST be in French.
+2.  **Focus on the CRM Feature:** The sole priority is to complete the 3-step offer management feature requested by the user. This is a large task involving both frontend () and backend ().
+3.  **Resume in :** The implementation was paused while building the UI for the . Pick up from there. You need to build the modal view and ensure it correctly displays the comparison data returned from the enhanced  endpoint.
+4.  **Data is Key:** The entire feature hinges on correctly saving, retrieving, and using the  JSON object within the  collection. Old submissions lack this data, but all new ones should have it. The feature should gracefully handle both cases (e.g., show fewer details for older offers).
 
 **documents and test reports created in this job**
-*   
-*   
-*   
+*    (Updated)
 
 **Last 10 User Messages and any pending HUMAN messages**
-1.  **user:** Reports the Excel import shows 0 modifications even after making changes. **(PENDING - This is the current P0 issue)**
-2.  **user:** Asks for the Excel export to have frozen panes (fixed columns/rows). (Completed)
-3.  **user:** Asks for a force-logout mechanism after imports and an Excel workflow for lease rates. (Completed)
-4.  **user:** Points out that the import page workflow is incomplete; it needs a final step to upload the corrected Excel. (Completed)
-5.  **user:** Identifies duplicate vehicle programs and asks for an Alternative Cash Rebate column. (Completed)
-6.  **user:** Sent an email with the corrected Excel file. (Acknowledged)
-7.  **user:** States that all 2025 rebates are wrong and that Delivery Credits should be ignored. (Completed via migration script)
-8.  **user:** Asks to push the code to GitHub so it reflects on the production URL. (Agent advised user how to do it)
-9.  **user:** Reports that weekly lease calculations are wrong in the print view and there's no back button. (Completed)
-10. **user:** Asks for the complete application structure. (Completed, provided in chat and )
+1.  **user:** fais les trois étapes (Do the three steps) - User explicitly approved the agent's 3-step plan to fix the CRM. **(This is the current task)**
+2.  **agent:** Explained that no past submissions have the full data () and laid out the 3-step plan: 1. Fix saving, 2. Enrich offers, 3. Create detail view.
+3.  **user:** as tu stocker sur mongo pour les comparer dans le future dit moi (have you stored in mongo to compare them in the future tell me) - Asked if the full data is being saved for future comparisons.
+4.  **user:** et dans historique ca doisoas faire ca (and in history it should do that) - Pointed out the error in the History tab with a screenshot.
+5.  **user:** Described the desired workflow for the Offers tab: click an offer -> see details -> compare with new programs -> see savings -> send.
+6.  **user:** Sent email about SCI Lease rates not being included in the automated Excel email. (Completed)
+7.  **user:** Demanded that the AI-driven Excel structure be fixed and standardized permanently. (Completed)
+8.  **user:** Reported that the Excel import was crashing when uploading a corrected file. (Completed)
+9.  **user:** Requested that the frozen panes in the generated Excel file be set to . (Completed)
+10. **user:** je veux pas une solution rapide je veux que ça marche (I don't want a quick fix, I want it to work) - Rejected the agent's suggestion of a workaround for Vercel timeouts, demanding a permanent solution. (Completed, led to async implementation).
 
 **Project Health Check:**
-*   **Broken:** The Excel import functionality ( and ) is non-functional in a multi-environment setup.
+*   **Broken:**
+    *   The CRM's Offers tab lacks a detail view, making it difficult to use.
+    *   The CRM's History tab's Open Calculation feature is non-functional due to missing historical data.
 *   **Mocked:** None
 
 **3rd Party Integrations**
-*   **openpyxl:** (New) Used for creating and styling Excel files in the backend.
-*   **html2canvas:** Used for generating quote screenshots for sharing.
-*   **Google Cloud Vision:** Used for OCR on scanned invoices.
-*   **OpenAI GPT-4o:** Used for structuring text extracted from invoices.
-*   **PyMuPDF (fitz):** Python library for PDF parsing.
-*   **react-beautiful-dnd:** Used for the drag-and-drop admin interface.
+*   **openpyxl:** Used for creating and parsing complex Excel files.
+*   **html2canvas:** Used for generating quote screenshots.
+*   **Google Cloud Vision:** Used for OCR on scanned documents.
+*   **OpenAI GPT-4o:** Used for structuring extracted text. The prompt is now standardized.
+*   **PyMuPDF (fitz):** Used for PDF parsing.
+*   **react-beautiful-dnd:** Used for drag-and-drop UI.
 
 **Testing status**
-*   **Testing agent used after significant changes:** NO (for the latest fixes)
+*   **Testing agent used after significant changes:** NO (for the current in-progress CRM feature).
 *   **Troubleshoot agent used after agent stuck in loop:** NO
-*   **Test files created:** None.
-*   **Known regressions:** The core Excel import feature is not working as intended.
+*   **Test files created:** None
+*   **Known regressions:** None in this session.
 
 **Credentials to test flow:**
 *   **User Login:**  / 
 *   **Admin Password (for saving in admin panel):** 
 
 **What agent forgot to execute**
-*   While the agent correctly identified the need to use a composite key to fix the program import (), they did not apply the same crucial fix to the SCI Lease import (). The next agent must address this omission to prevent the same bug from appearing in the lease import workflow.</analysis>
+*   Nothing was forgotten. The agent was in the middle of a large, user-directed feature implementation when the session ended.</analysis>

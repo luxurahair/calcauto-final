@@ -10,7 +10,7 @@ import sys
 from datetime import datetime
 
 # Backend URL from frontend/.env
-BACKEND_URL = "https://batch-pdf-upload.preview.emergentagent.com/api"
+BACKEND_URL = "https://deal-detail-modal.preview.emergentagent.com/api"
 
 class UserIsolationTester:
     def __init__(self):

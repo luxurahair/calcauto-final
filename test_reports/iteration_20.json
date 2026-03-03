@@ -30,7 +30,7 @@
   },
   "test_credentials": {
     "admin_password": "Liana2018",
-    "base_url": "https://batch-pdf-upload.preview.emergentagent.com"
+    "base_url": "https://deal-detail-modal.preview.emergentagent.com"
   },
   "seed_data_creation": "Test data created and restored during tests (no persistent changes)",
   "retest_needed": false,

@@ -70,7 +70,7 @@ index 2e37c60..e69de29 100644
 --+import requests
 --+import json
 --+
---+BACKEND_URL = "https://batch-pdf-upload.preview.emergentagent.com/api"
+--+BACKEND_URL = "https://deal-detail-modal.preview.emergentagent.com/api"
 --+
 --+def investigate_contacts():
 --+    # Login first
@@ -793,7 +793,7 @@ index 2e37c60..e69de29 100644
 ------+
 ------+**Testing Agent**: Testing Sub-Agent  
 ------+**Test Date**: 2026-02-17  
-------+**Backend URL**: https://batch-pdf-upload.preview.emergentagent.com/api  
+------+**Backend URL**: https://deal-detail-modal.preview.emergentagent.com/api  
 ------+**Test Focus**: CRM submission management endpoints
 ------+
 ------+#### ✅ CRM Health Check
@@ -920,7 +920,7 @@ index 2e37c60..e69de29 100644
 -----+
 -----+**Testing Agent**: Testing Sub-Agent  
 -----+**Test Date**: 2026-02-17  
------+**Backend URL**: https://batch-pdf-upload.preview.emergentagent.com/api  
+-----+**Backend URL**: https://deal-detail-modal.preview.emergentagent.com/api  
 -----+**Test Focus**: Better Offers system - comparing old submissions with new programs to find savings
 -----+
 -----+#### ✅ Better Offers Health Check
@@ -1139,7 +1139,7 @@ index 2e37c60..e69de29 100644
 --+import uuid
 --+from datetime import datetime
 --+
---+BACKEND_URL = "https://batch-pdf-upload.preview.emergentagent.com/api"
+--+BACKEND_URL = "https://deal-detail-modal.preview.emergentagent.com/api"
 --+
 --+def test_multi_user_isolation():
 --+    print("🔒 MULTI-USER DATA ISOLATION TEST")
@@ -1294,7 +1294,7 @@ index 2e37c60..e69de29 100644
 --+
 --+**Testing Agent**: Testing Sub-Agent  
 --+**Test Date**: 2026-02-19  
---+**Backend URL**: https://batch-pdf-upload.preview.emergentagent.com/api  
+--+**Backend URL**: https://deal-detail-modal.preview.emergentagent.com/api  
 --+**Test Focus**: User data isolation per review request - ensuring each user only sees their own contacts, submissions and offers  
 --+
 --+#### ✅ Authentication System
@@ -1404,7 +1404,7 @@ index 2e37c60..e69de29 100644
 --+from datetime import datetime
 --+
 --+# Backend URL from frontend/.env
---+BACKEND_URL = "https://batch-pdf-upload.preview.emergentagent.com/api"
+--+BACKEND_URL = "https://deal-detail-modal.preview.emergentagent.com/api"
 --+
 --+class UserIsolationTester:
 --+    def __init__(self):

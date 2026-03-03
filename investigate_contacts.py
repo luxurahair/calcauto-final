@@ -6,7 +6,7 @@ Detailed investigation of contact data isolation issue
 import requests
 import json
 
-BACKEND_URL = "https://batch-pdf-upload.preview.emergentagent.com/api"
+BACKEND_URL = "https://deal-detail-modal.preview.emergentagent.com/api"
 
 def investigate_contacts():
     # Login first

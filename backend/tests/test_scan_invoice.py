@@ -10,7 +10,7 @@ import os
 import base64
 
 # Use the public URL from environment
-BASE_URL = os.environ.get('EXPO_PUBLIC_BACKEND_URL', os.environ.get('REACT_APP_BACKEND_URL', 'https://batch-pdf-upload.preview.emergentagent.com')).rstrip('/')
+BASE_URL = os.environ.get('EXPO_PUBLIC_BACKEND_URL', os.environ.get('REACT_APP_BACKEND_URL', 'https://deal-detail-modal.preview.emergentagent.com')).rstrip('/')
 
 # Test credentials
 TEST_EMAIL = "danielgiroux007@gmail.com"

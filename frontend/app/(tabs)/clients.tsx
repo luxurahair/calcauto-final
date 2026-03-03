@@ -12,6 +12,7 @@ import {
   Modal,
   Linking,
   RefreshControl,
+  Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -68,19 +69,46 @@ interface ImportedContact {
   email: string;
 }
 
+interface PaymentByTerm {
+  opt1_rate: number;
+  opt1_payment: number;
+  opt2_rate: number | null;
+  opt2_payment: number | null;
+}
+
 interface BetterOffer {
   submission_id: string;
   client_name: string;
   client_phone: string;
   client_email: string;
   vehicle: string;
+  vehicle_brand: string;
+  vehicle_model: string;
+  vehicle_year: number;
+  vehicle_price: number;
   old_payment: number;
   new_payment: number;
+  old_rate: number;
+  new_rate: number;
+  old_consumer_cash: number;
+  new_consumer_cash: number;
   savings_monthly: number;
   savings_total: number;
   term: number;
+  old_program: string;
+  new_program: string;
+  old_selected_option?: string;
   approved: boolean;
   email_sent: boolean;
+  calculator_state: any;
+  new_program_data: {
+    consumer_cash: number;
+    bonus_cash: number;
+    alt_consumer_cash: number;
+    option1_rates: any;
+    option2_rates: any;
+  };
+  payments_by_term?: Record<string, PaymentByTerm>;
 }
 
 const crmTranslations = {
@@ -244,6 +272,7 @@ export default function ClientsScreen() {
   const [betterOffers, setBetterOffers] = useState<BetterOffer[]>([]);
   const [checkingOffers, setCheckingOffers] = useState(false);
   const [approvingOffer, setApprovingOffer] = useState<string | null>(null);
+  const [selectedOffer, setSelectedOffer] = useState<BetterOffer | null>(null);
   
   // Import contacts modal
   const [showImportModal, setShowImportModal] = useState(false);
@@ -1028,7 +1057,7 @@ export default function ClientsScreen() {
         </View>
       ) : (
         betterOffers.map((offer, index) => (
-          <View key={index} style={styles.offerCard}>
+          <TouchableOpacity key={index} style={styles.offerCard} onPress={() => setSelectedOffer(offer)} activeOpacity={0.7}>
             <View style={styles.offerHeader}>
               <Text style={styles.offerClient}>{offer.client_name}</Text>
               {offer.email_sent && (
@@ -1093,22 +1122,307 @@ export default function ClientsScreen() {
                 </TouchableOpacity>
               </View>
             )}
-          </View>
+          </TouchableOpacity>
         ))
       )}
       <View style={{ height: 100 }} />
     </ScrollView>
   );
 
+  // Offer detail modal
+  const renderOfferDetailModal = () => {
+    if (!selectedOffer) return null;
+    const o = selectedOffer;
+    const cs = (o.calculator_state && typeof o.calculator_state === 'object') ? o.calculator_state : {};
+    const prixEchange = parseFloat(cs.prixEchange || '0');
+    const balanceDue = parseFloat(cs.montantDuEchange || '0');
+    const comptant = parseFloat(cs.comptantTxInclus || '0');
+    const equite = prixEchange - balanceDue;
+    const fraisDossier = parseFloat(cs.fraisDossier || '0');
+    const fmtCur = (n: number) => `$${Math.abs(n).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}`;
+    const npd = o.new_program_data || {};
+    const pbt = o.payments_by_term || {};
+    const allTerms = [36, 48, 60, 72, 84, 96];
+    const hasOpt2 = npd.option2_rates != null;
+    const clientTerm = o.term;
+    const isFr = lang === 'fr';
+    
+    return (
+      <Modal visible={!!selectedOffer} transparent animationType="fade" onRequestClose={() => setSelectedOffer(null)}>
+        <View style={{flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'center', alignItems: 'center', padding: 12}}>
+          <View style={{
+            backgroundColor: '#1a1a2e', borderRadius: 16, width: '100%', maxWidth: 500,
+            maxHeight: Math.round(Dimensions.get('window').height * 0.9), flexDirection: 'column' as const, overflow: 'hidden' as const,
+          }}>
+            {/* Header */}
+            <View style={{flexDirection: 'row' as const, alignItems: 'center' as const, padding: 14, borderBottomWidth: 1, borderBottomColor: '#2d2d44'}}>
+              <Ionicons name="pricetag" size={22} color="#4ECDC4" style={{marginRight: 10}} />
+              <View style={{flex: 1}}>
+                <Text style={{color: '#fff', fontSize: 16, fontWeight: 'bold'}}>{o.client_name}</Text>
+                <Text style={{color: '#888', fontSize: 13}}>{o.vehicle_brand} {o.vehicle_model} {o.vehicle_year} | {fmtCur(o.vehicle_price)}</Text>
+              </View>
+              <TouchableOpacity onPress={() => setSelectedOffer(null)} style={{padding: 4}} data-testid="close-offer-modal">
+                <Ionicons name="close" size={22} color="#888" />
+              </TouchableOpacity>
+            </View>
+            
+            <ScrollView style={{flex: 1}} showsVerticalScrollIndicator={true} bounces={false}>
+              <View style={{padding: 14}}>
+
+                {/* Old deal summary */}
+                <View style={{backgroundColor: '#2d2d44', borderRadius: 10, padding: 12, marginBottom: 10}}>
+                  <Text style={{color: '#FF6B6B', fontSize: 12, fontWeight: 'bold', marginBottom: 6}}>
+                    {isFr ? 'ANCIEN DEAL' : 'OLD DEAL'} ({o.old_program})
+                  </Text>
+                  <View style={{flexDirection: 'row' as const, justifyContent: 'space-between' as const}}>
+                    <View>
+                      <Text style={{color: '#888', fontSize: 11}}>{isFr ? 'Paiement' : 'Payment'}</Text>
+                      <Text style={{color: '#FF6B6B', fontSize: 18, fontWeight: 'bold', textDecorationLine: 'line-through'}}>{fmtCur(o.old_payment)}/m</Text>
+                    </View>
+                    <View style={{alignItems: 'center' as const}}>
+                      <Text style={{color: '#888', fontSize: 11}}>{isFr ? 'Taux' : 'Rate'}</Text>
+                      <Text style={{color: '#FF6B6B', fontSize: 16, fontWeight: 'bold'}}>{o.old_rate}%</Text>
+                    </View>
+                    <View style={{alignItems: 'flex-end' as const}}>
+                      <Text style={{color: '#888', fontSize: 11}}>{isFr ? 'Terme' : 'Term'}</Text>
+                      <Text style={{color: '#ccc', fontSize: 16, fontWeight: 'bold'}}>{clientTerm}m</Text>
+                    </View>
+                  </View>
+                  {o.old_consumer_cash > 0 && (
+                    <Text style={{color: '#888', fontSize: 12, marginTop: 4}}>
+                      {isFr ? 'Rabais' : 'Rebate'}: {fmtCur(o.old_consumer_cash)}
+                    </Text>
+                  )}
+                  {(o.old_selected_option || '1') !== '1' && (
+                    <Text style={{color: '#888', fontSize: 12}}>Option {o.old_selected_option}</Text>
+                  )}
+                </View>
+
+                {/* Trade-in section */}
+                {(prixEchange > 0 || balanceDue > 0) && (
+                  <View style={{backgroundColor: '#2d2d44', borderRadius: 10, padding: 12, marginBottom: 10}}>
+                    <Text style={{color: '#FF9F43', fontSize: 12, fontWeight: 'bold', marginBottom: 6}}>
+                      {isFr ? 'ECHANGE' : 'TRADE-IN'}
+                    </Text>
+                    <View style={{flexDirection: 'row' as const, justifyContent: 'space-between' as const}}>
+                      <View>
+                        <Text style={{color: '#888', fontSize: 11}}>{isFr ? 'Valeur' : 'Value'}</Text>
+                        <Text style={{color: '#4ECDC4', fontSize: 16, fontWeight: 'bold'}}>{fmtCur(prixEchange)}</Text>
+                      </View>
+                      <View style={{alignItems: 'center' as const}}>
+                        <Text style={{color: '#888', fontSize: 11}}>{isFr ? 'Balance' : 'Balance'}</Text>
+                        <Text style={{color: '#FF6B6B', fontSize: 16, fontWeight: 'bold'}}>{fmtCur(balanceDue)}</Text>
+                      </View>
+                      <View style={{alignItems: 'flex-end' as const}}>
+                        <Text style={{color: '#888', fontSize: 11}}>{isFr ? 'Equite' : 'Equity'}</Text>
+                        <Text style={{color: equite >= 0 ? '#4ECDC4' : '#FF6B6B', fontSize: 16, fontWeight: 'bold'}}>
+                          {equite >= 0 ? '+' : '-'}{fmtCur(equite)}
+                        </Text>
+                      </View>
+                    </View>
+                  </View>
+                )}
+
+                {/* New program info */}
+                <View style={{backgroundColor: '#1e3a2e', borderRadius: 10, padding: 12, marginBottom: 10, borderWidth: 1, borderColor: '#4ECDC4'}}>
+                  <Text style={{color: '#4ECDC4', fontSize: 12, fontWeight: 'bold', marginBottom: 6}}>
+                    {isFr ? 'NOUVEAU PROGRAMME' : 'NEW PROGRAM'} ({o.new_program})
+                  </Text>
+                  <View style={{flexDirection: 'row' as const, flexWrap: 'wrap' as const, gap: 8}}>
+                    {npd.consumer_cash > 0 && (
+                      <View style={{backgroundColor: '#0d2a1e', borderRadius: 6, padding: 6, paddingHorizontal: 10}}>
+                        <Text style={{color: '#888', fontSize: 10}}>Opt.1 {isFr ? 'Rabais' : 'Rebate'}</Text>
+                        <Text style={{color: '#4ECDC4', fontSize: 14, fontWeight: 'bold'}}>{fmtCur(npd.consumer_cash)}</Text>
+                      </View>
+                    )}
+                    {hasOpt2 && npd.alt_consumer_cash > 0 && (
+                      <View style={{backgroundColor: '#0d2a1e', borderRadius: 6, padding: 6, paddingHorizontal: 10}}>
+                        <Text style={{color: '#888', fontSize: 10}}>Opt.2 {isFr ? 'Rabais' : 'Rebate'}</Text>
+                        <Text style={{color: '#4ECDC4', fontSize: 14, fontWeight: 'bold'}}>{fmtCur(npd.alt_consumer_cash)}</Text>
+                      </View>
+                    )}
+                    {npd.bonus_cash > 0 && (
+                      <View style={{backgroundColor: '#0d2a1e', borderRadius: 6, padding: 6, paddingHorizontal: 10}}>
+                        <Text style={{color: '#888', fontSize: 10}}>Bonus</Text>
+                        <Text style={{color: '#FFD93D', fontSize: 14, fontWeight: 'bold'}}>{fmtCur(npd.bonus_cash)}</Text>
+                      </View>
+                    )}
+                  </View>
+                </View>
+
+                {/* Payment comparison table for all terms */}
+                <View style={{backgroundColor: '#2d2d44', borderRadius: 10, overflow: 'hidden' as const, marginBottom: 10}}>
+                  <Text style={{color: '#FFD93D', fontSize: 12, fontWeight: 'bold', padding: 10, paddingBottom: 6}}>
+                    {isFr ? 'COMPARAISON PAIEMENTS MENSUELS' : 'MONTHLY PAYMENT COMPARISON'}
+                  </Text>
+                  {/* Table header */}
+                  <View style={{flexDirection: 'row' as const, backgroundColor: '#1a1a2e', paddingVertical: 6, paddingHorizontal: 10}}>
+                    <Text style={{color: '#888', fontSize: 10, width: 42, fontWeight: 'bold'}}>{isFr ? 'Terme' : 'Term'}</Text>
+                    <Text style={{color: '#FF6B6B', fontSize: 10, flex: 1, textAlign: 'center' as const, fontWeight: 'bold'}}>{isFr ? 'Ancien' : 'Old'}</Text>
+                    <Text style={{color: '#4ECDC4', fontSize: 10, flex: 1, textAlign: 'center' as const, fontWeight: 'bold'}}>Opt.1</Text>
+                    {hasOpt2 && <Text style={{color: '#4ECDC4', fontSize: 10, flex: 1, textAlign: 'center' as const, fontWeight: 'bold'}}>Opt.2</Text>}
+                  </View>
+                  {/* Table rows */}
+                  {allTerms.map((t) => {
+                    const termData = pbt[String(t)];
+                    const isClientTerm = t === clientTerm;
+                    return (
+                      <View key={t} style={{
+                        flexDirection: 'row' as const, paddingVertical: 7, paddingHorizontal: 10,
+                        backgroundColor: isClientTerm ? 'rgba(78,205,196,0.1)' : 'transparent',
+                        borderLeftWidth: isClientTerm ? 3 : 0, borderLeftColor: '#4ECDC4',
+                      }}>
+                        <Text style={{color: isClientTerm ? '#4ECDC4' : '#ccc', fontSize: 12, width: 42, fontWeight: isClientTerm ? 'bold' : 'normal'}}>
+                          {t}m{isClientTerm ? ' *' : ''}
+                        </Text>
+                        <Text style={{color: '#FF6B6B', fontSize: 12, flex: 1, textAlign: 'center' as const}}>
+                          {isClientTerm ? `${fmtCur(o.old_payment)}` : '-'}
+                        </Text>
+                        <Text style={{color: '#4ECDC4', fontSize: 12, flex: 1, textAlign: 'center' as const, fontWeight: isClientTerm ? 'bold' : 'normal'}}>
+                          {termData ? `${fmtCur(termData.opt1_payment)}` : '-'}
+                        </Text>
+                        {hasOpt2 && (
+                          <Text style={{color: '#4ECDC4', fontSize: 12, flex: 1, textAlign: 'center' as const, fontWeight: isClientTerm ? 'bold' : 'normal'}}>
+                            {termData?.opt2_payment ? `${fmtCur(termData.opt2_payment)}` : '-'}
+                          </Text>
+                        )}
+                      </View>
+                    );
+                  })}
+                  {/* Rate row */}
+                  <View style={{flexDirection: 'row' as const, paddingVertical: 6, paddingHorizontal: 10, backgroundColor: '#1a1a2e', borderTopWidth: 1, borderTopColor: '#3d3d54'}}>
+                    <Text style={{color: '#888', fontSize: 10, width: 42}}>{isFr ? 'Taux' : 'Rate'}</Text>
+                    <Text style={{color: '#FF6B6B', fontSize: 10, flex: 1, textAlign: 'center' as const}}>{o.old_rate}%</Text>
+                    <Text style={{color: '#4ECDC4', fontSize: 10, flex: 1, textAlign: 'center' as const}}>
+                      {pbt[String(clientTerm)]?.opt1_rate ?? o.new_rate}%
+                    </Text>
+                    {hasOpt2 && (
+                      <Text style={{color: '#4ECDC4', fontSize: 10, flex: 1, textAlign: 'center' as const}}>
+                        {pbt[String(clientTerm)]?.opt2_rate ?? '-'}%
+                      </Text>
+                    )}
+                  </View>
+                </View>
+
+                {/* Savings highlight */}
+                <View style={{backgroundColor: '#1e3a2e', borderRadius: 10, padding: 14, marginBottom: 10, borderWidth: 1, borderColor: '#4ECDC4'}}>
+                  <Text style={{color: '#4ECDC4', fontSize: 12, fontWeight: 'bold', marginBottom: 8}}>
+                    {isFr ? 'ECONOMIE DU CLIENT' : 'CLIENT SAVINGS'} ({clientTerm}m)
+                  </Text>
+                  <View style={{flexDirection: 'row' as const, justifyContent: 'space-between' as const, alignItems: 'center' as const}}>
+                    <View>
+                      <Text style={{color: '#888', fontSize: 11}}>{isFr ? 'Ancien' : 'Old'}</Text>
+                      <Text style={{color: '#FF6B6B', fontSize: 20, fontWeight: 'bold', textDecorationLine: 'line-through'}}>{fmtCur(o.old_payment)}/m</Text>
+                    </View>
+                    <Ionicons name="arrow-forward" size={20} color="#4ECDC4" />
+                    <View style={{alignItems: 'flex-end' as const}}>
+                      <Text style={{color: '#888', fontSize: 11}}>{isFr ? 'Nouveau' : 'New'}</Text>
+                      <Text style={{color: '#4ECDC4', fontSize: 20, fontWeight: 'bold'}}>{fmtCur(o.new_payment)}/m</Text>
+                    </View>
+                  </View>
+                  <View style={{backgroundColor: '#0d2a1e', borderRadius: 8, padding: 10, marginTop: 10, alignItems: 'center' as const}}>
+                    <Text style={{color: '#4ECDC4', fontSize: 24, fontWeight: 'bold'}}>-{fmtCur(o.savings_monthly)}/m</Text>
+                    <Text style={{color: '#4ECDC4', fontSize: 14, marginTop: 2}}>
+                      {isFr ? 'Total sur' : 'Total over'} {clientTerm}m: -{fmtCur(o.savings_total)}
+                    </Text>
+                  </View>
+                </View>
+
+                {/* Extra info */}
+                {comptant > 0 && (
+                  <Text style={{color: '#888', fontSize: 12, marginBottom: 4}}>
+                    {isFr ? 'Comptant' : 'Down payment'}: {fmtCur(comptant)}
+                  </Text>
+                )}
+                {fraisDossier > 0 && (
+                  <Text style={{color: '#888', fontSize: 12, marginBottom: 4}}>
+                    {isFr ? 'Frais de dossier' : 'Admin fees'}: {fmtCur(fraisDossier)}
+                  </Text>
+                )}
+              </View>
+            </ScrollView>
+            
+            {/* Action buttons */}
+            <View style={{flexDirection: 'row' as const, padding: 12, gap: 10, borderTopWidth: 1, borderTopColor: '#2d2d44'}}>
+              <TouchableOpacity 
+                style={{flex: 1, backgroundColor: '#2d2d44', borderRadius: 10, padding: 12, alignItems: 'center' as const}}
+                onPress={() => setSelectedOffer(null)}
+                data-testid="offer-modal-close-btn"
+              >
+                <Text style={{color: '#ccc', fontWeight: 'bold'}}>{isFr ? 'Fermer' : 'Close'}</Text>
+              </TouchableOpacity>
+              {!o.email_sent && (
+                <TouchableOpacity 
+                  style={{flex: 2, backgroundColor: '#4ECDC4', borderRadius: 10, padding: 12, flexDirection: 'row' as const, alignItems: 'center' as const, justifyContent: 'center' as const, gap: 8}}
+                  onPress={() => { setSelectedOffer(null); approveOffer(o.submission_id); }}
+                  data-testid="offer-modal-approve-btn"
+                >
+                  <Ionicons name="send" size={18} color="#1a1a2e" />
+                  <Text style={{color: '#1a1a2e', fontWeight: 'bold'}}>
+                    {isFr ? 'Approuver & Envoyer' : 'Approve & Send'}
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          </View>
+        </View>
+      </Modal>
+    );
+  };
+
   const openSubmissionInCalculator = async (sub: Submission) => {
-    if (sub.calculator_state) {
+    if (sub.calculator_state && typeof sub.calculator_state === 'object') {
       await AsyncStorage.setItem('calcauto_restore_state', JSON.stringify(sub.calculator_state));
       router.push('/(tabs)');
     } else {
-      if (Platform.OS === 'web') {
-        alert(lang === 'fr' ? 'Cette soumission a été créée avant la mise à jour. Les données complètes ne sont pas disponibles.' : 'This submission was created before the update. Full data is not available.');
-      } else {
-        Alert.alert(lang === 'fr' ? 'Non disponible' : 'Not available', lang === 'fr' ? 'Cette soumission a été créée avant la mise à jour.' : 'This submission was created before the update.');
+      // Old submission without full state - reconstruct partial state from available fields
+      try {
+        const headers = await getAuthHeaders();
+        // Try to find a matching program to get rate data
+        let matchedProgram = null;
+        try {
+          const progResp = await axios.get(`${API_URL}/api/programs`, { headers });
+          const allProgs = progResp.data || [];
+          matchedProgram = allProgs.find((p: any) =>
+            p.brand === sub.vehicle_brand && p.model === sub.vehicle_model && p.year === sub.vehicle_year
+          );
+        } catch (e) {
+          console.log('Could not fetch programs for restore:', e);
+        }
+        
+        const partialState: any = {
+          vehiclePrice: String(sub.vehicle_price || ''),
+          selectedTerm: sub.term || 72,
+          selectedOption: sub.selected_option || '1',
+          paymentFrequency: 'monthly',
+          selectedBrand: sub.vehicle_brand || '',
+          selectedModel: sub.vehicle_model || '',
+          selectedYear: sub.vehicle_year || 2025,
+        };
+        
+        if (matchedProgram) {
+          partialState.selectedProgram = matchedProgram;
+        } else {
+          // Construct a minimal program-like object 
+          partialState.selectedProgram = {
+            brand: sub.vehicle_brand,
+            model: sub.vehicle_model,
+            year: sub.vehicle_year,
+            consumer_cash: 0,
+            bonus_cash: 0,
+            option1_rates: { rate_36: sub.rate || 0, rate_48: sub.rate || 0, rate_60: sub.rate || 0, rate_72: sub.rate || 0, rate_84: sub.rate || 0, rate_96: sub.rate || 0 },
+          };
+        }
+        
+        await AsyncStorage.setItem('calcauto_restore_state', JSON.stringify(partialState));
+        router.push('/(tabs)');
+      } catch (e) {
+        console.error('Error restoring old submission:', e);
+        if (Platform.OS === 'web') {
+          alert(lang === 'fr' ? 'Erreur lors de la restauration.' : 'Error restoring submission.');
+        } else {
+          Alert.alert(lang === 'fr' ? 'Erreur' : 'Error', lang === 'fr' ? 'Erreur lors de la restauration.' : 'Error restoring submission.');
+        }
       }
     }
   };
@@ -1251,6 +1565,9 @@ export default function ClientsScreen() {
       {activeTab === 'reminders' && renderRemindersTab()}
       {activeTab === 'offers' && renderOffersTab()}
       {activeTab === 'history' && renderHistoryTab()}
+      
+      {/* Offer Detail Modal */}
+      {renderOfferDetailModal()}
 
       {/* ============================================ */}
       {/* IMPORT CONTACTS MODAL - vCard/CSV Options */}

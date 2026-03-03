@@ -245,13 +245,21 @@ async def delete_better_offer(submission_id: str, authorization: Optional[str] =
     
     return {"success": True, "message": "Offre supprimée de la liste"}
 
+def _calc_payment(principal: float, annual_rate: float, term_months: int) -> float:
+    """Helper: calcul paiement mensuel"""
+    if principal <= 0:
+        return 0.0
+    if annual_rate == 0:
+        return round(principal / term_months, 2)
+    mr = annual_rate / 100 / 12
+    return round(principal * (mr * (1 + mr) ** term_months) / ((1 + mr) ** term_months - 1), 2)
+
 @router.post("/compare-programs")
 async def compare_programs_with_submissions(authorization: Optional[str] = Header(None)):
     """Compare les programmes actuels avec les soumissions passées pour trouver de meilleures offres"""
     user = await get_current_user(authorization)
     
     try:
-        # Get current programs (latest month/year)
         latest = await db.programs.find_one(sort=[("program_year", -1), ("program_month", -1)])
         if not latest:
             return {"better_offers": [], "count": 0}
@@ -259,7 +267,6 @@ async def compare_programs_with_submissions(authorization: Optional[str] = Heade
         current_month = latest["program_month"]
         current_year = latest["program_year"]
         
-        # Get submissions from PREVIOUS months FOR THIS USER
         submissions = await db.submissions.find({
             "owner_id": user["id"],
             "$or": [
@@ -269,9 +276,9 @@ async def compare_programs_with_submissions(authorization: Optional[str] = Heade
         }).to_list(500)
         
         better_offers = []
+        all_terms = [36, 48, 60, 72, 84, 96]
         
         for sub in submissions:
-            # Find matching program in current month
             program = await db.programs.find_one({
                 "brand": sub.get("vehicle_brand"),
                 "model": sub.get("vehicle_model"),
@@ -283,68 +290,98 @@ async def compare_programs_with_submissions(authorization: Optional[str] = Heade
             if not program:
                 continue
             
-            # Calculate new payment
             term = int(sub.get("term", 72))
             old_payment = float(sub.get("payment_monthly", 0))
-            
-            # Get rate for this term
-            opt1_rates = program.get("option1_rates", {})
-            rate_key = f"rate_{term}"
-            new_rate = float(opt1_rates.get(rate_key, 4.99))
-            
-            # Calculate with new program
             vehicle_price = float(sub.get("vehicle_price", 0))
             consumer_cash = float(program.get("consumer_cash", 0))
             bonus_cash = float(program.get("bonus_cash", 0))
-            principal = vehicle_price - consumer_cash - bonus_cash
+            alt_cc = float(program.get("alternative_consumer_cash", program.get("alt_consumer_cash", 0)) or 0)
+            opt1_rates = program.get("option1_rates", {})
+            opt2_rates = program.get("option2_rates")
             
-            if principal <= 0:
+            # Calculate new Option 1 payment for the client's term
+            rate_key = f"rate_{term}"
+            new_rate = float(opt1_rates.get(rate_key, 4.99))
+            opt1_principal = vehicle_price - consumer_cash - bonus_cash
+            
+            if opt1_principal <= 0:
                 continue
-                
-            if new_rate == 0:
-                new_payment = round(principal / term, 2)
-            else:
-                monthly_rate = new_rate / 100 / 12
-                new_payment = round(principal * (monthly_rate * (1 + monthly_rate) ** term) / ((1 + monthly_rate) ** term - 1), 2)
             
-            # Check if better (at least $10 savings)
-            if new_payment < old_payment - 10:
-                savings_monthly = old_payment - new_payment
-                savings_total = savings_monthly * term
+            new_payment = _calc_payment(opt1_principal, new_rate, term)
+            
+            if new_payment >= old_payment - 10:
+                continue
+            
+            savings_monthly = round(old_payment - new_payment, 2)
+            savings_total = round(savings_monthly * term, 2)
+            
+            # Pre-calculate payments for ALL terms, both options
+            payments_by_term = {}
+            for t in all_terms:
+                rk = f"rate_{t}"
+                o1_rate = float(opt1_rates.get(rk, 0))
+                o1_pay = _calc_payment(opt1_principal, o1_rate, t)
                 
-                better_offers.append({
-                    "submission_id": str(sub.get("id", "")),
-                    "owner_id": user["id"],  # Add owner_id for isolation
-                    "client_name": str(sub.get("client_name", "")),
-                    "client_phone": str(sub.get("client_phone", "")),
-                    "client_email": str(sub.get("client_email", "")),
-                    "vehicle": f"{sub.get('vehicle_brand', '')} {sub.get('vehicle_model', '')} {sub.get('vehicle_year', '')}",
-                    "old_payment": round(old_payment, 2),
-                    "new_payment": round(new_payment, 2),
-                    "old_rate": round(float(sub.get("rate", 0)), 2),
-                    "new_rate": round(new_rate, 2),
-                    "savings_monthly": round(savings_monthly, 2),
-                    "savings_total": round(savings_total, 2),
-                    "term": term,
-                    "old_program": f"{sub.get('program_month', '?')}/{sub.get('program_year', '?')}",
-                    "new_program": f"{current_month}/{current_year}",
-                    "approved": False,
-                    "email_sent": False
-                })
+                o2_rate = None
+                o2_pay = None
+                if opt2_rates:
+                    o2_rate = float(opt2_rates.get(rk, 0))
+                    o2_principal = vehicle_price - alt_cc - bonus_cash
+                    o2_pay = _calc_payment(o2_principal, o2_rate, t)
+                
+                payments_by_term[str(t)] = {
+                    "opt1_rate": round(o1_rate, 2),
+                    "opt1_payment": o1_pay,
+                    "opt2_rate": round(o2_rate, 2) if o2_rate is not None else None,
+                    "opt2_payment": o2_pay,
+                }
+            
+            better_offers.append({
+                "submission_id": str(sub.get("id", "")),
+                "owner_id": user["id"],
+                "client_name": str(sub.get("client_name", "")),
+                "client_phone": str(sub.get("client_phone", "")),
+                "client_email": str(sub.get("client_email", "")),
+                "vehicle": f"{sub.get('vehicle_brand', '')} {sub.get('vehicle_model', '')} {sub.get('vehicle_year', '')}",
+                "vehicle_brand": str(sub.get("vehicle_brand", "")),
+                "vehicle_model": str(sub.get("vehicle_model", "")),
+                "vehicle_year": int(sub.get("vehicle_year", 0)),
+                "vehicle_price": round(vehicle_price, 2),
+                "old_payment": round(old_payment, 2),
+                "new_payment": round(new_payment, 2),
+                "old_rate": round(float(sub.get("rate", 0)), 2),
+                "new_rate": round(new_rate, 2),
+                "old_consumer_cash": round(float(sub.get("calculator_state", {}).get("selectedProgram", {}).get("consumer_cash", 0)) if isinstance(sub.get("calculator_state"), dict) else 0, 2),
+                "new_consumer_cash": round(consumer_cash, 2),
+                "savings_monthly": round(savings_monthly, 2),
+                "savings_total": round(savings_total, 2),
+                "term": term,
+                "old_program": f"{sub.get('program_month', '?')}/{sub.get('program_year', '?')}",
+                "new_program": f"{current_month}/{current_year}",
+                "old_selected_option": str(sub.get("selected_option", "1")),
+                "approved": False,
+                "email_sent": False,
+                "calculator_state": sub.get("calculator_state") if isinstance(sub.get("calculator_state"), dict) else None,
+                "new_program_data": {
+                    "consumer_cash": round(consumer_cash, 2),
+                    "bonus_cash": round(bonus_cash, 2),
+                    "alt_consumer_cash": round(alt_cc, 2),
+                    "option1_rates": opt1_rates,
+                    "option2_rates": opt2_rates,
+                },
+                "payments_by_term": payments_by_term,
+            })
         
-        # Store better offers in DB for approval
         if better_offers:
-            await db.better_offers.delete_many({"owner_id": user["id"]})  # Clear old offers for this user only
+            await db.better_offers.delete_many({"owner_id": user["id"]})
             for offer in better_offers:
-                await db.better_offers.insert_one(offer.copy())  # Use copy to avoid _id being added to original
+                await db.better_offers.insert_one(offer.copy())
             
-            # Send notification email to admin
             try:
                 send_better_offers_notification(better_offers)
             except Exception as e:
                 logger.error(f"Error sending better offers notification: {e}")
         
-        # Return clean offers without MongoDB ObjectId
         return {"better_offers": better_offers, "count": len(better_offers)}
     
     except Exception as e:
@@ -396,7 +433,7 @@ def send_better_offers_notification(offers: List[dict]):
                     Ouvrez l'application pour approuver l'envoi des emails aux clients.
                 </div>
                 
-                <a href="https://batch-pdf-upload.preview.emergentagent.com" style="display: inline-block; background: #4ECDC4; color: #1a1a2e; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold;">
+                <a href="https://deal-detail-modal.preview.emergentagent.com" style="display: inline-block; background: #4ECDC4; color: #1a1a2e; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold;">
                     Ouvrir l'application
                 </a>
             </div>

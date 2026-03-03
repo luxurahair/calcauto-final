@@ -31,7 +31,7 @@
   "test_credentials": {
     "email": "danielgiroux007@gmail.com",
     "password": "Liana2018$",
-    "base_url": "https://batch-pdf-upload.preview.emergentagent.com"
+    "base_url": "https://deal-detail-modal.preview.emergentagent.com"
   },
   "seed_data_creation": "None - tested with existing data",
   "retest_needed": false,

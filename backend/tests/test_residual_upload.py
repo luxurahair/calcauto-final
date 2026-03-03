@@ -11,7 +11,7 @@ import os
 import json
 from pathlib import Path
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://batch-pdf-upload.preview.emergentagent.com')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://deal-detail-modal.preview.emergentagent.com')
 ADMIN_PASSWORD = "Liana2018"
 TEST_PDF_PATH = "/app/sci_residual_guide.pdf"
 

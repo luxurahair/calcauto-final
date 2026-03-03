@@ -146,7 +146,7 @@
 
 **Testing Agent**: Testing Sub-Agent  
 **Test Date**: 2026-02-17  
-**Backend URL**: https://batch-pdf-upload.preview.emergentagent.com/api  
+**Backend URL**: https://deal-detail-modal.preview.emergentagent.com/api  
 **Test Focus**: CRM submission management endpoints
 
 #### ✅ CRM Health Check
@@ -265,7 +265,7 @@
 
 **Testing Agent**: Testing Sub-Agent  
 **Test Date**: 2026-02-17  
-**Backend URL**: https://batch-pdf-upload.preview.emergentagent.com/api  
+**Backend URL**: https://deal-detail-modal.preview.emergentagent.com/api  
 **Test Focus**: Better Offers system - comparing old submissions with new programs to find savings
 
 #### ✅ Better Offers Health Check
@@ -468,7 +468,7 @@ The Better Offers system is fully functional and ready for production deployment
 
 **Testing Agent**: Testing Sub-Agent  
 **Test Date**: 2026-02-19  
-**Backend URL**: https://batch-pdf-upload.preview.emergentagent.com/api  
+**Backend URL**: https://deal-detail-modal.preview.emergentagent.com/api  
 **Test Focus**: User data isolation per review request - ensuring each user only sees their own contacts, submissions and offers  
 
 #### ✅ Authentication System
