@@ -23,1776 +23,431 @@
     {
       "model": "Grand Caravan SXT",
       "brand": "Chrysler",
-      "lease_cash": 0.0,
+      "lease_cash": 1000,
       "standard_rates": null,
-      "alternative_rates": {
-        "24": 4.99,
-        "27": 4.99,
-        "36": 5.49,
-        "39": 5.49,
-        "42": 5.49,
-        "48": 6.49,
-        "51": 6.49,
-        "54": 6.49,
-        "60": 6.99
-      },
-      "alternative_lease_cash": 0.0
-    },
-    {
-      "model": "Pacifica PHEV",
-      "brand": "Chrysler",
-      "lease_cash": 0.0,
-      "standard_rates": {
-        "24": 8.79,
-        "27": 8.79,
-        "36": 8.29,
-        "39": 8.29,
-        "42": 8.29,
-        "48": 8.29,
-        "51": 8.29,
-        "54": 8.29,
-        "60": 8.29
-      },
-      "alternative_rates": null,
-      "alternative_lease_cash": 0.0
-    },
-    {
-      "model": "Pacifica (excluding PHEV)",
-      "brand": "Chrysler",
-      "lease_cash": 0.0,
-      "standard_rates": null,
-      "alternative_rates": {
-        "24": 3.49,
-        "27": 3.49,
-        "36": 4.49,
-        "39": 4.49,
-        "42": 4.49,
-        "48": 5.49,
-        "51": 5.49,
-        "54": 5.49,
-        "60": 6.49
-      },
-      "alternative_lease_cash": 0.0
-    },
-    {
-      "model": "Compass Sport",
-      "brand": "Jeep",
-      "lease_cash": 0.0,
-      "standard_rates": {
-        "24": 8.79,
-        "27": 8.79,
-        "36": 8.29,
-        "39": 8.29,
-        "42": 8.29,
-        "48": 8.29,
-        "51": 8.29,
-        "54": 8.29,
-        "60": 8.29
-      },
-      "alternative_rates": null,
-      "alternative_lease_cash": 0.0
-    },
-    {
-      "model": "Compass North",
-      "brand": "Jeep",
-      "lease_cash": 3500.0,
-      "standard_rates": {
-        "24": 8.79,
-        "27": 8.79,
-        "36": 8.29,
-        "39": 8.29,
-        "42": 8.29,
-        "48": 8.29,
-        "51": 8.29,
-        "54": 8.29,
-        "60": 8.29
-      },
-      "alternative_rates": {
-        "24": 1.99,
-        "27": 1.99,
-        "36": 1.99,
-        "39": 1.99,
-        "42": 1.99,
-        "48": 1.99,
-        "51": 1.99,
-        "54": 1.99,
-        "60": 1.99
-      },
-      "alternative_lease_cash": 0.0
-    },
-    {
-      "model": "Compass North w/ Altitude Package (ADZ)",
-      "brand": "Jeep",
-      "lease_cash": 4000.0,
-      "standard_rates": {
-        "24": 8.79,
-        "27": 8.79,
-        "36": 8.29,
-        "39": 8.29,
-        "42": 8.29,
-        "48": 8.29,
-        "51": 8.29,
-        "54": 8.29,
-        "60": 8.29
-      },
-      "alternative_rates": {
-        "24": 1.99,
-        "27": 1.99,
-        "36": 1.99,
-        "39": 1.99,
-        "42": 1.99,
-        "48": 1.99,
-        "51": 1.99,
-        "54": 1.99,
-        "60": 1.99
-      },
-      "alternative_lease_cash": 0.0
-    },
-    {
-      "model": "Compass Trailhawk",
-      "brand": "Jeep",
-      "lease_cash": 4000.0,
-      "standard_rates": {
-        "24": 8.79,
-        "27": 8.79,
-        "36": 8.29,
-        "39": 8.29,
-        "42": 8.29,
-        "48": 8.29,
-        "51": 8.29,
-        "54": 8.29,
-        "60": 8.29
-      },
-      "alternative_rates": {
-        "24": 1.99,
-        "27": 1.99,
-        "36": 1.99,
-        "39": 1.99,
-        "42": 1.99,
-        "48": 1.99,
-        "51": 1.99,
-        "54": 1.99,
-        "60": 1.99
-      },
-      "alternative_lease_cash": 0.0
-    },
-    {
-      "model": "Compass Limited",
-      "brand": "Jeep",
-      "lease_cash": 0.0,
-      "standard_rates": null,
-      "alternative_rates": {
-        "24": 1.99,
-        "27": 1.99,
-        "36": 1.99,
-        "39": 1.99,
-        "42": 1.99,
-        "48": 1.99,
-        "51": 1.99,
-        "54": 1.99,
-        "60": 1.99
-      },
-      "alternative_lease_cash": 0.0
-    },
-    {
-      "model": "Cherokee Base (KMJL74)",
-      "brand": "Jeep",
-      "lease_cash": 0.0,
-      "standard_rates": {
-        "24": 8.79,
-        "27": 8.79,
-        "36": 8.29,
-        "39": 8.29,
-        "42": 8.29,
-        "48": 8.29,
-        "51": 8.29,
-        "54": 8.29,
-        "60": 8.29
-      },
-      "alternative_rates": null,
-      "alternative_lease_cash": 0.0
-    },
-    {
-      "model": "Cherokee (excluding Base (KMJL74))",
-      "brand": "Jeep",
-      "lease_cash": 0.0,
-      "standard_rates": null,
-      "alternative_rates": {
-        "24": 5.99,
-        "27": 5.99,
-        "36": 5.99,
-        "39": 5.99,
-        "42": 5.99,
-        "48": 6.99,
-        "51": 6.99,
-        "54": 6.99,
-        "60": 6.99
-      },
-      "alternative_lease_cash": 0.0
-    },
-    {
-      "model": "Wrangler 2-Door (JL) (JLJL72) (non Rubicon models)",
-      "brand": "Jeep",
-      "lease_cash": 0.0,
-      "standard_rates": {
-        "24": 8.79,
-        "27": 8.79,
-        "36": 8.29,
-        "39": 8.29,
-        "42": 8.29,
-        "48": 8.29,
-        "51": 8.29,
-        "54": 8.29,
-        "60": 8.29
-      },
-      "alternative_rates": null,
-      "alternative_lease_cash": 0.0
-    },
-    {
-      "model": "Wrangler 2-Door Rubicon (JL) (JLJS72)",
-      "brand": "Jeep",
-      "lease_cash": 5250.0,
-      "standard_rates": {
-        "24": 8.79,
-        "27": 8.79,
-        "36": 8.29,
-        "39": 8.29,
-        "42": 8.29,
-        "48": 8.29,
-        "51": 8.29,
-        "54": 8.29,
-        "60": 8.29
-      },
-      "alternative_rates": {
-        "24": 2.99,
-        "27": 2.99,
-        "36": 2.99,
-        "39": 2.99,
-        "42": 2.99,
-        "48": 2.99,
-        "51": 2.99,
-        "54": 2.99,
-        "60": 3.99
-      },
-      "alternative_lease_cash": 0.0
-    },
-    {
-      "model": "Wrangler 4-Door (excluding 392 and 4xe Models)",
-      "brand": "Jeep",
-      "lease_cash": 6000.0,
-      "standard_rates": {
-        "24": 8.79,
-        "27": 8.79,
-        "36": 8.29,
-        "39": 8.29,
-        "42": 8.29,
-        "48": 8.29,
-        "51": 8.29,
-        "54": 8.29,
-        "60": 8.29
-      },
-      "alternative_rates": {
-        "24": 2.99,
-        "27": 2.99,
-        "36": 2.99,
-        "39": 2.99,
-        "42": 2.99,
-        "48": 2.99,
-        "51": 2.99,
-        "54": 2.99,
-        "60": 3.99
-      },
-      "alternative_lease_cash": 0.0
-    },
-    {
-      "model": "Wrangler 4-Door MOAB 392 (JLJX74)",
-      "brand": "Jeep",
-      "lease_cash": 0.0,
-      "standard_rates": {
-        "24": 8.79,
-        "27": 8.79,
-        "36": 8.29,
-        "39": 8.29,
-        "42": 8.29,
-        "48": 8.29,
-        "51": 8.29,
-        "54": 8.29,
-        "60": 8.29
-      },
-      "alternative_rates": null,
-      "alternative_lease_cash": 0.0
-    },
-    {
-      "model": "Gladiator Sport S, Willys, Sahara, Willys '41 (JTJL98)",
-      "brand": "Jeep",
-      "lease_cash": 0.0,
-      "standard_rates": {
-        "24": 8.79,
-        "27": 8.79,
-        "36": 8.29,
-        "39": 8.29,
-        "42": 8.29,
-        "48": 8.29,
-        "51": 8.29,
-        "54": 8.29,
-        "60": 8.29
-      },
-      "alternative_rates": null,
-      "alternative_lease_cash": 0.0
-    },
-    {
-      "model": "Gladiator (excluding Sport S, Willys, Sahara, Willys '41 (JTJL98))",
-      "brand": "Jeep",
-      "lease_cash": 0.0,
-      "standard_rates": null,
-      "alternative_rates": {
-        "24": 4.99,
-        "27": 4.99,
-        "36": 5.99,
-        "39": 5.99,
-        "42": 5.99,
-        "48": 6.49,
-        "51": 6.49,
-        "54": 6.49,
-        "60": 6.99
-      },
-      "alternative_lease_cash": 0.0
-    },
-    {
-      "model": "Grand Wagoneer/Grand Wagoneer L",
-      "brand": "Jeep",
-      "lease_cash": 0.0,
-      "standard_rates": {
-        "24": 8.79,
-        "27": 8.79,
-        "36": 8.29,
-        "39": 8.29,
-        "42": 8.29,
-        "48": 8.29,
-        "51": 8.29,
-        "54": 8.29,
-        "60": 8.29
-      },
-      "alternative_rates": null,
-      "alternative_lease_cash": 0.0
-    },
-    {
-      "model": "Durango SXT, GT, GT Plus",
-      "brand": "Dodge",
-      "lease_cash": 7500.0,
-      "standard_rates": {
-        "24": 8.79,
-        "27": 8.79,
-        "36": 8.29,
-        "39": 8.29,
-        "42": 8.29,
-        "48": 8.29,
-        "51": 8.29,
-        "54": 8.29,
-        "60": 8.29
-      },
-      "alternative_rates": {
-        "24": 2.99,
-        "27": 2.99,
-        "36": 3.49,
-        "39": 3.49,
-        "42": 3.49,
-        "48": 4.99,
-        "51": 4.99,
-        "54": 4.99,
-        "60": 5.49
-      },
-      "alternative_lease_cash": 0.0
-    },
-    {
-      "model": "Durango GT Hemi V8 Plus, GT Hemi V8 Premium",
-      "brand": "Dodge",
-      "lease_cash": 9000.0,
-      "standard_rates": {
-        "24": 8.79,
-        "27": 8.79,
-        "36": 8.29,
-        "39": 8.29,
-        "42": 8.29,
-        "48": 8.29,
-        "51": 8.29,
-        "54": 8.29,
-        "60": 8.29
-      },
-      "alternative_rates": {
-        "24": 2.99,
-        "27": 2.99,
-        "36": 3.49,
-        "39": 3.49,
-        "42": 3.49,
-        "48": 4.99,
-        "51": 4.99,
-        "54": 4.99,
-        "60": 5.49
-      },
-      "alternative_lease_cash": 0.0
-    },
-    {
-      "model": "Durango SRT Hellcat",
-      "brand": "Dodge",
-      "lease_cash": 15500.0,
-      "standard_rates": {
-        "24": 8.79,
-        "27": 8.79,
-        "36": 8.29,
-        "39": 8.29,
-        "42": 8.29,
-        "48": 8.29,
-        "51": 8.29,
-        "54": 8.29,
-        "60": 8.29
-      },
-      "alternative_rates": {
-        "24": 2.99,
-        "27": 2.99,
-        "36": 3.49,
-        "39": 3.49,
-        "42": 3.49,
-        "48": 4.99,
-        "51": 4.99,
-        "54": 4.99,
-        "60": 5.49
-      },
-      "alternative_lease_cash": 0.0
-    },
-    {
-      "model": "Charger 2-Door & 4-Door (ICE)",
-      "brand": "Dodge",
-      "lease_cash": 0.0,
-      "standard_rates": {
-        "24": 8.79,
-        "27": 8.79,
-        "36": 8.29,
-        "39": 8.29,
-        "42": 8.29,
-        "48": 8.29,
-        "51": 8.29,
-        "54": 8.29,
-        "60": 8.29
-      },
-      "alternative_rates": null,
-      "alternative_lease_cash": 0.0
-    },
-    {
-      "model": "Ram 1500 Tradesman, Express, Warlock",
-      "brand": "Ram",
-      "lease_cash": 6500.0,
-      "standard_rates": {
-        "24": 8.79,
-        "27": 8.79,
-        "36": 8.29,
-        "39": 8.29,
-        "42": 8.29,
-        "48": 8.29,
-        "51": 8.29,
-        "54": 8.29,
-        "60": 8.29
-      },
-      "alternative_rates": {
-        "24": 1.49,
-        "27": 1.49,
-        "36": 1.49,
-        "39": 1.49,
-        "42": 1.49,
-        "48": 3.49,
-        "51": 3.49,
-        "54": 3.49,
-        "60": 4.99
-      },
-      "alternative_lease_cash": 0.0
-    },
-    {
-      "model": "Ram 1500 Big Horn",
-      "brand": "Ram",
-      "lease_cash": 6000.0,
-      "standard_rates": {
-        "24": 8.79,
-        "27": 8.79,
-        "36": 8.29,
-        "39": 8.29,
-        "42": 8.29,
-        "48": 8.29,
-        "51": 8.29,
-        "54": 8.29,
-        "60": 8.29
-      },
-      "alternative_rates": {
-        "24": 1.49,
-        "27": 1.49,
-        "36": 1.49,
-        "39": 1.49,
-        "42": 1.49,
-        "48": 3.49,
-        "51": 3.49,
-        "54": 3.49,
-        "60": 4.99
-      },
-      "alternative_lease_cash": 0.0
-    },
-    {
-      "model": "Ram 1500 Sport, Rebel",
-      "brand": "Ram",
-      "lease_cash": 8250.0,
-      "standard_rates": {
-        "24": 8.79,
-        "27": 8.79,
-        "36": 8.29,
-        "39": 8.29,
-        "42": 8.29,
-        "48": 8.29,
-        "51": 8.29,
-        "54": 8.29,
-        "60": 8.29
-      },
-      "alternative_rates": {
-        "24": 2.49,
-        "27": 2.49,
-        "36": 2.49,
-        "39": 2.49,
-        "42": 2.49,
-        "48": 3.99,
-        "51": 3.99,
-        "54": 3.99,
-        "60": 4.99
-      },
-      "alternative_lease_cash": 0.0
-    },
-    {
-      "model": "Ram 1500 Laramie (DT6P98)",
-      "brand": "Ram",
-      "lease_cash": 0.0,
-      "standard_rates": null,
-      "alternative_rates": {
-        "24": 2.49,
-        "27": 2.49,
-        "36": 2.49,
-        "39": 2.49,
-        "42": 2.49,
-        "48": 3.99,
-        "51": 3.99,
-        "54": 3.99,
-        "60": 4.99
-      },
-      "alternative_lease_cash": 0.0
-    },
-    {
-      "model": "Ram 1500 Laramie, Limited, Longhorn, Tungsten, RHO (excluding Laramie (DT6P98))",
-      "brand": "Ram",
-      "lease_cash": 11500.0,
-      "standard_rates": {
-        "24": 8.79,
-        "27": 8.79,
-        "36": 8.29,
-        "39": 8.29,
-        "42": 8.29,
-        "48": 8.29,
-        "51": 8.29,
-        "54": 8.29,
-        "60": 8.29
-      },
-      "alternative_rates": {
-        "24": 2.49,
-        "27": 2.49,
-        "36": 2.49,
-        "39": 2.49,
-        "42": 2.49,
-        "48": 3.99,
-        "51": 3.99,
-        "54": 3.99,
-        "60": 4.99
-      },
-      "alternative_lease_cash": 0.0
-    },
-    {
-      "model": "Ram 2500 Power Wagon Crew Cab (DJ7X91 2UP)",
-      "brand": "Ram",
-      "lease_cash": 0.0,
-      "standard_rates": null,
-      "alternative_rates": {
-        "24": 5.99,
-        "27": 5.99,
-        "36": 5.99,
-        "39": 5.99,
-        "42": 5.99,
-        "48": 6.99,
-        "51": 6.99,
-        "54": 6.99,
-        "60": 6.99
-      },
-      "alternative_lease_cash": 0.0
-    },
-    {
-      "model": "Ram 2500/3500 Gas Models (excl 2500 Power Wagon Crew Cab (DJ7X91 2UP), Chassis Cab Models)",
-      "brand": "Ram",
-      "lease_cash": 7000.0,
-      "standard_rates": {
-        "24": 8.79,
-        "27": 8.79,
-        "36": 8.29,
-        "39": 8.29,
-        "42": 8.29,
-        "48": 8.29,
-        "51": 8.29,
-        "54": 8.29,
-        "60": 8.29
-      },
-      "alternative_rates": {
-        "24": 5.99,
-        "27": 5.99,
-        "36": 5.99,
-        "39": 5.99,
-        "42": 5.99,
-        "48": 6.99,
-        "51": 6.99,
-        "54": 6.99,
-        "60": 6.99
-      },
-      "alternative_lease_cash": 0.0
-    },
-    {
-      "model": "Ram 2500/3500 Diesel Models (excl Chassis Cab Models)",
-      "brand": "Ram",
-      "lease_cash": 5000.0,
-      "standard_rates": {
-        "24": 8.79,
-        "27": 8.79,
-        "36": 8.29,
-        "39": 8.29,
-        "42": 8.29,
-        "48": 8.29,
-        "51": 8.29,
-        "54": 8.29,
-        "60": 8.29
-      },
-      "alternative_rates": {
-        "24": 5.99,
-        "27": 5.99,
-        "36": 5.99,
-        "39": 5.99,
-        "42": 5.99,
-        "48": 6.99,
-        "51": 6.99,
-        "54": 6.99,
-        "60": 6.99
-      },
-      "alternative_lease_cash": 0.0
-    }
-  ],
-  "vehicles_2025": [
-    {
-      "model": "Grand Caravan SXT",
-      "brand": "Chrysler",
-      "lease_cash": 1000.0,
-      "standard_rates": {
-        "24": 8.79,
-        "27": 8.79,
-        "36": 8.29,
-        "39": 8.29,
-        "42": 8.29,
-        "48": 8.29,
-        "51": 8.29,
-        "54": 8.29,
-        "60": 8.29
-      },
-      "alternative_rates": {
-        "24": 5.49,
-        "27": 5.49,
-        "36": 5.99,
-        "39": 5.99,
-        "42": 5.99,
-        "48": 6.49,
-        "51": 6.49,
-        "54": 6.49,
-        "60": 6.99
-      },
-      "alternative_lease_cash": 0.0
+      "alternative_rates": null
     },
     {
       "model": "Pacifica Hybrid",
       "brand": "Chrysler",
-      "lease_cash": 0.0,
-      "standard_rates": {
-        "24": 8.79,
-        "27": 8.79,
-        "36": 8.29,
-        "39": 8.29,
-        "42": 8.29,
-        "48": 8.29,
-        "51": 8.29,
-        "54": 8.29,
-        "60": 8.29
-      },
-      "alternative_rates": null,
-      "alternative_lease_cash": 0.0
+      "lease_cash": 0,
+      "standard_rates": null,
+      "alternative_rates": null
     },
     {
       "model": "Pacifica Select Models (excludes Hybrid)",
       "brand": "Chrysler",
-      "lease_cash": 0.0,
+      "lease_cash": 0,
       "standard_rates": null,
-      "alternative_rates": {
-        "24": 2.99,
-        "27": 2.99,
-        "36": 3.99,
-        "39": 3.99,
-        "42": 3.99,
-        "48": 4.49,
-        "51": 4.49,
-        "54": 4.49,
-        "60": 4.99
-      },
-      "alternative_lease_cash": 0.0
+      "alternative_rates": null
     },
     {
       "model": "Pacifica (excludes Select & Hybrid Models)",
       "brand": "Chrysler",
-      "lease_cash": 0.0,
+      "lease_cash": 0,
       "standard_rates": null,
-      "alternative_rates": {
-        "24": 2.99,
-        "27": 2.99,
-        "36": 3.99,
-        "39": 3.99,
-        "42": 3.99,
-        "48": 4.49,
-        "51": 4.49,
-        "54": 4.49,
-        "60": 4.99
-      },
-      "alternative_lease_cash": 0.0
+      "alternative_rates": null
     },
     {
       "model": "Compass Sport",
       "brand": "Jeep",
-      "lease_cash": 750.0,
-      "standard_rates": {
-        "24": 8.79,
-        "27": 8.79,
-        "36": 8.29,
-        "39": 8.29,
-        "42": 8.29,
-        "48": 8.29,
-        "51": 8.29,
-        "54": 8.29,
-        "60": 8.29
-      },
-      "alternative_rates": null,
-      "alternative_lease_cash": 0.0
+      "lease_cash": 750,
+      "standard_rates": null,
+      "alternative_rates": null
     },
     {
       "model": "Compass North",
       "brand": "Jeep",
-      "lease_cash": 5500.0,
-      "standard_rates": {
-        "24": 8.79,
-        "27": 8.79,
-        "36": 8.29,
-        "39": 8.29,
-        "42": 8.29,
-        "48": 8.29,
-        "51": 8.29,
-        "54": 8.29,
-        "60": 8.29
-      },
-      "alternative_rates": {
-        "24": 5.49,
-        "27": 5.49,
-        "36": 5.49,
-        "39": 5.49,
-        "42": 5.49,
-        "48": 5.49,
-        "51": 5.49,
-        "54": 5.49,
-        "60": 5.99
-      },
-      "alternative_lease_cash": 0.0
+      "lease_cash": 5500,
+      "standard_rates": null,
+      "alternative_rates": null
     },
     {
       "model": "Compass Altitude, Trailhawk, Trailhawk Elite",
       "brand": "Jeep",
-      "lease_cash": 7500.0,
-      "standard_rates": {
-        "24": 8.79,
-        "27": 8.79,
-        "36": 8.29,
-        "39": 8.29,
-        "42": 8.29,
-        "48": 8.29,
-        "51": 8.29,
-        "54": 8.29,
-        "60": 8.29
-      },
-      "alternative_rates": {
-        "24": 3.99,
-        "27": 3.99,
-        "36": 3.99,
-        "39": 3.99,
-        "42": 3.99,
-        "48": 4.49,
-        "51": 4.49,
-        "54": 4.49,
-        "60": 4.99
-      },
-      "alternative_lease_cash": 0.0
+      "lease_cash": 7500,
+      "standard_rates": null,
+      "alternative_rates": null
     },
     {
       "model": "Compass Limited",
       "brand": "Jeep",
-      "lease_cash": 0.0,
+      "lease_cash": 0,
       "standard_rates": null,
-      "alternative_rates": {
-        "24": 3.99,
-        "27": 3.99,
-        "36": 3.99,
-        "39": 3.99,
-        "42": 3.99,
-        "48": 4.49,
-        "51": 4.49,
-        "54": 4.49,
-        "60": 4.99
-      },
-      "alternative_lease_cash": 0.0
+      "alternative_rates": null
     },
     {
       "model": "Wrangler 4-Door (JL) 4xe (JLXL74)",
       "brand": "Jeep",
-      "lease_cash": 4000.0,
-      "standard_rates": {
-        "24": 8.79,
-        "27": 8.79,
-        "36": 8.29,
-        "39": 8.29,
-        "42": 8.29,
-        "48": 8.29,
-        "51": 8.29,
-        "54": 8.29,
-        "60": 8.29
-      },
-      "alternative_rates": {
-        "24": 5.99,
-        "27": 5.99,
-        "36": 5.99,
-        "39": 5.99,
-        "42": 5.99,
-        "48": 6.99,
-        "51": 6.99,
-        "54": 6.99,
-        "60": 6.99
-      },
-      "alternative_lease_cash": 0.0
+      "lease_cash": 4000,
+      "standard_rates": null,
+      "alternative_rates": null
     },
     {
-      "model": "Wrangler 4-Door (JL) 4xe (excluding JLXL74)",
+      "model": "Wrangler 4-Door (JL) 4xe (excludes JLXL74)",
       "brand": "Jeep",
-      "lease_cash": 4000.0,
-      "standard_rates": {
-        "24": 8.79,
-        "27": 8.79,
-        "36": 8.29,
-        "39": 8.29,
-        "42": 8.29,
-        "48": 8.29,
-        "51": 8.29,
-        "54": 8.29,
-        "60": 8.29
-      },
-      "alternative_rates": {
-        "24": 5.99,
-        "27": 5.99,
-        "36": 5.99,
-        "39": 5.99,
-        "42": 5.99,
-        "48": 6.99,
-        "51": 6.99,
-        "54": 6.99,
-        "60": 6.99
-      },
-      "alternative_lease_cash": 0.0
+      "lease_cash": 4000,
+      "standard_rates": null,
+      "alternative_rates": null
     },
     {
       "model": "Wrangler 2-Door (JL) (JLJL72) (non Rubicon models)",
       "brand": "Jeep",
-      "lease_cash": 750.0,
-      "standard_rates": {
-        "24": 8.79,
-        "27": 8.79,
-        "36": 8.29,
-        "39": 8.29,
-        "42": 8.29,
-        "48": 8.29,
-        "51": 8.29,
-        "54": 8.29,
-        "60": 8.29
-      },
-      "alternative_rates": null,
-      "alternative_lease_cash": 0.0
+      "lease_cash": 750,
+      "standard_rates": null,
+      "alternative_rates": null
     },
     {
       "model": "Wrangler 2-Door Rubicon (JL) (JLJS72)",
       "brand": "Jeep",
-      "lease_cash": 8500.0,
-      "standard_rates": {
-        "24": 8.79,
-        "27": 8.79,
-        "36": 8.29,
-        "39": 8.29,
-        "42": 8.29,
-        "48": 8.29,
-        "51": 8.29,
-        "54": 8.29,
-        "60": 8.29
-      },
-      "alternative_rates": {
-        "24": 1.99,
-        "27": 1.99,
-        "36": 1.99,
-        "39": 1.99,
-        "42": 1.99,
-        "48": 1.99,
-        "51": 1.99,
-        "54": 1.99,
-        "60": 2.99
-      },
-      "alternative_lease_cash": 0.0
+      "lease_cash": 8500,
+      "standard_rates": null,
+      "alternative_rates": null
     },
     {
       "model": "Wrangler 4-Door Rubicon w/ 2.0L (JLJS74 22R)",
       "brand": "Jeep",
-      "lease_cash": 0.0,
+      "lease_cash": 0,
       "standard_rates": null,
-      "alternative_rates": {
-        "24": 1.99,
-        "27": 1.99,
-        "36": 1.99,
-        "39": 1.99,
-        "42": 1.99,
-        "48": 1.99,
-        "51": 1.99,
-        "54": 1.99,
-        "60": 2.99
-      },
-      "alternative_lease_cash": 0.0
+      "alternative_rates": null
     },
     {
-      "model": "Wrangler 4-Door (JL) (excluding Rubicon w/ 2.0L (JLJS74 22R) and 4xe)",
+      "model": "Wrangler 4-Door (JL) (excluding Rubicon w/ 2.0L(JLJS74 22R) and 4xe)",
       "brand": "Jeep",
-      "lease_cash": 8500.0,
-      "standard_rates": {
-        "24": 8.79,
-        "27": 8.79,
-        "36": 8.29,
-        "39": 8.29,
-        "42": 8.29,
-        "48": 8.29,
-        "51": 8.29,
-        "54": 8.29,
-        "60": 8.29
-      },
-      "alternative_rates": {
-        "24": 1.99,
-        "27": 1.99,
-        "36": 1.99,
-        "39": 1.99,
-        "42": 1.99,
-        "48": 1.99,
-        "51": 1.99,
-        "54": 1.99,
-        "60": 2.99
-      },
-      "alternative_lease_cash": 0.0
+      "lease_cash": 8500,
+      "standard_rates": null,
+      "alternative_rates": null
     },
     {
       "model": "Gladiator",
       "brand": "Jeep",
-      "lease_cash": 11000.0,
-      "standard_rates": {
-        "24": 8.79,
-        "27": 8.79,
-        "36": 8.29,
-        "39": 8.29,
-        "42": 8.29,
-        "48": 8.29,
-        "51": 8.29,
-        "54": 8.29,
-        "60": 8.29
-      },
-      "alternative_rates": {
-        "24": 1.99,
-        "27": 1.99,
-        "36": 2.99,
-        "39": 2.99,
-        "42": 2.99,
-        "48": 2.99,
-        "51": 2.99,
-        "54": 2.99,
-        "60": 5.49
-      },
-      "alternative_lease_cash": 0.0
+      "lease_cash": 11000,
+      "standard_rates": null,
+      "alternative_rates": null
     },
     {
       "model": "Grand Cherokee 4xe (WL)",
       "brand": "Jeep",
-      "lease_cash": 4000.0,
-      "standard_rates": {
-        "24": 8.79,
-        "27": 8.79,
-        "36": 8.29,
-        "39": 8.29,
-        "42": 8.29,
-        "48": 8.29,
-        "51": 8.29,
-        "54": 8.29,
-        "60": 8.29
-      },
-      "alternative_rates": {
-        "24": 5.99,
-        "27": 5.99,
-        "36": 5.99,
-        "39": 5.99,
-        "42": 5.99,
-        "48": 6.99,
-        "51": 6.99,
-        "54": 6.99,
-        "60": 6.99
-      },
-      "alternative_lease_cash": 0.0
+      "lease_cash": 4000,
+      "standard_rates": null,
+      "alternative_rates": null
     },
     {
       "model": "Grand Cherokee Laredo (WLJH74 2*A) (WL)",
       "brand": "Jeep",
-      "lease_cash": 6000.0,
-      "standard_rates": {
-        "24": 8.79,
-        "27": 8.79,
-        "36": 8.29,
-        "39": 8.29,
-        "42": 8.29,
-        "48": 8.29,
-        "51": 8.29,
-        "54": 8.29,
-        "60": 8.29
-      },
-      "alternative_rates": {
-        "24": 2.99,
-        "27": 2.99,
-        "36": 2.99,
-        "39": 2.99,
-        "42": 2.99,
-        "48": 2.99,
-        "51": 2.99,
-        "54": 2.99,
-        "60": 3.99
-      },
-      "alternative_lease_cash": 0.0
+      "lease_cash": 6000,
+      "standard_rates": null,
+      "alternative_rates": null
     },
     {
       "model": "Grand Cherokee Altitude (WLJH74 2*B) (WL)",
       "brand": "Jeep",
-      "lease_cash": 7500.0,
-      "standard_rates": {
-        "24": 8.79,
-        "27": 8.79,
-        "36": 8.29,
-        "39": 8.29,
-        "42": 8.29,
-        "48": 8.29,
-        "51": 8.29,
-        "54": 8.29,
-        "60": 8.29
-      },
-      "alternative_rates": {
-        "24": 2.99,
-        "27": 2.99,
-        "36": 2.99,
-        "39": 2.99,
-        "42": 2.99,
-        "48": 2.99,
-        "51": 2.99,
-        "54": 2.99,
-        "60": 3.99
-      },
-      "alternative_lease_cash": 0.0
+      "lease_cash": 7500,
+      "standard_rates": null,
+      "alternative_rates": null
     },
     {
       "model": "Grand Cherokee Summit (WLJT74 23S) (WL)",
       "brand": "Jeep",
-      "lease_cash": 0.0,
+      "lease_cash": 0,
       "standard_rates": null,
-      "alternative_rates": {
-        "24": 2.99,
-        "27": 2.99,
-        "36": 2.99,
-        "39": 2.99,
-        "42": 2.99,
-        "48": 2.99,
-        "51": 2.99,
-        "54": 2.99,
-        "60": 3.99
-      },
-      "alternative_lease_cash": 0.0
+      "alternative_rates": null
     },
     {
       "model": "Grand Cherokee (WL) (excludes Laredo (WLJH74 2*A & 2*B), Summit (WLJT74 23S), and 4xe)",
       "brand": "Jeep",
-      "lease_cash": 9500.0,
-      "standard_rates": {
-        "24": 8.79,
-        "27": 8.79,
-        "36": 8.29,
-        "39": 8.29,
-        "42": 8.29,
-        "48": 8.29,
-        "51": 8.29,
-        "54": 8.29,
-        "60": 8.29
-      },
-      "alternative_rates": {
-        "24": 2.99,
-        "27": 2.99,
-        "36": 2.99,
-        "39": 2.99,
-        "42": 2.99,
-        "48": 2.99,
-        "51": 2.99,
-        "54": 2.99,
-        "60": 3.99
-      },
-      "alternative_lease_cash": 0.0
+      "lease_cash": 9500,
+      "standard_rates": null,
+      "alternative_rates": null
     },
     {
-      "model": "Grand Cherokee L Laredo (WLJH75 2*A) (WL)",
+      "model": "Grand Cherokee L Laredo  (WLJH75 2*A) (WL)",
       "brand": "Jeep",
-      "lease_cash": 6000.0,
-      "standard_rates": {
-        "24": 8.79,
-        "27": 8.79,
-        "36": 8.29,
-        "39": 8.29,
-        "42": 8.29,
-        "48": 8.29,
-        "51": 8.29,
-        "54": 8.29,
-        "60": 8.29
-      },
-      "alternative_rates": {
-        "24": 2.99,
-        "27": 2.99,
-        "36": 2.99,
-        "39": 2.99,
-        "42": 2.99,
-        "48": 2.99,
-        "51": 2.99,
-        "54": 2.99,
-        "60": 3.99
-      },
-      "alternative_lease_cash": 0.0
+      "lease_cash": 6000,
+      "standard_rates": null,
+      "alternative_rates": null
     },
     {
       "model": "Grand Cherokee L Altitude (WLJH75 2*B) (WL)",
       "brand": "Jeep",
-      "lease_cash": 7500.0,
-      "standard_rates": {
-        "24": 8.79,
-        "27": 8.79,
-        "36": 8.29,
-        "39": 8.29,
-        "42": 8.29,
-        "48": 8.29,
-        "51": 8.29,
-        "54": 8.29,
-        "60": 8.29
-      },
-      "alternative_rates": {
-        "24": 2.99,
-        "27": 2.99,
-        "36": 2.99,
-        "39": 2.99,
-        "42": 2.99,
-        "48": 2.99,
-        "51": 2.99,
-        "54": 2.99,
-        "60": 3.99
-      },
-      "alternative_lease_cash": 0.0
+      "lease_cash": 7500,
+      "standard_rates": null,
+      "alternative_rates": null
     },
     {
       "model": "Grand Cherokee L Overland (WLJS75) (WL)",
       "brand": "Jeep",
-      "lease_cash": 0.0,
+      "lease_cash": 0,
       "standard_rates": null,
-      "alternative_rates": {
-        "24": 2.99,
-        "27": 2.99,
-        "36": 2.99,
-        "39": 2.99,
-        "42": 2.99,
-        "48": 2.99,
-        "51": 2.99,
-        "54": 2.99,
-        "60": 3.99
-      },
-      "alternative_lease_cash": 0.0
+      "alternative_rates": null
     },
     {
-      "model": "Grand Cherokee L (WL) (excludes Laredo (WLJH75 2*A & 2*B) and Overland (WLJS75))",
+      "model": "Grand Cherokee L (WL) (excludes Laredo (WLJH75 2*A & 2*B) and Overland (WLJS75 ))",
       "brand": "Jeep",
-      "lease_cash": 9500.0,
-      "standard_rates": {
-        "24": 8.79,
-        "27": 8.79,
-        "36": 8.29,
-        "39": 8.29,
-        "42": 8.29,
-        "48": 8.29,
-        "51": 8.29,
-        "54": 8.29,
-        "60": 8.29
-      },
-      "alternative_rates": {
-        "24": 2.99,
-        "27": 2.99,
-        "36": 2.99,
-        "39": 2.99,
-        "42": 2.99,
-        "48": 2.99,
-        "51": 2.99,
-        "54": 2.99,
-        "60": 3.99
-      },
-      "alternative_lease_cash": 0.0
+      "lease_cash": 9500,
+      "standard_rates": null,
+      "alternative_rates": null
     },
     {
       "model": "Wagoneer / Wagoneer L",
       "brand": "Jeep",
-      "lease_cash": 7500.0,
-      "standard_rates": {
-        "24": 8.79,
-        "27": 8.79,
-        "36": 8.29,
-        "39": 8.29,
-        "42": 8.29,
-        "48": 8.29,
-        "51": 8.29,
-        "54": 8.29,
-        "60": 8.29
-      },
-      "alternative_rates": {
-        "24": 3.49,
-        "27": 3.49,
-        "36": 3.49,
-        "39": 3.49,
-        "42": 3.49,
-        "48": 4.49,
-        "51": 4.49,
-        "54": 4.49,
-        "60": 5.99
-      },
-      "alternative_lease_cash": 0.0
+      "lease_cash": 7500,
+      "standard_rates": null,
+      "alternative_rates": null
     },
     {
       "model": "Grand Wagoneer / Grand Wagoneer L",
       "brand": "Jeep",
-      "lease_cash": 9500.0,
-      "standard_rates": {
-        "24": 8.79,
-        "27": 8.79,
-        "36": 8.29,
-        "39": 8.29,
-        "42": 8.29,
-        "48": 8.29,
-        "51": 8.29,
-        "54": 8.29,
-        "60": 8.29
-      },
-      "alternative_rates": {
-        "24": 3.49,
-        "27": 3.49,
-        "36": 3.49,
-        "39": 3.49,
-        "42": 3.49,
-        "48": 4.49,
-        "51": 4.49,
-        "54": 4.49,
-        "60": 5.99
-      },
-      "alternative_lease_cash": 0.0
+      "lease_cash": 9500,
+      "standard_rates": null,
+      "alternative_rates": null
     },
     {
       "model": "Wagoneer S Limited & Premium (BEV)",
       "brand": "Jeep",
-      "lease_cash": 8000.0,
-      "standard_rates": {
-        "24": 8.79,
-        "27": 8.79,
-        "36": 8.29,
-        "39": 8.29,
-        "42": 8.29,
-        "48": 8.29,
-        "51": 8.29,
-        "54": 8.29,
-        "60": 8.29
-      },
-      "alternative_rates": {
-        "24": 2.99,
-        "27": 2.99,
-        "36": 3.99,
-        "39": 3.99,
-        "42": 3.99,
-        "48": 4.99,
-        "51": 4.99,
-        "54": 4.99,
-        "60": 5.99
-      },
-      "alternative_lease_cash": 0.0
+      "lease_cash": 8000,
+      "standard_rates": null,
+      "alternative_rates": null
     },
     {
       "model": "Durango GT, GT Plus",
       "brand": "Dodge",
-      "lease_cash": 8000.0,
-      "standard_rates": {
-        "24": 8.79,
-        "27": 8.79,
-        "36": 8.29,
-        "39": 8.29,
-        "42": 8.29,
-        "48": 8.29,
-        "51": 8.29,
-        "54": 8.29,
-        "60": 8.29
-      },
-      "alternative_rates": {
-        "24": 3.99,
-        "27": 3.99,
-        "36": 4.49,
-        "39": 4.49,
-        "42": 4.49,
-        "48": 4.49,
-        "51": 4.49,
-        "54": 4.49,
-        "60": 4.99
-      },
-      "alternative_lease_cash": 0.0
+      "lease_cash": 8000,
+      "standard_rates": null,
+      "alternative_rates": null
     },
     {
       "model": "Durango R/T, R/T Plus, R/T 20th Anniversary, R/T Plus 20th Anniversary",
       "brand": "Dodge",
-      "lease_cash": 9500.0,
-      "standard_rates": {
-        "24": 8.79,
-        "27": 8.79,
-        "36": 8.29,
-        "39": 8.29,
-        "42": 8.29,
-        "48": 8.29,
-        "51": 8.29,
-        "54": 8.29,
-        "60": 8.29
-      },
-      "alternative_rates": {
-        "24": 3.99,
-        "27": 3.99,
-        "36": 4.49,
-        "39": 4.49,
-        "42": 4.49,
-        "48": 4.49,
-        "51": 4.49,
-        "54": 4.49,
-        "60": 4.99
-      },
-      "alternative_lease_cash": 0.0
+      "lease_cash": 9500,
+      "standard_rates": null,
+      "alternative_rates": null
     },
     {
       "model": "Durango SRT Hellcat",
       "brand": "Dodge",
-      "lease_cash": 16000.0,
-      "standard_rates": {
-        "24": 8.79,
-        "27": 8.79,
-        "36": 8.29,
-        "39": 8.29,
-        "42": 8.29,
-        "48": 8.29,
-        "51": 8.29,
-        "54": 8.29,
-        "60": 8.29
-      },
-      "alternative_rates": {
-        "24": 3.99,
-        "27": 3.99,
-        "36": 4.49,
-        "39": 4.49,
-        "42": 4.49,
-        "48": 4.49,
-        "51": 4.49,
-        "54": 4.49,
-        "60": 4.99
-      },
-      "alternative_lease_cash": 0.0
+      "lease_cash": 16000,
+      "standard_rates": null,
+      "alternative_rates": null
     },
     {
       "model": "Charger Daytona R/T (BEV)",
       "brand": "Dodge",
-      "lease_cash": 3000.0,
-      "standard_rates": {
-        "24": 8.79,
-        "27": 8.79,
-        "36": 8.29,
-        "39": 8.29,
-        "42": 8.29,
-        "48": 8.29,
-        "51": 8.29,
-        "54": 8.29,
-        "60": 8.29
-      },
-      "alternative_rates": {
-        "24": 2.99,
-        "27": 2.99,
-        "36": 3.99,
-        "39": 3.99,
-        "42": 3.99,
-        "48": 3.99,
-        "51": 3.99,
-        "54": 3.99,
-        "60": 5.99
-      },
-      "alternative_lease_cash": 0.0
+      "lease_cash": 3000,
+      "standard_rates": null,
+      "alternative_rates": null
     },
     {
       "model": "Charger Daytona R/T Plus (BEV)",
       "brand": "Dodge",
-      "lease_cash": 5000.0,
-      "standard_rates": {
-        "24": 8.79,
-        "27": 8.79,
-        "36": 8.29,
-        "39": 8.29,
-        "42": 8.29,
-        "48": 8.29,
-        "51": 8.29,
-        "54": 8.29,
-        "60": 8.29
-      },
-      "alternative_rates": {
-        "24": 2.99,
-        "27": 2.99,
-        "36": 3.99,
-        "39": 3.99,
-        "42": 3.99,
-        "48": 3.99,
-        "51": 3.99,
-        "54": 3.99,
-        "60": 5.99
-      },
-      "alternative_lease_cash": 0.0
+      "lease_cash": 5000,
+      "standard_rates": null,
+      "alternative_rates": null
     },
     {
       "model": "Charger Daytona Scat Pack (BEV)",
       "brand": "Dodge",
-      "lease_cash": 7000.0,
-      "standard_rates": {
-        "24": 8.79,
-        "27": 8.79,
-        "36": 8.29,
-        "39": 8.29,
-        "42": 8.29,
-        "48": 8.29,
-        "51": 8.29,
-        "54": 8.29,
-        "60": 8.29
-      },
-      "alternative_rates": {
-        "24": 2.99,
-        "27": 2.99,
-        "36": 3.99,
-        "39": 3.99,
-        "42": 3.99,
-        "48": 3.99,
-        "51": 3.99,
-        "54": 3.99,
-        "60": 5.99
-      },
-      "alternative_lease_cash": 0.0
+      "lease_cash": 7000,
+      "standard_rates": null,
+      "alternative_rates": null
     },
     {
       "model": "Hornet RT (PHEV)",
       "brand": "Dodge",
-      "lease_cash": 0.0,
-      "standard_rates": {
-        "24": 8.79,
-        "27": 8.79,
-        "36": 8.29,
-        "39": 8.29,
-        "42": 8.29,
-        "48": 8.29,
-        "51": 8.29,
-        "54": 8.29,
-        "60": 8.29
-      },
-      "alternative_rates": null,
-      "alternative_lease_cash": 0.0
+      "lease_cash": 0,
+      "standard_rates": null,
+      "alternative_rates": null
     },
     {
       "model": "Hornet RT Plus (PHEV)",
       "brand": "Dodge",
-      "lease_cash": 0.0,
-      "standard_rates": {
-        "24": 8.79,
-        "27": 8.79,
-        "36": 8.29,
-        "39": 8.29,
-        "42": 8.29,
-        "48": 8.29,
-        "51": 8.29,
-        "54": 8.29,
-        "60": 8.29
-      },
-      "alternative_rates": null,
-      "alternative_lease_cash": 0.0
+      "lease_cash": 0,
+      "standard_rates": null,
+      "alternative_rates": null
     },
     {
       "model": "Hornet GT (Gas)",
       "brand": "Dodge",
-      "lease_cash": 0.0,
-      "standard_rates": {
-        "24": 8.79,
-        "27": 8.79,
-        "36": 8.29,
-        "39": 8.29,
-        "42": 8.29,
-        "48": 8.29,
-        "51": 8.29,
-        "54": 8.29,
-        "60": 8.29
-      },
-      "alternative_rates": null,
-      "alternative_lease_cash": 0.0
+      "lease_cash": 0,
+      "standard_rates": null,
+      "alternative_rates": null
     },
     {
       "model": "Hornet GT Plus (Gas)",
       "brand": "Dodge",
-      "lease_cash": 0.0,
-      "standard_rates": {
-        "24": 8.79,
-        "27": 8.79,
-        "36": 8.29,
-        "39": 8.29,
-        "42": 8.29,
-        "48": 8.29,
-        "51": 8.29,
-        "54": 8.29,
-        "60": 8.29
-      },
-      "alternative_rates": null,
-      "alternative_lease_cash": 0.0
+      "lease_cash": 0,
+      "standard_rates": null,
+      "alternative_rates": null
+    },
+    {
+      "model": "Ram Promaster",
+      "brand": "Ram",
+      "lease_cash": 0,
+      "standard_rates": null,
+      "alternative_rates": null
     },
     {
       "model": "New Ram 1500 Tradesman, Warlock, Express (DT)",
       "brand": "Ram",
-      "lease_cash": 9250.0,
-      "standard_rates": {
-        "24": 8.79,
-        "27": 8.79,
-        "36": 8.29,
-        "39": 8.29,
-        "42": 8.29,
-        "48": 8.29,
-        "51": 8.29,
-        "54": 8.29,
-        "60": 8.29
-      },
-      "alternative_rates": {
-        "24": 5.49,
-        "27": 5.49,
-        "36": 5.49,
-        "39": 5.49,
-        "42": 5.49,
-        "48": 5.49,
-        "51": 5.49,
-        "54": 5.49,
-        "60": 6.49
-      },
-      "alternative_lease_cash": 0.0
+      "lease_cash": 9250,
+      "standard_rates": null,
+      "alternative_rates": null
     },
     {
       "model": "New Ram 1500 Big Horn (DT) with Off-Roader Value Package (4KF)",
       "brand": "Ram",
-      "lease_cash": 0.0,
+      "lease_cash": 0,
       "standard_rates": null,
-      "alternative_rates": {
-        "24": 5.49,
-        "27": 5.49,
-        "36": 5.49,
-        "39": 5.49,
-        "42": 5.49,
-        "48": 5.49,
-        "51": 5.49,
-        "54": 5.49,
-        "60": 6.49
-      },
-      "alternative_lease_cash": 0.0
+      "alternative_rates": null
     },
     {
       "model": "New Ram 1500 Big Horn (DT) (excludes Big Horn with Off-Roader Value Package (4KF))",
       "brand": "Ram",
-      "lease_cash": 9250.0,
-      "standard_rates": {
-        "24": 8.79,
-        "27": 8.79,
-        "36": 8.29,
-        "39": 8.29,
-        "42": 8.29,
-        "48": 8.29,
-        "51": 8.29,
-        "54": 8.29,
-        "60": 8.29
-      },
-      "alternative_rates": {
-        "24": 5.49,
-        "27": 5.49,
-        "36": 5.49,
-        "39": 5.49,
-        "42": 5.49,
-        "48": 5.49,
-        "51": 5.49,
-        "54": 5.49,
-        "60": 6.49
-      },
-      "alternative_lease_cash": 0.0
+      "lease_cash": 9250,
+      "standard_rates": null,
+      "alternative_rates": null
     },
     {
       "model": "New Ram 1500 Sport, Rebel (DT)",
       "brand": "Ram",
-      "lease_cash": 10000.0,
-      "standard_rates": {
-        "24": 8.79,
-        "27": 8.79,
-        "36": 8.29,
-        "39": 8.29,
-        "42": 8.29,
-        "48": 8.29,
-        "51": 8.29,
-        "54": 8.29,
-        "60": 8.29
-      },
-      "alternative_rates": {
-        "24": 5.49,
-        "27": 5.49,
-        "36": 5.49,
-        "39": 5.49,
-        "42": 5.49,
-        "48": 5.49,
-        "51": 5.49,
-        "54": 5.49,
-        "60": 6.49
-      },
-      "alternative_lease_cash": 0.0
+      "lease_cash": 10000,
+      "standard_rates": null,
+      "alternative_rates": null
     },
     {
       "model": "New Ram 1500 Laramie, Limited, Longhorn, Tungsten, RHO (DT)",
       "brand": "Ram",
-      "lease_cash": 12250.0,
-      "standard_rates": {
-        "24": 8.79,
-        "27": 8.79,
-        "36": 8.29,
-        "39": 8.29,
-        "42": 8.29,
-        "48": 8.29,
-        "51": 8.29,
-        "54": 8.29,
-        "60": 8.29
-      },
-      "alternative_rates": {
-        "24": 5.49,
-        "27": 5.49,
-        "36": 5.49,
-        "39": 5.49,
-        "42": 5.49,
-        "48": 5.49,
-        "51": 5.49,
-        "54": 5.49,
-        "60": 6.49
-      },
-      "alternative_lease_cash": 0.0
+      "lease_cash": 12250,
+      "standard_rates": null,
+      "alternative_rates": null
     },
     {
       "model": "Ram 2500/3500 Gas Models (Excludes Chassis Cab models, Diesel Engine models)",
       "brand": "Ram",
-      "lease_cash": 9500.0,
-      "standard_rates": {
-        "24": 8.79,
-        "27": 8.79,
-        "36": 8.29,
-        "39": 8.29,
-        "42": 8.29,
-        "48": 8.29,
-        "51": 8.29,
-        "54": 8.29,
-        "60": 8.29
-      },
-      "alternative_rates": {
-        "24": 3.99,
-        "27": 3.99,
-        "36": 4.99,
-        "39": 4.99,
-        "42": 4.99,
-        "48": 5.99,
-        "51": 5.99,
-        "54": 5.99,
-        "60": 5.99
-      },
-      "alternative_lease_cash": 0.0
+      "lease_cash": 9500,
+      "standard_rates": null,
+      "alternative_rates": null
     },
     {
       "model": "Ram 2500/3500 6.7L High Output Diesel Models (ETM) (excludes Chassis Cab models)",
       "brand": "Ram",
-      "lease_cash": 7000.0,
-      "standard_rates": {
-        "24": 8.79,
-        "27": 8.79,
-        "36": 8.29,
-        "39": 8.29,
-        "42": 8.29,
-        "48": 8.29,
-        "51": 8.29,
-        "54": 8.29,
-        "60": 8.29
-      },
-      "alternative_rates": {
-        "24": 3.99,
-        "27": 3.99,
-        "36": 4.99,
-        "39": 4.99,
-        "42": 4.99,
-        "48": 5.99,
-        "51": 5.99,
-        "54": 5.99,
-        "60": 5.99
-      },
-      "alternative_lease_cash": 0.0
+      "lease_cash": 7000,
+      "standard_rates": null,
+      "alternative_rates": null
+    },
+    {
+      "model": "Ram Chassis Cab",
+      "brand": "Ram",
+      "lease_cash": 0,
+      "standard_rates": null,
+      "alternative_rates": null
     },
     {
       "model": "FIAT 500e BEV",
       "brand": "FIAT",
-      "lease_cash": 5000.0,
+      "lease_cash": 5000,
       "standard_rates": null,
-      "alternative_rates": {
-        "24": 1.99,
-        "27": 1.99,
-        "36": 1.99,
-        "39": 1.99,
-        "42": 1.99,
-        "48": 1.99,
-        "51": 1.99,
-        "54": 1.99,
-        "60": 4.99
-      },
-      "alternative_lease_cash": 0.0
+      "alternative_rates": null
+    }
+  ],
+  "vehicles_2025": [
+    {
+      "model": "Pacifica Hybrid",
+      "brand": "Chrysler",
+      "lease_cash": 0,
+      "standard_rates": null,
+      "alternative_rates": null
+    },
+    {
+      "model": "All-New Wagoneer S (BEV)",
+      "brand": "Jeep",
+      "lease_cash": 0,
+      "standard_rates": null,
+      "alternative_rates": null
+    },
+    {
+      "model": "Durango SXT, SXT Plus, GT, GT Plus, GT Premium",
+      "brand": "Dodge",
+      "lease_cash": 8000,
+      "standard_rates": null,
+      "alternative_rates": null
+    },
+    {
+      "model": "Durango R/T, R/T Plus, Citadel",
+      "brand": "Dodge",
+      "lease_cash": 9500,
+      "standard_rates": null,
+      "alternative_rates": null
+    },
+    {
+      "model": "Durango SRT/SRT Hellcat",
+      "brand": "Dodge",
+      "lease_cash": 16000,
+      "standard_rates": null,
+      "alternative_rates": null
+    },
+    {
+      "model": "All-New Charger Daytona R/T (BEV)",
+      "brand": "Dodge",
+      "lease_cash": 0,
+      "standard_rates": null,
+      "alternative_rates": null
+    },
+    {
+      "model": "All-New Charger Daytona R/T Plus (BEV)",
+      "brand": "Dodge",
+      "lease_cash": 0,
+      "standard_rates": null,
+      "alternative_rates": null
+    },
+    {
+      "model": "All-New Charger Daytona Scat Pack (BEV)",
+      "brand": "Dodge",
+      "lease_cash": 0,
+      "standard_rates": null,
+      "alternative_rates": null
+    },
+    {
+      "model": "All-New Hornet RT EAWD (PHEV)",
+      "brand": "Dodge",
+      "lease_cash": 8500,
+      "standard_rates": null,
+      "alternative_rates": null
+    },
+    {
+      "model": "All-New Hornet RT Plus EAWD (PHEV)",
+      "brand": "Dodge",
+      "lease_cash": 10000,
+      "standard_rates": null,
+      "alternative_rates": null
+    },
+    {
+      "model": "Hornet GT (Gas)",
+      "brand": "Dodge",
+      "lease_cash": 3500,
+      "standard_rates": null,
+      "alternative_rates": null
+    },
+    {
+      "model": "Hornet GT Plus (Gas)",
+      "brand": "Dodge",
+      "lease_cash": 5500,
+      "standard_rates": null,
+      "alternative_rates": null
+    },
+    {
+      "model": "Ram Promaster",
+      "brand": "Ram",
+      "lease_cash": 0,
+      "standard_rates": null,
+      "alternative_rates": null
+    },
+    {
+      "model": "Ram Chassis Cab",
+      "brand": "Ram",
+      "lease_cash": 0,
+      "standard_rates": null,
+      "alternative_rates": null
     }
   ]
 }
