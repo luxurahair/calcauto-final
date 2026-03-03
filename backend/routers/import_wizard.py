@@ -22,6 +22,65 @@ try:
 except ImportError:
     EXCEL_AVAILABLE = False
 
+import re as re_module
+
+def normalize_correction_str(s: str) -> str:
+    """Normalise une chaine pour matching flexible des corrections."""
+    if not s:
+        return ""
+    s = s.strip().lower()
+    s = re_module.sub(r'\(cpos[^)]*\)', '', s)
+    s = re_module.sub(r'\([A-Z]{2,}[0-9]+[^)]*\)', '', s, flags=re_module.IGNORECASE)
+    s = re_module.sub(r'\(etm\)', '', s, flags=re_module.IGNORECASE)
+    s = re_module.sub(r'\s+', ' ', s).strip()
+    s = s.rstrip(' ,')
+    return s
+
+def normalize_correction_model(model: str) -> str:
+    """Normalise le nom du modele pour matching flexible."""
+    if not model:
+        return ""
+    m = model.strip().lower()
+    m = m.replace("grand cherokee/grand cherokee l", "grand cherokee/l")
+    m = m.replace("grand wagoneer / grand wagoneer l", "grand wagoneer/l")
+    m = m.replace("grand wagoneer/grand wagoneer l", "grand wagoneer/l")
+    m = m.replace("wagoneer / wagoneer l", "wagoneer/l")
+    m = m.replace("wagoneer/wagoneer l", "wagoneer/l")
+    m = re_module.sub(r'\s+', ' ', m).strip()
+    return m
+
+async def find_best_correction(brand: str, model: str, trim: str, year: int) -> dict:
+    """Cherche la meilleure correction memorisee avec matching flexible."""
+    # Strategie 1: Match exact
+    correction = await db.program_corrections.find_one(
+        {"brand": brand, "model": model, "trim": trim, "year": year},
+        {"_id": 0}
+    )
+    if correction:
+        return correction
+
+    # Strategie 2: Match normalise
+    norm_model = normalize_correction_model(model)
+    norm_trim = normalize_correction_str(trim)
+
+    all_corrections = await db.program_corrections.find(
+        {"year": year},
+        {"_id": 0}
+    ).to_list(500)
+
+    for c in all_corrections:
+        if c.get("brand", "").lower() != brand.lower():
+            continue
+        c_model = normalize_correction_model(c.get("model", ""))
+        c_trim = normalize_correction_str(c.get("trim", ""))
+        if c_model == norm_model and c_trim == norm_trim:
+            return c
+        # Trim partiel
+        if c_model == norm_model and norm_trim and c_trim and (c_trim in norm_trim or norm_trim in c_trim):
+            return c
+
+    return None
+
 router = APIRouter()
 
 # ============ Excel Generation Function ============
@@ -1052,6 +1111,7 @@ async def save_programs(request: SaveProgramsRequest):
     # Insert new programs
     inserted = 0
     skipped = 0
+    corrections_applied = []
     default_rates = {"rate_36": 4.99, "rate_48": 4.99, "rate_60": 4.99, "rate_72": 4.99, "rate_84": 4.99, "rate_96": 4.99}
     
     for prog_data in request.programs:
@@ -1075,26 +1135,51 @@ async def save_programs(request: SaveProgramsRequest):
         prog_data["bonus_cash"] = prog_data.get("bonus_cash", 0)
         prog_data["consumer_cash"] = prog_data.get("consumer_cash", 0)
 
-        # Appliquer les corrections memorisees (de l'import Excel precedent)
-        correction = await db.program_corrections.find_one({
-            "brand": prog_data.get("brand", ""),
-            "model": prog_data.get("model", ""),
-            "trim": prog_data.get("trim", ""),
-            "year": prog_data.get("year", 2026)
-        }, {"_id": 0})
+        # Appliquer les corrections memorisees (matching flexible)
+        correction = await find_best_correction(
+            prog_data.get("brand", ""),
+            prog_data.get("model", ""),
+            prog_data.get("trim", ""),
+            prog_data.get("year", 2026)
+        )
+        correction_applied = False
+        correction_details = {}
         if correction and correction.get("corrected_values"):
             cv = correction["corrected_values"]
             if cv.get("consumer_cash") is not None:
+                old_val = prog_data.get("consumer_cash", 0)
                 prog_data["consumer_cash"] = cv["consumer_cash"]
+                if old_val != cv["consumer_cash"]:
+                    correction_details["consumer_cash"] = {"avant": old_val, "apres": cv["consumer_cash"]}
             if cv.get("alternative_consumer_cash") is not None:
+                old_val = prog_data.get("alternative_consumer_cash", 0)
                 prog_data["alternative_consumer_cash"] = cv["alternative_consumer_cash"]
+                if old_val != cv["alternative_consumer_cash"]:
+                    correction_details["alternative_consumer_cash"] = {"avant": old_val, "apres": cv["alternative_consumer_cash"]}
             if cv.get("bonus_cash") is not None:
+                old_val = prog_data.get("bonus_cash", 0)
                 prog_data["bonus_cash"] = cv["bonus_cash"]
+                if old_val != cv["bonus_cash"]:
+                    correction_details["bonus_cash"] = {"avant": old_val, "apres": cv["bonus_cash"]}
             if cv.get("option1_rates"):
                 prog_data["option1_rates"] = cv["option1_rates"]
+                correction_details["option1_rates"] = "corrige"
             if cv.get("option2_rates") is not None:
                 prog_data["option2_rates"] = cv["option2_rates"]
+                correction_details["option2_rates"] = "corrige"
+            correction_applied = True
+            # Incrementer le compteur d'application
+            await db.program_corrections.update_one(
+                {"brand": correction["brand"], "model": correction["model"], "trim": correction["trim"], "year": correction["year"]},
+                {"$inc": {"times_applied": 1}, "$set": {"last_applied_at": datetime.utcnow().isoformat()}}
+            )
             logger.info(f"[CORRECTION] Appliquee pour {prog_data.get('brand')} {prog_data.get('model')} {prog_data.get('trim')}")
+        
+        if correction_applied:
+            corrections_applied.append({
+                "vehicule": f"{prog_data.get('brand')} {prog_data.get('model')} {prog_data.get('trim')} {prog_data.get('year')}",
+                "changes": correction_details
+            })
         
         try:
             prog = VehicleProgram(**prog_data)
@@ -1135,8 +1220,41 @@ async def save_programs(request: SaveProgramsRequest):
 
     return {
         "success": True,
-        "message": f"Sauvegardé {inserted} programmes pour {request.program_month}/{request.program_year}" + (f" ({skipped} ignorés)" if skipped > 0 else "") + " - Tous les utilisateurs deconnectes"
+        "message": f"Sauvegardé {inserted} programmes pour {request.program_month}/{request.program_year}" + (f" ({skipped} ignorés)" if skipped > 0 else "") + (f" — {len(corrections_applied)} corrections appliquées" if corrections_applied else "") + " - Tous les utilisateurs deconnectes",
+        "inserted": inserted,
+        "skipped": skipped,
+        "corrections_applied": len(corrections_applied),
+        "correction_details": corrections_applied[:50]
     }
+
+
+@router.get("/corrections")
+async def list_corrections():
+    """Retourne toutes les corrections memorisees avec statistiques."""
+    corrections = await db.program_corrections.find({}, {"_id": 0}).sort("corrected_at", -1).to_list(500)
+    return {
+        "total": len(corrections),
+        "corrections": corrections
+    }
+
+
+@router.delete("/corrections/{brand}/{model}/{year}")
+async def delete_correction(brand: str, model: str, year: int, password: str = ""):
+    """Supprime une correction memorisee."""
+    if password != ADMIN_PASSWORD:
+        raise HTTPException(status_code=401, detail="Mot de passe admin incorrect")
+    result = await db.program_corrections.delete_many({"brand": brand, "model": model, "year": year})
+    return {"deleted": result.deleted_count}
+
+
+@router.delete("/corrections/all")
+async def delete_all_corrections(password: str = ""):
+    """Supprime toutes les corrections memorisees."""
+    if password != ADMIN_PASSWORD:
+        raise HTTPException(status_code=401, detail="Mot de passe admin incorrect")
+    result = await db.program_corrections.delete_many({})
+    return {"deleted": result.deleted_count}
+
 
 async def send_import_report_email(programs_count: int, program_month: int, program_year: int, brands_summary: dict, skipped_count: int = 0):
     """Envoie automatiquement un rapport par email après l'import des programmes"""
