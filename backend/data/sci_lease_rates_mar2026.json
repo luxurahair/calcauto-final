@@ -17,22 +17,58 @@
       "model": "Grand Caravan SXT",
       "brand": "Chrysler",
       "lease_cash": 1000,
-      "standard_rates": null,
-      "alternative_rates": null
+      "standard_rates": {
+        "24": 8.79,
+        "27": 8.79,
+        "36": 8.29,
+        "48": 8.29,
+        "60": 8.29
+      },
+      "alternative_rates": {
+        "24": 1.99,
+        "27": 1.99,
+        "36": 1.99,
+        "48": 1.99,
+        "60": 1.99
+      }
     },
     {
       "model": "Pacifica Hybrid",
       "brand": "Chrysler",
       "lease_cash": 0,
-      "standard_rates": null,
-      "alternative_rates": null
+      "standard_rates": {
+        "24": 8.79,
+        "27": 8.79,
+        "36": 8.29,
+        "48": 8.29,
+        "60": 8.29
+      },
+      "alternative_rates": {
+        "24": 1.99,
+        "27": 1.99,
+        "36": 1.99,
+        "48": 1.99,
+        "60": 1.99
+      }
     },
     {
       "model": "Pacifica Select Models (excludes Hybrid)",
       "brand": "Chrysler",
       "lease_cash": 0,
-      "standard_rates": null,
-      "alternative_rates": null
+      "standard_rates": {
+        "24": 8.79,
+        "27": 8.79,
+        "36": 8.29,
+        "48": 8.29,
+        "60": 8.29
+      },
+      "alternative_rates": {
+        "24": 1.99,
+        "27": 1.99,
+        "36": 1.99,
+        "48": 1.99,
+        "60": 1.99
+      }
     },
     {
       "model": "Pacifica (excludes Select & Hybrid Models)",

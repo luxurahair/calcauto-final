@@ -25,6 +25,86 @@ except ImportError:
 
 import re as re_module
 
+def _merge_previous_sci_rates(new_vehicles_2026, new_vehicles_2025, current_month, current_year):
+    """Copie les taux du mois précédent pour les véhicules dont les taux sont vides.
+    Ceci évite de perdre les taux importés via Excel quand un nouveau mois est extrait."""
+    import glob
+    
+    month_order = {"jan": 1, "feb": 2, "mar": 3, "apr": 4, "may": 5, "jun": 6,
+                   "jul": 7, "aug": 8, "sep": 9, "oct": 10, "nov": 11, "dec": 12}
+    month_order_fr = {"janvier": 1, "février": 2, "fevrier": 2, "mars": 3, "avril": 4, "mai": 5, "juin": 6,
+                      "juillet": 7, "août": 8, "aout": 8, "septembre": 9, "octobre": 10, "novembre": 11, "décembre": 12, "decembre": 12}
+    all_months = {**month_order, **month_order_fr}
+    
+    data_dir = ROOT_DIR / "data"
+    best_file = None
+    best_score = (0, 0)
+    
+    for filepath in glob.glob(str(data_dir / "sci_lease_rates_*.json")):
+        fname = filepath.split("/")[-1]
+        part = fname.replace("sci_lease_rates_", "").replace(".json", "")
+        year_match = re.search(r'(\d{4})$', part)
+        if not year_match:
+            continue
+        year = int(year_match.group(1))
+        month_part = part[:year_match.start()].lower().strip()
+        month_num = all_months.get(month_part, 0)
+        
+        score = (year, month_num)
+        # Find the best file that is BEFORE the current month
+        if score < (current_year, current_month) and score > best_score:
+            best_score = score
+            best_file = filepath
+    
+    if not best_file:
+        logger.info("[SCI Merge] No previous SCI file found to merge rates from")
+        return
+    
+    try:
+        with open(best_file, 'r', encoding='utf-8') as f:
+            prev_data = json.load(f)
+        
+        # Build lookup: (brand_lower, model_lower) -> vehicle with rates
+        def build_lookup(vehicles):
+            lookup = {}
+            for v in (vehicles or []):
+                key = (v.get("brand", "").lower(), v.get("model", "").lower())
+                sr = v.get("standard_rates") or v.get("standard_rate") or {}
+                ar = v.get("alternative_rates") or v.get("alt_rates") or {}
+                if sr or ar:
+                    lookup[key] = {"standard_rates": sr, "alternative_rates": ar}
+            return lookup
+        
+        prev_2026 = build_lookup(prev_data.get("vehicles_2026", []))
+        prev_2025 = build_lookup(prev_data.get("vehicles_2025", []))
+        merged_count = 0
+        
+        for v in (new_vehicles_2026 or []):
+            sr = v.get("standard_rates") or {}
+            ar = v.get("alternative_rates") or {}
+            if not sr and not ar:
+                key = (v.get("brand", "").lower(), v.get("model", "").lower())
+                prev = prev_2026.get(key)
+                if prev:
+                    v["standard_rates"] = prev["standard_rates"]
+                    v["alternative_rates"] = prev["alternative_rates"]
+                    merged_count += 1
+        
+        for v in (new_vehicles_2025 or []):
+            sr = v.get("standard_rates") or {}
+            ar = v.get("alternative_rates") or {}
+            if not sr and not ar:
+                key = (v.get("brand", "").lower(), v.get("model", "").lower())
+                prev = prev_2025.get(key)
+                if prev:
+                    v["standard_rates"] = prev["standard_rates"]
+                    v["alternative_rates"] = prev["alternative_rates"]
+                    merged_count += 1
+        
+        logger.info(f"[SCI Merge] Merged rates from {best_file} for {merged_count} vehicles")
+    except Exception as e:
+        logger.error(f"[SCI Merge] Error merging rates: {e}")
+
 def normalize_correction_str(s: str) -> str:
     """Normalise une chaine pour matching flexible des corrections."""
     if not s:
@@ -827,6 +907,9 @@ EXTRAIS ABSOLUMENT TOUS LES VÉHICULES. JSON valide uniquement."""
                         sci_lease_count = len(vehicles_2026) + len(vehicles_2025)
                         
                         if sci_lease_count > 0:
+                            # Merge rates from previous month
+                            _merge_previous_sci_rates(vehicles_2026, vehicles_2025, program_month, program_year)
+                            
                             # Build the SCI lease rates JSON
                             month_names_local = ["", "Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
                                            "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"]
@@ -1102,6 +1185,9 @@ EXTRAIS ABSOLUMENT TOUS LES VÉHICULES. JSON valide uniquement."""
                         sci_lease_count = len(vehicles_2026) + len(vehicles_2025)
 
                         if sci_lease_count > 0:
+                            # Merge rates from previous month
+                            _merge_previous_sci_rates(vehicles_2026, vehicles_2025, program_month, program_year)
+                            
                             month_names_local = ["", "Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
                                                "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"]
                             en_month_abbrev = ["", "jan", "feb", "mar", "apr", "may", "jun",

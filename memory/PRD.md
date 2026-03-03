@@ -20,7 +20,8 @@ Application de gestion de financement et location automobile pour concessionnair
 - [x] Excel 2 onglets: Programmes + SCI Lease — email inclut les deux
 - [x] Modal detail offre CRM — comparaison complete avec METHODE DELTA (vraies economies)
 - [x] Fix "Ouvrir le calcul" historique — restauration partielle pour anciennes soumissions
-- [x] **FIX: Endpoints SCI dynamiques** — plus de fichiers codes en dur `feb2026`. Trouve automatiquement le fichier le plus recent (Mars, Avril, etc.) — 3 mars 2026
+- [x] **FIX PERMANENT: Endpoints SCI dynamiques** — `_get_latest_data_file()` trouve le fichier le plus recent — 3 mars 2026
+- [x] **FIX PERMANENT: Merge taux SCI** — `_merge_previous_sci_rates()` copie les taux du mois precedent lors d'une nouvelle extraction — 3 mars 2026
 
 ## Standard Excel Structure (FIGEE)
 ### Onglet 1: Programmes
@@ -37,17 +38,13 @@ Application de gestion de financement et location automobile pour concessionnair
 - Frontend: Expo/React Native Web, pre-built to /app/frontend/dist
 - Backend: FastAPI on port 8001
 - Frontend rebuild: npx expo export --platform web + supervisorctl restart expo
-- Async extraction: POST /api/extract-pdf-async + GET /api/extract-task/{task_id}
-- Prompt AI centralise dans build_extraction_prompt() - NEVER modify column structure
-- **SCI files dynamiques**: `_get_latest_data_file()` dans sci.py scanne le dossier data/ et retourne le fichier le plus recent par mois/annee
+- **SCI dynamique**: `_get_latest_data_file(prefix)` dans sci.py scanne data/ par mois/annee
+- **SCI merge**: `_merge_previous_sci_rates()` dans import_wizard.py copie les taux du mois precedent quand une nouvelle extraction cree un fichier avec taux vides
 
 ## CRM Offer System — METHODE DELTA
-- POST /api/compare-programs: Compare anciennes soumissions vs programmes actuels
-  - Methode delta: compare sur meme base (sans taxes/frais)
-  - Delta = old_theoretical - new_theoretical
-  - New estimated payment = old_actual_payment - delta
-- GET /api/better-offers: Offres stockees
-- POST /api/better-offers/{id}/approve: Approuver et envoyer
+- Compare sur meme base (sans taxes/frais) pour eviter fausses economies
+- Delta = old_theoretical - new_theoretical
+- New estimated payment = old_actual_payment - delta
 
 ## Backlog
 - (P1) Creer UI admin pour gestion des corrections sauvegardees
