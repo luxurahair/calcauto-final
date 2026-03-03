@@ -86,6 +86,89 @@ router = APIRouter()
 
 # ============ Excel Generation Function ============
 
+# ============ STANDARD EXTRACTION PROMPT (Source de verite pour la structure Excel) ============
+# Ce prompt definit la structure FIGEE du fichier Excel genere.
+# Colonnes: A(Marque) B(Modele) C(Trim) D(Annee) | E(Rabais Opt1) F-K(Taux Opt1) | L(Rabais Opt2) M-R(Taux Opt2) | S(Bonus)
+# L'IA peut ajouter des lignes (nouveaux vehicules) mais NE DOIT JAMAIS modifier la structure.
+
+def build_extraction_prompt(pdf_text: str) -> str:
+    """Construit le prompt d'extraction standardise. Structure FIGEE: ne JAMAIS modifier les colonnes."""
+    return f"""EXTRAIS TOUS LES VÉHICULES de ce PDF de programmes de financement FCA Canada.
+
+TEXTE COMPLET DU PDF:
+{pdf_text}
+
+=== STRUCTURE DU FICHIER EXCEL (FIGÉE - NE PAS MODIFIER) ===
+Le résultat sera converti en Excel avec EXACTEMENT cette structure:
+- Colonne A: Marque (brand)
+- Colonne B: Modèle (model)  
+- Colonne C: Version/Trim (trim)
+- Colonne D: Année (year)
+- Colonne E: Rabais Option 1 - Consumer Cash en $ (consumer_cash)
+- Colonnes F-K: Taux Option 1 - 36m, 48m, 60m, 72m, 84m, 96m (option1_rates)
+- Colonne L: Rabais Option 2 - Alternative Consumer Cash en $ (alt_consumer_cash)
+- Colonnes M-R: Taux Option 2 - 36m, 48m, 60m, 72m, 84m, 96m (option2_rates)
+- Colonne S: Bonus Cash en $ (bonus_cash)
+
+=== FORMAT DES LIGNES DU PDF ===
+Chaque ligne suit ce format:
+VÉHICULE [Consumer Cash $X,XXX] [6 taux Option1] [Alternative Consumer Cash $X,XXX] [6 taux Option2] [Delivery Credit]
+
+- Si tu vois "- - - - - -" = option non disponible (null)
+- Si tu vois "P" avant un montant = c'est quand même le montant
+- 6 taux = 36M, 48M, 60M, 72M, 84M, 96M
+
+=== OPTION 2 - RÈGLE CRITIQUE ===
+ATTENTION: BEAUCOUP de véhicules n'ont PAS d'Option 2 (Alternative Consumer Cash Finance Rates).
+- Les colonnes Option 2 dans le PDF sont SOUVENT VIDES (pas de chiffres, pas de tirets)
+- Si les colonnes Option 2 d'un véhicule sont VIDES → alt_consumer_cash = 0 et option2_rates = null
+- NE PAS inventer ou copier des taux/rabais Option 2 d'un autre véhicule
+- Chaque ligne/véhicule doit être traitée INDIVIDUELLEMENT pour Option 2
+- En cas de DOUTE, mettre alt_consumer_cash = 0 et option2_rates = null
+
+=== BONUS CASH / DELIVERY CREDIT - RÈGLE CRITIQUE ===
+La dernière colonne du PDF est "Delivery Credit" (code 261Q02).
+TYPE OF SALE: 'E' Only = à IGNORER.
+*** bonus_cash doit TOUJOURS être 0 pour TOUS les véhicules ***
+
+=== MARQUES À EXTRAIRE ===
+- CHRYSLER: Grand Caravan, Pacifica
+- JEEP: Compass, Cherokee, Wrangler, Gladiator, Grand Cherokee, Grand Wagoneer
+- DODGE: Durango, Charger, Hornet
+- RAM: ProMaster, 1500, 2500, 3500, Chassis Cab
+- FIAT: 500e
+
+=== ANNÉES ===
+- "2026 MODELS" → year: 2026
+- "2025 MODELS" → year: 2025
+Extrais les véhicules des DEUX sections!
+
+=== JSON REQUIS (Structure FIGÉE) ===
+{{{{
+    "programs": [
+        {{{{
+            "brand": "Chrysler",
+            "model": "Grand Caravan", 
+            "trim": "SXT",
+            "year": 2026,
+            "consumer_cash": 0,
+            "alt_consumer_cash": 0,
+            "bonus_cash": 0,
+            "option1_rates": {{{{"rate_36": 4.99, "rate_48": 4.99, "rate_60": 4.99, "rate_72": 4.99, "rate_84": 4.99, "rate_96": 4.99}}}},
+            "option2_rates": null
+        }}}}
+    ]
+}}}}
+
+RÈGLES FINALES:
+- EXTRAIS ABSOLUMENT TOUS LES VÉHICULES DES SECTIONS 2026 ET 2025
+- bonus_cash = 0 POUR TOUS (Delivery Credit est ignoré)
+- consumer_cash = Rabais Option 1 (colonne E)
+- alt_consumer_cash = Rabais Option 2 / Alternative Consumer Cash (colonne L). Si pas d'Option 2 → 0
+- CHAQUE ligne du PDF = 1 entrée dans le JSON"""
+
+
+
 def generate_excel_from_programs(programs: List[Dict[str, Any]], program_month: int, program_year: int) -> bytes:
     """Génère un fichier Excel selon le format du PDF Stellantis"""
     if not EXCEL_AVAILABLE:
@@ -371,79 +454,7 @@ async def extract_pdf(
             # Use OpenAI to extract structured data
             client = OpenAI(api_key=OPENAI_API_KEY)
             
-            extraction_prompt = f"""EXTRAIS TOUS LES VÉHICULES de ce PDF de programmes de financement FCA Canada.
-
-TEXTE COMPLET DU PDF:
-{pdf_text}
-
-=== FORMAT DES LIGNES DU PDF ===
-Chaque ligne suit ce format:
-VÉHICULE [Consumer Cash $X,XXX] [6 taux Option1] [6 taux Option2] [Bonus Cash]
-
-- Si tu vois "- - - - - -" = option non disponible (null)
-- Si tu vois "P" avant un montant = c'est quand même le montant
-- 6 taux = 36M, 48M, 60M, 72M, 84M, 96M
-
-=== OPTION 2 - RÈGLE CRITIQUE ===
-ATTENTION: BEAUCOUP de véhicules n'ont PAS d'Option 2 (Alternative Consumer Cash Finance Rates).
-- Les colonnes Option 2 dans le PDF sont SOUVENT VIDES (pas de chiffres, pas de tirets)
-- Si les colonnes Option 2 d'un véhicule sont VIDES ou contiennent UNIQUEMENT des tirets "- - - - - -", alors option2_rates = null
-- NE PAS inventer ou copier des taux Option 2 d'un autre véhicule
-- NE PAS supposer qu'un véhicule a Option 2 juste parce qu'un autre véhicule du même modèle l'a
-- Chaque ligne/véhicule doit être traitée INDIVIDUELLEMENT pour Option 2
-- En cas de DOUTE sur l'existence d'Option 2, mettre null
-
-=== BONUS CASH / DELIVERY CREDIT - RÈGLE CRITIQUE ===
-ATTENTION: La dernière colonne du PDF est "Delivery Credit" (code 261Q02).
-Cette colonne est marquée TYPE OF SALE: 'E' Only.
-*** NE JAMAIS IMPORTER LES VALEURS DE DELIVERY CREDIT ***
-Le Delivery Credit ($1,000, $3,000, $5,000 etc.) est UNIQUEMENT pour les ventes en ligne ('E').
-Il ne s'applique PAS aux ventes en concession.
-bonus_cash doit TOUJOURS être 0 pour TOUS les véhicules.
-Ignore complètement cette colonne lors de l'extraction.
-
-=== EXEMPLES ===
-
-2026 MODELS:
-"Grand Caravan SXT    4.99%... " → bonus_cash: 0
-"Ram 1500 Big Horn    $6,000  4.99%..." → bonus_cash: 0
-
-2025 MODELS (IGNORER le Delivery Credit à droite!):
-"Compass North  $7,500  4.99%...   $1,000" → bonus_cash: 0 (le $1,000 est Delivery Credit = IGNORER)
-"Ram 1500 Sport  $10,000  4.99%...  $3,000" → bonus_cash: 0 (le $3,000 est Delivery Credit = IGNORER)
-"Ram 2500/3500 Gas Models  $9,500  4.99%...  -" → bonus_cash: 0
-
-=== MARQUES À EXTRAIRE ===
-- CHRYSLER: Grand Caravan, Pacifica
-- JEEP: Compass, Cherokee, Wrangler, Gladiator, Grand Cherokee, Grand Wagoneer
-- DODGE: Durango, Charger, Hornet
-- RAM: ProMaster, 1500, 2500, 3500, Chassis Cab
-
-=== ANNÉES ===
-- "2026 MODELS" → year: 2026
-- "2025 MODELS" → year: 2025
-Extrais les véhicules des DEUX sections!
-
-=== JSON REQUIS ===
-{{
-    "programs": [
-        {{
-            "brand": "Chrysler",
-            "model": "Grand Caravan", 
-            "trim": "SXT",
-            "year": 2026,
-            "consumer_cash": 0,
-            "bonus_cash": 0,
-            "option1_rates": {{"rate_36": 4.99, "rate_48": 4.99, "rate_60": 4.99, "rate_72": 4.99, "rate_84": 4.99, "rate_96": 4.99}},
-            "option2_rates": null
-        }},
-        ... TOUS les autres véhicules ...
-    ]
-}}
-
-EXTRAIS ABSOLUMENT TOUS LES VÉHICULES DES SECTIONS 2026 ET 2025. 
-BONUS_CASH = 0 POUR TOUS LES VÉHICULES (la colonne Delivery Credit 'E' Only est à IGNORER).
-VÉRIFIE OPTION 2 POUR CHAQUE VÉHICULE: si les colonnes sont vides → null!"""
+            extraction_prompt = build_extraction_prompt(pdf_text)
 
             response = client.chat.completions.create(
                 model="gpt-4o",
@@ -798,65 +809,9 @@ async def _run_extraction_task(task_id: str, pdf_content: bytes, password: str,
                 {"$set": {"status": "ai_processing", "message": "Analyse IA en cours (programmes)..."}}
             )
 
-            # Use OpenAI to extract structured data (reuse the same prompt as sync endpoint)
+            # Use OpenAI to extract structured data (standardized prompt)
             client = OpenAI(api_key=OPENAI_API_KEY)
-            extraction_prompt = f"""EXTRAIS TOUS LES VÉHICULES de ce PDF de programmes de financement FCA Canada.
-
-TEXTE COMPLET DU PDF:
-{pdf_text}
-
-=== FORMAT DES LIGNES DU PDF ===
-Chaque ligne suit ce format:
-VÉHICULE [Consumer Cash $X,XXX] [6 taux Option1] [6 taux Option2] [Bonus Cash]
-
-- Si tu vois "- - - - - -" = option non disponible (null)
-- Si tu vois "P" avant un montant = c'est quand même le montant
-- 6 taux = 36M, 48M, 60M, 72M, 84M, 96M
-
-=== OPTION 2 - RÈGLE CRITIQUE ===
-ATTENTION: BEAUCOUP de véhicules n'ont PAS d'Option 2 (Alternative Consumer Cash Finance Rates).
-- Les colonnes Option 2 dans le PDF sont SOUVENT VIDES (pas de chiffres, pas de tirets)
-- Si les colonnes Option 2 d'un véhicule sont VIDES ou contiennent UNIQUEMENT des tirets "- - - - - -", alors option2_rates = null
-- NE PAS inventer ou copier des taux Option 2 d'un autre véhicule
-- NE PAS supposer qu'un véhicule a Option 2 juste parce qu'un autre véhicule du même modèle l'a
-- Chaque ligne/véhicule doit être traitée INDIVIDUELLEMENT pour Option 2
-- En cas de DOUTE sur l'existence d'Option 2, mettre null
-
-=== BONUS CASH / DELIVERY CREDIT - RÈGLE CRITIQUE ===
-ATTENTION: La dernière colonne du PDF est "Delivery Credit" (code 261Q02).
-Cette colonne est marquée TYPE OF SALE: 'E' Only.
-*** NE JAMAIS IMPORTER LES VALEURS DE DELIVERY CREDIT ***
-bonus_cash doit TOUJOURS être 0 pour TOUS les véhicules.
-
-=== MARQUES À EXTRAIRE ===
-- CHRYSLER: Grand Caravan, Pacifica
-- JEEP: Compass, Cherokee, Wrangler, Gladiator, Grand Cherokee, Grand Wagoneer
-- DODGE: Durango, Charger, Hornet
-- RAM: ProMaster, 1500, 2500, 3500, Chassis Cab
-
-=== ANNÉES ===
-- "2026 MODELS" → year: 2026
-- "2025 MODELS" → year: 2025
-Extrais les véhicules des DEUX sections!
-
-=== JSON REQUIS ===
-{{
-    "programs": [
-        {{
-            "brand": "Chrysler",
-            "model": "Grand Caravan", 
-            "trim": "SXT",
-            "year": 2026,
-            "consumer_cash": 0,
-            "bonus_cash": 0,
-            "option1_rates": {{"rate_36": 4.99, "rate_48": 4.99, "rate_60": 4.99, "rate_72": 4.99, "rate_84": 4.99, "rate_96": 4.99}},
-            "option2_rates": null
-        }}
-    ]
-}}
-
-EXTRAIS ABSOLUMENT TOUS LES VÉHICULES DES SECTIONS 2026 ET 2025. 
-BONUS_CASH = 0 POUR TOUS LES VÉHICULES."""
+            extraction_prompt = build_extraction_prompt(pdf_text)
 
             response = client.chat.completions.create(
                 model="gpt-4o",
