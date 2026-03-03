@@ -13,13 +13,51 @@ except ImportError:
 
 router = APIRouter()
 
+# ============ HELPER: Find latest data file ============
+
+def _get_latest_data_file(prefix: str) -> str:
+    """Find the most recent data file matching prefix (e.g. 'sci_lease_rates', 'sci_residuals')"""
+    import glob, re
+    data_dir = ROOT_DIR / "data"
+    
+    month_order_en = {"jan": 1, "feb": 2, "mar": 3, "apr": 4, "may": 5, "jun": 6,
+                      "jul": 7, "aug": 8, "sep": 9, "oct": 10, "nov": 11, "dec": 12}
+    month_order_fr = {"janvier": 1, "février": 2, "fevrier": 2, "mars": 3, "avril": 4, "mai": 5, "juin": 6,
+                      "juillet": 7, "août": 8, "aout": 8, "septembre": 9, "octobre": 10, "novembre": 11, "décembre": 12, "decembre": 12}
+    
+    all_months = {**month_order_en, **month_order_fr}
+    
+    best_file = None
+    best_score = (0, 0)  # (year, month)
+    
+    pattern = str(data_dir / f"{prefix}_*.json")
+    for filepath in glob.glob(pattern):
+        fname = filepath.split("/")[-1]
+        # Remove prefix and .json to get month+year part
+        part = fname.replace(f"{prefix}_", "").replace(".json", "")
+        # Extract year (last 4 digits)
+        year_match = re.search(r'(\d{4})$', part)
+        if not year_match:
+            continue
+        year = int(year_match.group(1))
+        month_part = part[:year_match.start()].lower().strip()
+        month_num = all_months.get(month_part, 0)
+        
+        score = (year, month_num)
+        if score > best_score:
+            best_score = score
+            best_file = filepath
+    
+    return best_file
+
+
 # ============ SCI LEASE ENDPOINTS ============
 
 @router.get("/sci/residuals")
 async def get_sci_residuals():
     """Retourne les valeurs résiduelles SCI pour tous les véhicules"""
-    residuals_path = ROOT_DIR / "data" / "sci_residuals_feb2026.json"
-    if not residuals_path.exists():
+    residuals_path = _get_latest_data_file("sci_residuals")
+    if not residuals_path:
         raise HTTPException(status_code=404, detail="Residual data not found")
     with open(residuals_path, 'r') as f:
         data = json.load(f)
@@ -28,8 +66,8 @@ async def get_sci_residuals():
 @router.get("/sci/lease-rates")
 async def get_sci_lease_rates():
     """Retourne les taux de location SCI et lease cash"""
-    rates_path = ROOT_DIR / "data" / "sci_lease_rates_feb2026.json"
-    if not rates_path.exists():
+    rates_path = _get_latest_data_file("sci_lease_rates")
+    if not rates_path:
         raise HTTPException(status_code=404, detail="Lease rates data not found")
     with open(rates_path, 'r') as f:
         data = json.load(f)
@@ -38,8 +76,8 @@ async def get_sci_lease_rates():
 @router.get("/sci/vehicle-hierarchy")
 async def get_sci_vehicle_hierarchy():
     """Retourne la hiérarchie des véhicules SCI: marque -> modèle -> trim -> body_style"""
-    residuals_path = ROOT_DIR / "data" / "sci_residuals_feb2026.json"
-    if not residuals_path.exists():
+    residuals_path = _get_latest_data_file("sci_residuals")
+    if not residuals_path:
         raise HTTPException(status_code=404, detail="Residual data not found")
     with open(residuals_path, 'r') as f:
         data = json.load(f)
@@ -115,9 +153,9 @@ async def calculate_lease(payload: dict):
         TAUX_TAXE = TPS + TVQ
         
         # Ajustement km
-        residuals_path = ROOT_DIR / "data" / "sci_residuals_feb2026.json"
+        residuals_path = _get_latest_data_file("sci_residuals")
         km_adj = 0
-        if residuals_path.exists():
+        if residuals_path:
             with open(residuals_path, 'r') as f:
                 res_data = json.load(f)
             adjustments = res_data.get("km_adjustments", {}).get("adjustments", {})
@@ -221,8 +259,8 @@ async def export_sci_lease_excel():
     if not EXCEL_AVAILABLE:
         raise HTTPException(status_code=500, detail="openpyxl non disponible")
 
-    rates_path = ROOT_DIR / "data" / "sci_lease_rates_feb2026.json"
-    if not rates_path.exists():
+    rates_path = _get_latest_data_file("sci_lease_rates")
+    if not rates_path:
         raise HTTPException(status_code=404, detail="Fichier de taux SCI introuvable")
 
     with open(rates_path, 'r') as f:
@@ -333,7 +371,9 @@ async def import_sci_lease_excel(file: UploadFile = File(...), password: str = F
     if not EXCEL_AVAILABLE:
         raise HTTPException(status_code=500, detail="openpyxl non disponible")
 
-    rates_path = ROOT_DIR / "data" / "sci_lease_rates_feb2026.json"
+    rates_path = _get_latest_data_file("sci_lease_rates")
+    if not rates_path:
+        raise HTTPException(status_code=404, detail="Fichier de taux SCI introuvable")
     with open(rates_path, 'r') as f:
         data = json.load(f)
 

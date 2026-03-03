@@ -18,11 +18,9 @@ Application de gestion de financement et location automobile pour concessionnair
 - [x] Import Excel cree les programmes manquants
 - [x] Prompt AI standardise dans build_extraction_prompt() — structure FIGEE, incluant alt_consumer_cash
 - [x] Excel 2 onglets: Programmes + SCI Lease — email inclut les deux
-- [x] Modal detail offre CRM — comparaison complete ancien/nouveau deal avec table economies par terme
+- [x] Modal detail offre CRM — comparaison complete avec METHODE DELTA (vraies economies)
 - [x] Fix "Ouvrir le calcul" historique — restauration partielle pour anciennes soumissions
-- [x] **METHODE DELTA** pour comparaison offres — compare sur meme base (sans taxes/frais) puis applique delta au paiement reel. Evite les fausses economies — 3 mars 2026
-- [x] Fix $NaN dans l'en-tete du modal d'offre
-- [x] Table COMPARAISON PAR TERME — montre economies par terme (36-96m) avec taux, Option 1 et Option 2
+- [x] **FIX: Endpoints SCI dynamiques** — plus de fichiers codes en dur `feb2026`. Trouve automatiquement le fichier le plus recent (Mars, Avril, etc.) — 3 mars 2026
 
 ## Standard Excel Structure (FIGEE)
 ### Onglet 1: Programmes
@@ -41,16 +39,15 @@ Application de gestion de financement et location automobile pour concessionnair
 - Frontend rebuild: npx expo export --platform web + supervisorctl restart expo
 - Async extraction: POST /api/extract-pdf-async + GET /api/extract-task/{task_id}
 - Prompt AI centralise dans build_extraction_prompt() - NEVER modify column structure
+- **SCI files dynamiques**: `_get_latest_data_file()` dans sci.py scanne le dossier data/ et retourne le fichier le plus recent par mois/annee
 
 ## CRM Offer System — METHODE DELTA
 - POST /api/compare-programs: Compare anciennes soumissions vs programmes actuels
-  - **Methode delta**: Calcule old_theoretical et new_theoretical (meme base, sans taxes/frais)
-  - Delta = old_theoretical - new_theoretical (vraie economie)
+  - Methode delta: compare sur meme base (sans taxes/frais)
+  - Delta = old_theoretical - new_theoretical
   - New estimated payment = old_actual_payment - delta
-  - Retourne payments_by_term avec opt1_delta et opt2_delta pour 6 termes
-  - Cherche l'ancien programme dans la DB pour obtenir old_consumer_cash/bonus_cash
-- GET /api/better-offers: Offres stockees en attente d'approbation
-- POST /api/better-offers/{id}/approve: Approuver et envoyer email au client
+- GET /api/better-offers: Offres stockees
+- POST /api/better-offers/{id}/approve: Approuver et envoyer
 
 ## Backlog
 - (P1) Creer UI admin pour gestion des corrections sauvegardees
