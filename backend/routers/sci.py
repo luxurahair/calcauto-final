@@ -15,8 +15,10 @@ router = APIRouter()
 
 # ============ HELPER: Find latest data file ============
 
-def _get_latest_data_file(prefix: str) -> str:
-    """Find the most recent data file matching prefix (e.g. 'sci_lease_rates', 'sci_residuals')"""
+def _get_latest_data_file(prefix: str, target_month: int = None, target_year: int = None) -> str:
+    """Find a specific or the most recent data file matching prefix.
+    If target_month/year are provided, find that specific month's file.
+    Otherwise, find the most recent."""
     import glob, re
     data_dir = ROOT_DIR / "data"
     
@@ -28,14 +30,13 @@ def _get_latest_data_file(prefix: str) -> str:
     all_months = {**month_order_en, **month_order_fr}
     
     best_file = None
-    best_score = (0, 0)  # (year, month)
+    best_score = (0, 0)
+    target_file = None
     
     pattern = str(data_dir / f"{prefix}_*.json")
     for filepath in glob.glob(pattern):
         fname = filepath.split("/")[-1]
-        # Remove prefix and .json to get month+year part
         part = fname.replace(f"{prefix}_", "").replace(".json", "")
-        # Extract year (last 4 digits)
         year_match = re.search(r'(\d{4})$', part)
         if not year_match:
             continue
@@ -43,10 +44,18 @@ def _get_latest_data_file(prefix: str) -> str:
         month_part = part[:year_match.start()].lower().strip()
         month_num = all_months.get(month_part, 0)
         
+        # If targeting a specific month, check for exact match
+        if target_month and target_year:
+            if year == target_year and month_num == target_month:
+                target_file = filepath
+        
         score = (year, month_num)
         if score > best_score:
             best_score = score
             best_file = filepath
+    
+    if target_month and target_year:
+        return target_file  # None if not found for that specific month
     
     return best_file
 
@@ -54,21 +63,21 @@ def _get_latest_data_file(prefix: str) -> str:
 # ============ SCI LEASE ENDPOINTS ============
 
 @router.get("/sci/residuals")
-async def get_sci_residuals():
-    """Retourne les valeurs résiduelles SCI pour tous les véhicules"""
-    residuals_path = _get_latest_data_file("sci_residuals")
+async def get_sci_residuals(month: int = None, year: int = None):
+    """Retourne les valeurs résiduelles SCI. month/year optionnels pour historique."""
+    residuals_path = _get_latest_data_file("sci_residuals", month, year)
     if not residuals_path:
-        raise HTTPException(status_code=404, detail="Residual data not found")
+        raise HTTPException(status_code=404, detail="Residual data not found" + (f" for {month}/{year}" if month else ""))
     with open(residuals_path, 'r') as f:
         data = json.load(f)
     return data
 
 @router.get("/sci/lease-rates")
-async def get_sci_lease_rates():
-    """Retourne les taux de location SCI et lease cash"""
-    rates_path = _get_latest_data_file("sci_lease_rates")
+async def get_sci_lease_rates(month: int = None, year: int = None):
+    """Retourne les taux de location SCI et lease cash. month/year optionnels pour historique."""
+    rates_path = _get_latest_data_file("sci_lease_rates", month, year)
     if not rates_path:
-        raise HTTPException(status_code=404, detail="Lease rates data not found")
+        raise HTTPException(status_code=404, detail="Lease rates data not found" + (f" for {month}/{year}" if month else ""))
     with open(rates_path, 'r') as f:
         data = json.load(f)
     return data
@@ -359,8 +368,9 @@ async def export_sci_lease_excel():
 
 
 @router.post("/sci/import-excel")
-async def import_sci_lease_excel(file: UploadFile = File(...), password: str = Form("")):
-    """Importe un Excel corrige pour les taux SCI avec comparaison avant/apres."""
+async def import_sci_lease_excel(file: UploadFile = File(...), password: str = Form(""), program_month: int = Form(0), program_year: int = Form(0)):
+    """Importe un Excel corrigé pour les taux SCI. 
+    program_month/year optionnels pour cibler un mois spécifique (sinon le plus récent)."""
     from database import ADMIN_PASSWORD
     import uuid
     from datetime import datetime
@@ -371,7 +381,20 @@ async def import_sci_lease_excel(file: UploadFile = File(...), password: str = F
     if not EXCEL_AVAILABLE:
         raise HTTPException(status_code=500, detail="openpyxl non disponible")
 
-    rates_path = _get_latest_data_file("sci_lease_rates")
+    # Cibler le bon fichier: mois spécifique OU le plus récent
+    if program_month > 0 and program_year > 0:
+        rates_path = _get_latest_data_file("sci_lease_rates", program_month, program_year)
+        if not rates_path:
+            # Créer le fichier pour ce mois s'il n'existe pas
+            en_months = ["", "jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"]
+            rates_path = str(ROOT_DIR / "data" / f"sci_lease_rates_{en_months[program_month]}{program_year}.json")
+            fr_months = ["", "Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"]
+            initial_data = {"program_period": f"{fr_months[program_month]} {program_year}", "terms": [24, 27, 36, 39, 42, 48, 51, 54, 60], "vehicles_2026": [], "vehicles_2025": []}
+            with open(rates_path, 'w') as f:
+                json.dump(initial_data, f, indent=2, ensure_ascii=False)
+    else:
+        rates_path = _get_latest_data_file("sci_lease_rates")
+    
     if not rates_path:
         raise HTTPException(status_code=404, detail="Fichier de taux SCI introuvable")
     with open(rates_path, 'r') as f:
