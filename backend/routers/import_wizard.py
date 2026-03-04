@@ -105,6 +105,56 @@ def _merge_previous_sci_rates(new_vehicles_2026, new_vehicles_2025, current_mont
     except Exception as e:
         logger.error(f"[SCI Merge] Error merging rates: {e}")
 
+def _strip_delivery_credit(text: str) -> str:
+    """
+    ╔══════════════════════════════════════════════════════════╗
+    ║  SUPPRIMER la colonne Delivery Credit (261Q03, 'E' Only)║
+    ║  du texte PDF AVANT envoi à l'IA.                       ║
+    ║  L'IA ne verra JAMAIS ces montants.                     ║
+    ╚══════════════════════════════════════════════════════════╝
+    """
+    import re
+    # Remove header references
+    text = re.sub(r'Delivery\s*Credit\*?', '', text, flags=re.IGNORECASE)
+    text = re.sub(r'261Q03', '', text)
+    text = re.sub(r"['\"]E['\"]\s*Only", '', text, flags=re.IGNORECASE)
+    text = re.sub(r"TYPE\s+OF\s+SALE\s*[:\s]*'E'\s*Only", '', text, flags=re.IGNORECASE)
+    text = re.sub(r"Stackable\s+only\s+with\s+Consumer\s+Cash\s+and\s+Bonus\s+Cash", '', text, flags=re.IGNORECASE)
+    text = re.sub(r"BEFORE\s+TAX", '', text, flags=re.IGNORECASE)
+    
+    # Remove dollar amounts at the END of lines that are Delivery Credit values
+    # Pattern: lines ending with $X,XXX (after Bonus Cash which is also $ at end)
+    # Strategy: each data line typically ends with 2 dollar amounts: Bonus Cash then Delivery Credit
+    # We remove the very last dollar amount on lines that have 2+ dollar amounts at the end
+    lines = text.split('\n')
+    cleaned = []
+    for line in lines:
+        # Find all dollar amounts in the line
+        dollar_pattern = r'\$[\d,]+(?:\.\d+)?'
+        dollars = list(re.finditer(dollar_pattern, line))
+        
+        if len(dollars) >= 2:
+            # Check if the last 2 dollar amounts are close together (Bonus Cash + Delivery Credit)
+            last = dollars[-1]
+            second_last = dollars[-2]
+            gap = last.start() - second_last.end()
+            # If gap is small (< 30 chars), they're adjacent columns → remove the last one (Delivery Credit)
+            if gap < 30:
+                line = line[:last.start()] + line[last.end():]
+        elif len(dollars) == 1:
+            # Single dollar at end of a data line could be Delivery Credit
+            # Check context: if the line has rate patterns (X.XX%) before it, the trailing $ is likely DC
+            if re.search(r'\d+\.\d+%', line):
+                last = dollars[-1]
+                # Check if there's rate data before this dollar (indicating it's at the end of the row)
+                before = line[:last.start()].strip()
+                if before.endswith('-') or before.endswith('%'):
+                    line = line[:last.start()] + line[last.end():]
+        
+        cleaned.append(line)
+    
+    return '\n'.join(cleaned)
+
 def normalize_correction_str(s: str) -> str:
     """Normalise une chaine pour matching flexible des corrections."""
     if not s:
@@ -714,6 +764,10 @@ async def extract_pdf(
                 
                 logger.info(f"Extracted {end_idx - start_idx} pages, total text length: {len(pdf_text)} characters")
             
+            # SUPPRIMER la colonne Delivery Credit AVANT envoi à l'IA
+            pdf_text = _strip_delivery_credit(pdf_text)
+            logger.info(f"After stripping Delivery Credit: {len(pdf_text)} characters")
+            
             # Use OpenAI to extract structured data
             client = OpenAI(api_key=OPENAI_API_KEY)
             
@@ -1074,6 +1128,10 @@ async def _run_extraction_task(task_id: str, pdf_content: bytes, password: str,
                     page_text = page.extract_text()
                     pdf_text += f"\n--- PAGE {page_num + 1} ---\n{page_text}\n"
                 logger.info(f"[Async] Extracted {end_idx - start_idx} pages, {len(pdf_text)} chars")
+
+            # SUPPRIMER la colonne Delivery Credit AVANT envoi à l'IA
+            pdf_text = _strip_delivery_credit(pdf_text)
+            logger.info(f"[Async] After stripping Delivery Credit: {len(pdf_text)} chars")
 
             await db.extract_tasks.update_one(
                 {"task_id": task_id},
