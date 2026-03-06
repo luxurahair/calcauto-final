@@ -671,18 +671,19 @@ def auto_detect_pages(pdf_content: bytes) -> Dict:
             result['retail_start'] = min(retail_pages)
             result['retail_end'] = max(retail_pages)
         if lease_pages:
-            # Only take the first consecutive group of lease pages
-            # e.g., [25, 26, 37, 38, 39] → only [25, 26]
+            # Take the LAST consecutive group of lease pages
+            # SCI Lease is always near the end of the PDF
             sorted_lease = sorted(lease_pages)
-            first_group = [sorted_lease[0]]
+            groups = [[sorted_lease[0]]]
             for i in range(1, len(sorted_lease)):
-                if sorted_lease[i] - sorted_lease[i-1] <= 2:  # allow 1 gap page
-                    first_group.append(sorted_lease[i])
+                if sorted_lease[i] - sorted_lease[i-1] <= 2:
+                    groups[-1].append(sorted_lease[i])
                 else:
-                    break
-            result['lease_start'] = min(first_group)
-            result['lease_end'] = max(first_group)
-            logger.info(f"[AutoDetect] Lease pages detected: {sorted_lease}, using first group: {first_group}")
+                    groups.append([sorted_lease[i]])
+            last_group = groups[-1]  # Take the last group
+            result['lease_start'] = min(last_group)
+            result['lease_end'] = max(last_group)
+            logger.info(f"[AutoDetect] Lease pages detected: {sorted_lease}, groups: {groups}, using last group: {last_group}")
         if non_prime_pages:
             result['non_prime_start'] = min(non_prime_pages)
             result['non_prime_end'] = max(non_prime_pages)
