@@ -626,7 +626,7 @@ def auto_detect_pages(pdf_content: bytes) -> Dict:
             main_table = tables[0]
             num_cols = len(main_table[0]) if main_table else 0
 
-            is_lease = 'LEASE INCENTIVE PROGRAM' in text_upper or 'SCI LEASE' in text_upper
+            is_lease = 'LEASE INCENTIVE PROGRAM' in text_upper
             is_non_prime = 'NON-PRIME' in text_upper or 'NON PRIME' in text_upper
 
             if is_lease:
