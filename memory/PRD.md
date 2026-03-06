@@ -37,6 +37,14 @@ Application CRM pour concessionnaire automobile Stellantis/FCA Canada. Calculate
 - [x] **Accès Démo sans restriction** (TERMINÉ)
   - Auto-login Demo Admin, mot de passe admin pré-rempli
 
+- [x] **P0 - Bandeau Événementiel Dynamique + Logique Fidélité** (TERMINÉ - Mars 6, 2026)
+  - Composant `EventBanner` : affiche nom événement, période, taux vedette, jours sans paiement
+  - Toggle fidélité : visible uniquement quand `loyalty_rate > 0` dans les métadonnées
+  - Logique de calcul : réduction du taux appliquée aux Options 1 et 2 via `useCalculator`
+  - Backend : endpoint `GET /api/program-meta` + parsing couverture PDF
+  - Testé : Mars 2026 "Month of Ram" (-0.5%) et Février 2026 "4X4 Winter Event" (0%)
+  - Tests 100% : backend (10/10) + frontend (toutes fonctionnalités vérifiées)
+
 ### Previously Completed
 - [x] SCI Lease Data Pipeline (dynamique + historique)
 - [x] Data Carry-over (copie taux du mois précédent)
@@ -59,13 +67,16 @@ Application CRM pour concessionnaire automobile Stellantis/FCA Canada. Calculate
 - `POST /api/auth/demo-login` - Auto-login démo
 - `GET /api/programs` - Liste des programmes
 - `GET /api/sci/lease-rates` - Taux SCI Lease
+- `GET /api/program-meta` - Métadonnées événement du mois (couverture PDF)
 
 ## Key Files
 - `/app/backend/services/pdfplumber_parser.py` - Parser + auto_detect_pages()
-- `/app/backend/routers/import_wizard.py` - scan-pdf endpoint + extraction
+- `/app/backend/routers/import_wizard.py` - scan-pdf endpoint + extraction + program-meta
 - `/app/backend/routers/auth.py` - Auth + demo login
 - `/app/frontend/app/import.tsx` - Import wizard avec auto-détection
 - `/app/frontend/contexts/AuthContext.tsx` - Auth context + auto-demo
+- `/app/frontend/components/EventBanner.tsx` - Bandeau événementiel dynamique
+- `/app/frontend/hooks/useCalculator.ts` - Logique calcul financement + loyauté
 
 ## Credentials
 - Admin: `Liana2018`
