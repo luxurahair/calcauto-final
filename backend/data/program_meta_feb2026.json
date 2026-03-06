@@ -9,6 +9,13 @@
   "no_payments_days": 90,
   "featured_rate": 0.0,
   "featured_term": 72,
-  "key_message": "For February, the ‘4X4 Winter Event’ continues, providing cash discounts or aggressive rates on eligible 2025 and 2026 models, featuring finance rates as low as 0% for 72 months, plus No Finance Payments for 90 Days!",
-  "program_month_num": 2
+  "key_message": "For February, the \u20184X4 Winter Event\u2019 continues, providing cash discounts or aggressive rates on eligible 2025 and 2026 models, featuring finance rates as low as 0% for 72 months, plus No Finance Payments for 90 Days!",
+  "program_month_num": 2,
+  "brands": [
+    "Chrysler",
+    "Dodge",
+    "Fiat",
+    "Jeep",
+    "Ram"
+  ]
 }

@@ -10,5 +10,12 @@
   "featured_rate": 0.0,
   "featured_term": 72,
   "key_message": "For March, the 'Month of Ram' is here! Celebrate with exclusive rate reductions, including a 0.5% loyalty rate reduction for eligible customers, plus No Finance Payments for 90 Days!",
-  "program_month_num": 3
+  "program_month_num": 3,
+  "brands": [
+    "Chrysler",
+    "Dodge",
+    "Fiat",
+    "Jeep",
+    "Ram"
+  ]
 }

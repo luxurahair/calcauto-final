@@ -148,6 +148,7 @@ export default function HomeScreen() {
     featured_rate: number | null;
     featured_term: number | null;
     key_message: string;
+    brands?: string[];
   } | null>(null);
   
   // Loyalty rate toggle (from event metadata)

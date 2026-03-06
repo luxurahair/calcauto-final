@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 interface ProgramMeta {
@@ -11,6 +11,7 @@ interface ProgramMeta {
   featured_rate: number | null;
   featured_term: number | null;
   key_message: string;
+  brands?: string[];
 }
 
 interface EventBannerProps {
@@ -20,13 +21,23 @@ interface EventBannerProps {
   onToggleLoyalty: () => void;
 }
 
-const brandIcons: Record<string, string> = {
-  Ram: 'car-sport',
-  Jeep: 'compass',
-  Dodge: 'speedometer',
-  Chrysler: 'shield',
-  Fiat: 'cafe',
+const brandColors: Record<string, { bg: string; text: string; accent: string }> = {
+  Ram:      { bg: '#1a1a1a', text: '#C0C0C0', accent: '#8B0000' },
+  Jeep:     { bg: '#2B4A1E', text: '#C8D9A0', accent: '#4A7A3E' },
+  Dodge:    { bg: '#2A0A12', text: '#FF4D6D', accent: '#BA0C2F' },
+  Chrysler: { bg: '#0C1A2E', text: '#7EB3E0', accent: '#1565C0' },
+  Fiat:     { bg: '#2A1010', text: '#E8A0A0', accent: '#8B0000' },
 };
+
+function BrandBadge({ brand }: { brand: string }) {
+  const colors = brandColors[brand] || { bg: '#2d2d44', text: '#fff', accent: '#666' };
+  return (
+    <View style={[bs.badge, { backgroundColor: colors.bg, borderColor: colors.accent }]} data-testid={`brand-badge-${brand.toLowerCase()}`}>
+      <View style={[bs.dot, { backgroundColor: colors.accent }]} />
+      <Text style={[bs.badgeText, { color: colors.text }]}>{brand}</Text>
+    </View>
+  );
+}
 
 export function EventBanner({ meta, lang, loyaltyChecked, onToggleLoyalty }: EventBannerProps) {
   const eventName = meta.event_names?.[0] || '';
@@ -35,6 +46,7 @@ export function EventBanner({ meta, lang, loyaltyChecked, onToggleLoyalty }: Eve
   const hasLoyalty = meta.loyalty_rate > 0;
   const hasNoPayments = meta.no_payments_days > 0;
   const hasFeaturedRate = meta.featured_rate !== null && meta.featured_rate !== undefined;
+  const brands = meta.brands || [];
 
   return (
     <View style={s.container} data-testid="event-banner">
@@ -46,6 +58,15 @@ export function EventBanner({ meta, lang, loyaltyChecked, onToggleLoyalty }: Eve
 
       {/* Period */}
       <Text style={s.period}>{meta.program_period}</Text>
+
+      {/* Brand Logos Row */}
+      {brands.length > 0 && (
+        <View style={s.brandsRow} data-testid="brand-logos-row">
+          {brands.map(brand => (
+            <BrandBadge key={brand} brand={brand} />
+          ))}
+        </View>
+      )}
 
       {/* Highlights row */}
       <View style={s.highlightsRow}>
@@ -82,11 +103,11 @@ export function EventBanner({ meta, lang, loyaltyChecked, onToggleLoyalty }: Eve
           </View>
           <View style={s.loyaltyTextWrap}>
             <Text style={s.loyaltyLabel}>
-              {lang === 'fr' ? 'Fidélité' : 'Loyalty'} -{meta.loyalty_rate}%
+              {lang === 'fr' ? 'Fidelite' : 'Loyalty'} -{meta.loyalty_rate}%
             </Text>
             <Text style={s.loyaltyDesc}>
               {lang === 'fr'
-                ? 'Réduction de taux appliquée aux calculs'
+                ? 'Reduction de taux appliquee aux calculs'
                 : 'Rate reduction applied to calculations'}
             </Text>
           </View>
@@ -95,6 +116,29 @@ export function EventBanner({ meta, lang, loyaltyChecked, onToggleLoyalty }: Eve
     </View>
   );
 }
+
+const bs = StyleSheet.create({
+  badge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 6,
+    borderWidth: 1,
+    gap: 6,
+  },
+  dot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  badgeText: {
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
+  },
+});
 
 const s = StyleSheet.create({
   container: {
@@ -122,6 +166,12 @@ const s = StyleSheet.create({
     color: 'rgba(255,255,255,0.5)',
     marginBottom: 10,
     marginLeft: 26,
+  },
+  brandsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    marginBottom: 10,
   },
   highlightsRow: {
     flexDirection: 'row',

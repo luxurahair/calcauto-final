@@ -753,9 +753,14 @@ def parse_cover_page(pdf_content: bytes) -> Dict:
     if msg_m:
         result['key_message'] = ' '.join(msg_m.group(1).split())
 
+    # Brands mentioned on cover page
+    all_brands = ['Chrysler', 'Dodge', 'Fiat', 'Jeep', 'Ram']
+    result['brands'] = sorted(set(b for b in all_brands if b.lower() in text.lower()))
+
     logger.info(
         f"[CoverPage] Events={result['event_names']}, "
         f"Month={result['program_month']} {result['program_year']}, "
-        f"Loyalty={result['loyalty_rate']}%, NoPayments={result['no_payments_days']}d"
+        f"Loyalty={result['loyalty_rate']}%, NoPayments={result['no_payments_days']}d, "
+        f"Brands={result['brands']}"
     )
     return result
