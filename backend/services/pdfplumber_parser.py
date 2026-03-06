@@ -595,7 +595,7 @@ def auto_detect_pages(pdf_content: bytes) -> Dict:
 
         for i, page in enumerate(pdf.pages):
             page_num = i + 1
-            text = (page.extract_text() or '')[:1000]
+            text = (page.extract_text() or '')[:2000]
             text_upper = text.upper()
 
             # Key Incentives: "Go to Market" or "Key Incentives" with table
@@ -605,8 +605,18 @@ def auto_detect_pages(pdf_content: bytes) -> Dict:
                     ki_pages.append(page_num)
                     continue
 
-            # Skip non-data pages (overviews, rules, etc.)
-            if 'MODEL YEAR' not in text_upper and 'MODEL\nYEAR' not in text_upper:
+            # Multiple strategies to detect data pages
+            has_model_year = ('MODEL YEAR' in text_upper or 'MODEL\nYEAR' in text_upper
+                              or 'MODELYEAR' in text_upper.replace(' ', ''))
+            has_rate_keywords = any(kw in text_upper for kw in [
+                'CONSUMER CASH', 'BONUS CASH', 'RATE REDUCTION',
+                'FINANCE PRIME', 'RATE LANDSCAPE',
+            ])
+            has_term_headers = any(f'{t} MO' in text_upper or f'{t}\n' in text_upper 
+                                   for t in ['36', '48', '60', '72', '84', '96'])
+
+            # Skip if clearly not a data page
+            if not has_model_year and not has_rate_keywords and not has_term_headers:
                 continue
 
             tables = page.extract_tables()
@@ -616,7 +626,7 @@ def auto_detect_pages(pdf_content: bytes) -> Dict:
             main_table = tables[0]
             num_cols = len(main_table[0]) if main_table else 0
 
-            is_lease = 'LEASE INCENTIVE PROGRAM' in text_upper
+            is_lease = 'LEASE INCENTIVE PROGRAM' in text_upper or 'SCI LEASE' in text_upper
             is_non_prime = 'NON-PRIME' in text_upper or 'NON PRIME' in text_upper
 
             if is_lease:
@@ -630,7 +640,7 @@ def auto_detect_pages(pdf_content: bytes) -> Dict:
                         'tables': len(tables),
                     })
             elif is_non_prime:
-                if num_cols >= 20:
+                if num_cols >= 15:
                     non_prime_pages.append(page_num)
                     result['detected_sections'].append({
                         'page': page_num,
@@ -639,8 +649,8 @@ def auto_detect_pages(pdf_content: bytes) -> Dict:
                         'cols': num_cols,
                     })
             else:
-                # Retail Finance Prime: large table with 25+ cols
-                if num_cols >= 20:
+                # Retail Finance Prime: large table (lowered threshold from 20 to 15)
+                if num_cols >= 15:
                     retail_pages.append(page_num)
                     result['detected_sections'].append({
                         'page': page_num,
@@ -660,6 +670,30 @@ def auto_detect_pages(pdf_content: bytes) -> Dict:
             result['non_prime_start'] = min(non_prime_pages)
             result['non_prime_end'] = max(non_prime_pages)
         result['key_incentive_pages'] = ki_pages
+
+        # Fallback: Try TOC-based detection if retail not found
+        if not retail_pages:
+            logger.info("[AutoDetect] Retail not found by table scan, trying TOC fallback...")
+            for i in range(min(5, len(pdf.pages))):
+                toc_text = (pdf.pages[i].extract_text() or '').upper()
+                # Look for TOC entries like "Finance Prime Rate Landscapes...20"
+                toc_patterns = [
+                    r'FINANCE\s+PRIME\s+RATE\s+LANDSCAPE[S]?\s*[\.…\s]+(\d+)',
+                    r'PRIME\s+RATE\s+LANDSCAPE[S]?\s*[\.…\s]+(\d+)',
+                    r'RETAIL\s+INCENTIVE[S]?\s+PROGRAM[S]?\s*[\.…\s]+(\d+)',
+                    r'FINANCE\s+PRIME[^\.]*[\.…\s]+(\d+)',
+                ]
+                for pattern in toc_patterns:
+                    m = re.search(pattern, toc_text)
+                    if m:
+                        toc_start = int(m.group(1))
+                        result['retail_start'] = toc_start
+                        # Estimate end page: scan a few pages after start
+                        result['retail_end'] = min(toc_start + 4, len(pdf.pages))
+                        logger.info(f"[AutoDetect] TOC fallback found retail at pages {toc_start}-{result['retail_end']}")
+                        break
+                if result['retail_start']:
+                    break
 
     logger.info(
         f"[AutoDetect] Retail={result['retail_start']}-{result['retail_end']}, "
