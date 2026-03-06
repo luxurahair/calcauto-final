@@ -16,6 +16,7 @@ interface AuthContextType {
   isLoading: boolean;
   isAuthenticated: boolean;
   isAdmin: boolean;
+  isDemoUser: boolean;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   register: (name: string, email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
@@ -70,17 +71,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           // Token is valid
           setUser(JSON.parse(userData));
         } catch (err: any) {
-          // Token is invalid - clear storage and force re-login
-          console.log('Token invalid, clearing session');
+          // Token is invalid - auto-login as demo
+          console.log('Token invalid, auto-login demo');
           await storage.removeItem('auth_token');
           await storage.removeItem('user_data');
-          setUser(null);
+          await autoDemoLogin();
         }
+      } else {
+        // No stored session — auto-login as demo user
+        await autoDemoLogin();
       }
     } catch (error) {
       console.error('Error checking auth:', error);
+      await autoDemoLogin();
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const autoDemoLogin = async () => {
+    try {
+      const response = await axios.post(`${API_URL}/api/auth/demo-login`);
+      if (response.data.success) {
+        await storage.setItem('auth_token', response.data.token);
+        await storage.setItem('user_data', JSON.stringify(response.data.user));
+        setUser(response.data.user);
+      }
+    } catch (err) {
+      console.error('Demo auto-login failed:', err);
     }
   };
 
@@ -152,6 +170,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isLoading,
       isAuthenticated: !!user,
       isAdmin: user?.is_admin || false,
+      isDemoUser: user?.email === 'demo@calcauto.ca',
       login,
       register,
       logout,

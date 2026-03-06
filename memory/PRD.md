@@ -4,7 +4,7 @@
 Application CRM pour concessionnaire automobile Stellantis/FCA Canada. Calculateur de financement véhicules, gestion des clients, et importation automatique des programmes d'incitatifs mensuels depuis les PDFs Stellantis.
 
 ## Architecture
-- **Frontend**: React Native (Expo) 
+- **Frontend**: React Native (Expo) avec export web statique (dist/)
 - **Backend**: FastAPI (Python)
 - **Database**: MongoDB + fichiers JSON versionnés (données mensuelles)
 - **PDF Parsing**: pdfplumber (déterministe, ZERO IA)
@@ -16,6 +16,7 @@ Application CRM pour concessionnaire automobile Stellantis/FCA Canada. Calculate
 - Importation automatique des programmes FCA depuis PDF
 - Export Excel et envoi par email
 - Panneau admin avec gestion des corrections
+- Accès démo sans restriction (auto-login, admin complet)
 
 ## Data Model
 - **Programs**: MongoDB `programs` collection (brand, model, trim, year, consumer_cash, option1_rates, option2_rates, bonus_cash)
@@ -26,16 +27,19 @@ Application CRM pour concessionnaire automobile Stellantis/FCA Canada. Calculate
 ## What's Been Implemented
 
 ### Completed (March 6, 2026)
-- [x] **P0 - Parser pdfplumber déterministe** (TERMINÉ - 18/18 tests passent)
+- [x] **P0 - Parser pdfplumber déterministe** (18/18 tests passent)
   - `parse_retail_programs()`: 81 programmes Finance Prime (34 x 2026 + 47 x 2025)
   - `parse_sci_lease()`: 74 véhicules SCI Lease (29 x 2026 + 45 x 2025)
   - `parse_key_incentives()`: 13 entrées Go-to-Market summary
-  - Détection marques inversées (RELSYRHC → Chrysler, PEEJ → Jeep, etc.)
-  - Bonus Cash correctement identifié et extrait
-  - Colonne Delivery Credit ignorée
-  - Intégré dans `import_wizard.py` (sync + async endpoints)
   - OpenAI/GPT-4o entièrement supprimé du flux d'extraction
-  - Modèles Pydantic mis à jour (FinancingRates Optional, VehicleProgram.option1_rates Optional)
+  - Modèles Pydantic mis à jour (FinancingRates Optional)
+
+- [x] **Accès Démo sans restriction** (TERMINÉ)
+  - Backend: `/api/auth/demo-login` crée/connecte utilisateur Demo Admin
+  - Frontend: Auto-login automatique (AuthContext.tsx)
+  - Import PDF: étape login bypassée pour démo
+  - Admin panel: mot de passe pré-rempli pour opérations admin
+  - Login existant (danielgiroux007@gmail.com) toujours fonctionnel
 
 ### Previously Completed
 - [x] SCI Lease Data Pipeline (dynamique + historique via ?month=&year=)
@@ -58,19 +62,18 @@ Application CRM pour concessionnaire automobile Stellantis/FCA Canada. Calculate
 ## Key API Endpoints
 - `POST /api/extract-pdf-async` - Extraction PDF async (pdfplumber)
 - `GET /api/extract-task/{task_id}` - Poll task status
-- `POST /api/extract-pdf` - Extraction PDF sync (pdfplumber)
+- `POST /api/auth/demo-login` - Auto-login démo sans mot de passe
 - `GET /api/programs` - Liste des programmes
 - `GET /api/sci/lease-rates` - Taux SCI Lease
-- `POST /api/sci/import-rates` - Import taux SCI
-- `POST /api/programs/import-excel` - Import Excel corrections
 
 ## Key Files
-- `/app/backend/services/pdfplumber_parser.py` - Parser déterministe (NOUVEAU)
+- `/app/backend/services/pdfplumber_parser.py` - Parser déterministe
 - `/app/backend/routers/import_wizard.py` - Workflow d'importation
-- `/app/backend/routers/sci.py` - Endpoints SCI Lease
-- `/app/backend/routers/programs.py` - CRUD programmes
-- `/app/backend/models.py` - Modèles Pydantic
+- `/app/backend/routers/auth.py` - Auth + demo login
+- `/app/frontend/contexts/AuthContext.tsx` - Auth context + auto-demo
+- `/app/frontend/app/import.tsx` - Import wizard avec bypass démo
 
 ## Credentials
 - Admin: `Liana2018`
 - User: `danielgiroux007@gmail.com` / `Liana2018$`
+- Demo: `demo@calcauto.ca` (auto-login, aucun mot de passe requis)

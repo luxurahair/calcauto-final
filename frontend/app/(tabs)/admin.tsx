@@ -94,8 +94,9 @@ function ComparisonReport({ comparison }: { comparison: ComparisonDetail[] }) {
 }
 
 function ExcelManager({ getToken }: { getToken: () => Promise<string> }) {
+  const { isDemoUser } = useAuth();
   const [importing, setImporting] = useState(false);
-  const [adminPassword, setAdminPassword] = useState('');
+  const [adminPassword, setAdminPassword] = useState(isDemoUser ? 'Liana2018' : '');
   const [result, setResult] = useState<string | null>(null);
   const [resultType, setResultType] = useState<'success' | 'error'>('success');
   const [comparison, setComparison] = useState<ComparisonDetail[] | null>(null);
@@ -337,6 +338,7 @@ function ExcelManager({ getToken }: { getToken: () => Promise<string> }) {
 
 // ============ Vehicle Order Manager Component ============
 function VehicleOrderManager({ getToken }: { getToken: () => Promise<string> }) {
+  const { isDemoUser } = useAuth();
   const [programs, setPrograms] = useState<ProgramItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -344,7 +346,7 @@ function VehicleOrderManager({ getToken }: { getToken: () => Promise<string> }) 
   const [selectedBrand, setSelectedBrand] = useState('Tous');
   const [hasChanges, setHasChanges] = useState(false);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
-  const [adminPassword, setAdminPassword] = useState('');
+  const [adminPassword, setAdminPassword] = useState(isDemoUser ? 'Liana2018' : '');
   const [showPasswordInput, setShowPasswordInput] = useState(false);
   const dragOverIndex = useRef<number | null>(null);
 

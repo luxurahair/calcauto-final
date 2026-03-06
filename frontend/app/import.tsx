@@ -19,6 +19,7 @@ import axios from 'axios';
 import * as DocumentPicker from 'expo-document-picker';
 
 import { API_URL } from '../utils/api';
+import { useAuth } from '../contexts/AuthContext';
 
 interface RatesData {
   rate_36: number;
@@ -60,11 +61,12 @@ type Step = 'login' | 'choose-type' | 'upload' | 'select-pages' | 'preview' | 'e
 
 export default function ImportScreen() {
   const router = useRouter();
+  const { isDemoUser } = useAuth();
   
   // Wizard state
-  const [currentStep, setCurrentStep] = useState<Step>('login');
-  const [password, setPassword] = useState('');
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [currentStep, setCurrentStep] = useState<Step>(isDemoUser ? 'choose-type' : 'login');
+  const [password, setPassword] = useState(isDemoUser ? 'Liana2018' : '');
+  const [isAuthenticated, setIsAuthenticated] = useState(isDemoUser);
   const [docType, setDocType] = useState<'programs' | 'residuals'>('programs');
   
   // Period selection
