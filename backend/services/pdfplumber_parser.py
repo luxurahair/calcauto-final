@@ -150,6 +150,10 @@ def parse_dollar(value) -> int:
     s = str(value).strip()
     if not s:
         return 0
+    # Ignore MSRP percentage-off discounts and program codes (e.g., "MSRP % Off Discount (P2619B3)")
+    s_lower = s.lower()
+    if 'msrp' in s_lower or '% off' in s_lower or 'discount' in s_lower:
+        return 0
     s = re.sub(r'^P\s*', '', s)
     match = re.search(r'\$?([\d,]+)', s)
     if match:
@@ -487,6 +491,14 @@ def parse_retail_programs(pdf_content: bytes, start_page: int, end_page: int) ->
                     f"{len(rate_rows)} rate rows, {len(bonus_rows)} bonus rows"
                 )
 
+                # Alignment check - warn if counts don't match
+                if len(vehicles) != len(rate_rows):
+                    logger.warning(
+                        f"[RetailParser] ⚠ ALIGNMENT MISMATCH: {len(vehicles)} vehicles "
+                        f"vs {len(rate_rows)} rate rows on page {page_idx+1}. "
+                        f"Data may be shifted for the last vehicles."
+                    )
+
                 # Zip vehicles with rate rows
                 for vi, (brand, vehicle_name) in enumerate(vehicles):
                     if vi >= len(rate_rows):
@@ -553,24 +565,182 @@ def parse_retail_programs(pdf_content: bytes, start_page: int, end_page: int) ->
 
 
 # ═══════════════════════════════════════════════════════════════
+# POST-EXTRACTION VALIDATION
+# ═══════════════════════════════════════════════════════════════
+
+def validate_extraction(programs: List[Dict], sci_data: Dict = None) -> Dict:
+    """
+    Run quality checks after extraction. Returns a report dict with:
+    - warnings: non-critical issues that should be reviewed
+    - errors: critical issues that likely indicate parsing bugs
+    - stats: summary statistics
+    """
+    warnings = []
+    errors = []
+
+    if not programs:
+        errors.append("ZERO programmes extraits - vérifiez le PDF et les pages")
+        return {'warnings': warnings, 'errors': errors, 'stats': {}}
+
+    # Count by year
+    year_counts = {}
+    for p in programs:
+        y = p.get('year', 0)
+        year_counts[y] = year_counts.get(y, 0) + 1
+
+    # Brand distribution
+    brand_counts = {}
+    for p in programs:
+        b = p.get('brand', 'Unknown')
+        brand_counts[b] = brand_counts.get(b, 0) + 1
+
+    # Check for suspicious data
+    for p in programs:
+        name = f"{p.get('brand')} {p.get('model')} {p.get('trim', '')} ({p.get('year')})"
+
+        # Consumer cash sanity: should be 0 or $500-$25,000
+        cc = p.get('consumer_cash', 0)
+        if cc > 0 and (cc < 100 or cc > 25000):
+            warnings.append(f"CC suspect: {name}: ${cc}")
+
+        # Alt consumer cash sanity
+        acc = p.get('alt_consumer_cash', 0)
+        if acc > 0 and (acc < 100 or acc > 25000):
+            warnings.append(f"Alt CC suspect: {name}: ${acc}")
+
+        # Bonus cash sanity: should be 0 or $500-$10,000
+        bc = p.get('bonus_cash', 0)
+        if bc > 0 and (bc < 100 or bc > 15000):
+            warnings.append(f"Bonus suspect: {name}: ${bc}")
+
+        # Rate sanity: 0-10% is normal for FCA
+        opt1 = p.get('option1_rates') or {}
+        opt2 = p.get('option2_rates') or {}
+        for key, rate in {**opt1, **opt2}.items():
+            if rate is not None and (rate < 0 or rate > 15):
+                warnings.append(f"Taux suspect: {name}: {key}={rate}%")
+
+        # Check for "All-New" or other prefixes that should be stripped
+        for field in ['model', 'trim']:
+            val = p.get(field, '')
+            if 'All-New' in val or 'All New' in val:
+                warnings.append(f"Prefix non-nettoyé: {name}: '{val}'")
+
+        # Check for duplicate entries (same brand+model+trim+year)
+        # (would need a set check, handled separately below)
+
+    # Check for duplicates
+    seen = set()
+    for p in programs:
+        key = (p.get('brand'), p.get('model'), p.get('trim', ''), p.get('year'))
+        if key in seen:
+            errors.append(f"DOUBLON: {key}")
+        seen.add(key)
+
+    # Check for 'Unknown' brands
+    unknown_count = brand_counts.get('Unknown', 0)
+    if unknown_count > 0:
+        errors.append(f"{unknown_count} véhicules avec marque 'Unknown'")
+
+    # SCI Lease validation
+    sci_stats = {}
+    if sci_data:
+        v2026 = sci_data.get('vehicles_2026', [])
+        v2025 = sci_data.get('vehicles_2025', [])
+        sci_stats = {'v2026': len(v2026), 'v2025': len(v2025)}
+
+        for v in v2026 + v2025:
+            model = v.get('model', '')
+            if v.get('brand') == 'Unknown':
+                warnings.append(f"SCI Lease marque inconnue: {model}")
+            std = v.get('standard_rates') or {}
+            alt = v.get('alternative_rates') or {}
+            if not std and not alt:
+                warnings.append(f"SCI Lease sans taux: {model}")
+
+    stats = {
+        'total_programs': len(programs),
+        'by_year': year_counts,
+        'by_brand': brand_counts,
+        'loyalty_count': sum(1 for p in programs if p.get('loyalty_cash') or p.get('loyalty_opt1') or p.get('loyalty_opt2')),
+        'bonus_count': sum(1 for p in programs if p.get('bonus_cash', 0) > 0),
+        'sci_lease': sci_stats,
+    }
+
+    # Log the report
+    logger.info(f"[Validation] Stats: {stats}")
+    if warnings:
+        for w in warnings:
+            logger.warning(f"[Validation] ⚠ {w}")
+    if errors:
+        for e in errors:
+            logger.error(f"[Validation] ❌ {e}")
+    if not warnings and not errors:
+        logger.info("[Validation] ✅ Aucun problème détecté")
+
+    return {'warnings': warnings, 'errors': errors, 'stats': stats}
+
+
+
+# ═══════════════════════════════════════════════════════════════
 # SCI LEASE PARSER
 # ═══════════════════════════════════════════════════════════════
+
+def _detect_sci_columns(rates_t: list) -> Dict:
+    """
+    Dynamically detect column positions in the SCI Lease rates table.
+    Scans header rows for known keywords instead of using hardcoded indices.
+    Uses FIRST match only (does not override once found).
+    Returns dict: {lease_cash_col, std_start, alt_start, bonus_col}
+    """
+    result = {'lease_cash_col': None, 'std_start': None, 'alt_start': None, 'bonus_col': None}
+
+    for ri in range(min(8, len(rates_t))):
+        row = rates_t[ri]
+        for ci, cell in enumerate(row):
+            if not cell:
+                continue
+            cs = str(cell).strip()
+            cs_upper = cs.upper()
+
+            # Skip descriptive text that is NOT a header label
+            if 'STACKABLE' in cs_upper or 'TYPE OF SALE' in cs_upper:
+                continue
+
+            if result['lease_cash_col'] is None and cs_upper == 'LEASE CASH':
+                result['lease_cash_col'] = ci
+            elif result['std_start'] is None and 'SCI' in cs_upper and 'STANDARD' in cs_upper:
+                result['std_start'] = ci
+            elif result['alt_start'] is None and 'SCI' in cs_upper and 'ALTERNATIVE' in cs_upper:
+                result['alt_start'] = ci
+            elif result['bonus_col'] is None and cs_upper.startswith('BONUS CASH'):
+                result['bonus_col'] = ci
+
+    # Defaults if not found
+    if result['lease_cash_col'] is None:
+        result['lease_cash_col'] = 2
+    if result['std_start'] is None:
+        result['std_start'] = 4
+    if result['alt_start'] is None:
+        result['alt_start'] = 19
+
+    logger.info(f"[SCIParser] Detected columns: lease_cash={result['lease_cash_col']}, "
+                f"std_start={result['std_start']}, alt_start={result['alt_start']}, "
+                f"bonus={result['bonus_col']}")
+    return result
+
 
 def parse_sci_lease(pdf_content: bytes, start_page: int, end_page: int) -> Dict:
     """
     Parse SCI Lease rates. Returns {vehicles_2026: [...], vehicles_2025: [...]}.
 
     PDF structure per page:
-    - Table 0 (6 cols): Vehicle names in col 1
-    - Table 1 (30 cols): Rate data
-      col 2 = Lease Cash, cols 4-12 = Standard rates, cols 19-27 = Alt rates
-    - Table 2 (optional): Bonus Cash in col 1 (separate on 2026 pages)
+    - Table 0 (6-7 cols): Vehicle names in col 1
+    - Table 1 (30+ cols): Rate data (columns detected dynamically)
     """
     vehicles_2026 = []
     vehicles_2025 = []
     term_keys = ['24', '27', '36', '39', '42', '48', '51', '54', '60']
-    std_indices = list(range(4, 13))
-    alt_indices = list(range(19, 28))
 
     with pdfplumber.open(BytesIO(pdf_content)) as pdf:
         total_pages = len(pdf.pages)
@@ -600,12 +770,10 @@ def parse_sci_lease(pdf_content: bytes, start_page: int, end_page: int) -> Dict:
                 for cell in row:
                     if cell:
                         cs = str(cell)
-                        # Match "2025 Model Year" or "2026 Model Year" at start
                         ym = re.match(r'(\d{4})\s+Model\s+Year', cs)
                         if ym:
                             model_year = int(ym.group(1))
                             break
-                        # Fallback: "YYYY\nMODEL YEAR"
                         ym2 = re.match(r'(\d{4})\n', cs)
                         if ym2 and 'MODEL' in cs.upper():
                             model_year = int(ym2.group(1))
@@ -614,6 +782,13 @@ def parse_sci_lease(pdf_content: bytes, start_page: int, end_page: int) -> Dict:
                     break
             if not model_year:
                 continue
+
+            # Dynamically detect column positions
+            col_map = _detect_sci_columns(rates_t)
+            lease_cash_col = col_map['lease_cash_col']
+            std_indices = list(range(col_map['std_start'], col_map['std_start'] + 9))
+            alt_indices = list(range(col_map['alt_start'], col_map['alt_start'] + 9))
+            bonus_col = col_map['bonus_col']
 
             logger.info(f"[SCIParser] Page {page_idx+1}: {model_year}, names={len(names_t)}, rates={len(rates_t)}")
 
@@ -631,16 +806,12 @@ def parse_sci_lease(pdf_content: bytes, start_page: int, end_page: int) -> Dict:
             if data_start is None:
                 continue
 
-            rates_cols = len(rates_t[0]) if rates_t else 0
-            has_bonus_col = rates_cols >= 30
-
             for ri in range(data_start, min(len(names_t), len(rates_t))):
                 vname = ''
                 if ri < len(names_t) and len(names_t[ri]) > 1:
                     vname = str(names_t[ri][1]).replace('\n', ' ').strip() if names_t[ri][1] else ''
                 if not vname or '*See' in vname or 'Program Rules' in vname:
                     continue
-                # Skip header rows that leak into data range
                 vname_lower = vname.lower()
                 if any(s in vname_lower for s in [
                     'discount type', 'stackability', 'type of sale',
@@ -650,7 +821,7 @@ def parse_sci_lease(pdf_content: bytes, start_page: int, end_page: int) -> Dict:
 
                 rr = rates_t[ri]
 
-                lease_cash = parse_dollar(rr[2] if len(rr) > 2 else None)
+                lease_cash = parse_dollar(rr[lease_cash_col] if lease_cash_col < len(rr) else None)
 
                 std = {}
                 std_ok = False
@@ -675,8 +846,8 @@ def parse_sci_lease(pdf_content: bytes, start_page: int, end_page: int) -> Dict:
                     alt = None
 
                 bonus = 0
-                if has_bonus_col and len(rr) > 29:
-                    bonus = parse_dollar(rr[29])
+                if bonus_col and bonus_col < len(rr):
+                    bonus = parse_dollar(rr[bonus_col])
                 elif bonus_t and ri < len(bonus_t) and len(bonus_t[ri]) > 1:
                     bonus = parse_dollar(bonus_t[ri][1])
 

@@ -661,6 +661,63 @@ def generate_excel_from_programs(programs: List[Dict[str, Any]], program_month: 
         # Freeze: rows 1-3 + columns A-C
         ws2.freeze_panes = 'D4'
     
+    # ── Rapport de validation sheet ──
+    try:
+        from services.pdfplumber_parser import validate_extraction
+        report = validate_extraction(programs, sci_lease_data)
+        ws3 = wb.create_sheet("Rapport")
+        ws3.column_dimensions['A'].width = 14
+        ws3.column_dimensions['B'].width = 70
+
+        ws3.cell(1, 1, "RAPPORT DE VALIDATION").font = Font(bold=True, size=14)
+        ws3.cell(2, 1, f"Mois: {program_month}/{program_year}").font = Font(size=11)
+
+        stats = report.get('stats', {})
+        r = 4
+        ws3.cell(r, 1, "Programmes").font = Font(bold=True)
+        ws3.cell(r, 2, stats.get('total_programs', 0))
+        r += 1
+        ws3.cell(r, 1, "Par année").font = Font(bold=True)
+        ws3.cell(r, 2, str(stats.get('by_year', {})))
+        r += 1
+        ws3.cell(r, 1, "Par marque").font = Font(bold=True)
+        ws3.cell(r, 2, str(stats.get('by_brand', {})))
+        r += 1
+        ws3.cell(r, 1, "Loyauté (P)").font = Font(bold=True)
+        ws3.cell(r, 2, stats.get('loyalty_count', 0))
+        r += 1
+        ws3.cell(r, 1, "Bonus Cash").font = Font(bold=True)
+        ws3.cell(r, 2, stats.get('bonus_count', 0))
+        r += 1
+        ws3.cell(r, 1, "SCI Lease").font = Font(bold=True)
+        ws3.cell(r, 2, str(stats.get('sci_lease', {})))
+
+        warnings = report.get('warnings', [])
+        errors = report.get('errors', [])
+
+        r += 2
+        ws3.cell(r, 1, "RÉSULTAT").font = Font(bold=True, size=12)
+        if not warnings and not errors:
+            ws3.cell(r, 2, "Aucun problème détecté").font = Font(color="00AA00", size=12, bold=True)
+        else:
+            ws3.cell(r, 2, f"{len(errors)} erreur(s), {len(warnings)} avertissement(s)").font = Font(color="FF0000" if errors else "FF8800", size=12, bold=True)
+
+        if errors:
+            r += 2
+            ws3.cell(r, 1, "ERREURS").font = Font(bold=True, color="FF0000")
+            for e in errors:
+                r += 1
+                ws3.cell(r, 2, e).font = Font(color="FF0000")
+
+        if warnings:
+            r += 2
+            ws3.cell(r, 1, "AVERTISSEMENTS").font = Font(bold=True, color="FF8800")
+            for w in warnings:
+                r += 1
+                ws3.cell(r, 2, w).font = Font(color="FF8800")
+    except Exception as val_err:
+        logger.error(f"[Excel] Validation sheet error: {val_err}")
+    
     # Save to bytes
     output = io.BytesIO()
     wb.save(output)
@@ -826,6 +883,37 @@ async def download_excel(month: int = 3, year: int = 2026):
         headers={"Content-Disposition": f"attachment; filename={filename}"}
     )
 
+
+@router.get("/validate-data")
+async def validate_data(month: int = 3, year: int = 2026):
+    """Valide les données extraites en BD et retourne un rapport de qualité."""
+    from services.pdfplumber_parser import validate_extraction
+
+    programs = []
+    async for doc in db.programs.find(
+        {"program_month": month, "program_year": year},
+        {"_id": 0}
+    ):
+        programs.append(doc)
+
+    if not programs:
+        return {"success": False, "message": f"Aucun programme trouvé pour {month}/{year}"}
+
+    # Load SCI lease data
+    en_month_abbrev = ["", "jan", "feb", "mar", "apr", "may", "jun",
+                      "jul", "aug", "sep", "oct", "nov", "dec"]
+    sci_data = None
+    sci_path = ROOT_DIR / "data" / f"sci_lease_rates_{en_month_abbrev[month]}{year}.json"
+    if sci_path.exists():
+        with open(sci_path, 'r', encoding='utf-8') as f:
+            sci_data = json.load(f)
+
+    report = validate_extraction(programs, sci_data)
+    report['success'] = len(report['errors']) == 0
+    report['programs_count'] = len(programs)
+    return report
+
+
 @router.post("/extract-pdf", response_model=ExtractedDataResponse)
 async def extract_pdf(
     file: UploadFile = File(...),
@@ -890,7 +978,7 @@ async def extract_pdf(
         saved_count = 0
         try:
             if not valid_programs:
-                logger.warning(f"[Sync] 0 programmes extraits - données existantes CONSERVÉES pour éviter la perte de données")
+                logger.warning("[Sync] 0 programmes extraits - données existantes CONSERVÉES pour éviter la perte de données")
                 return ExtractedDataResponse(
                     success=False,
                     message=f"0 programmes extraits des pages {start_page}-{end_page}. Vérifiez les numéros de pages. Les données existantes n'ont PAS été effacées.",
@@ -972,6 +1060,19 @@ async def extract_pdf(
         except Exception as ki_error:
             logger.error(f"[Sync] Key incentives error: {str(ki_error)}")
 
+        # Run post-extraction validation
+        try:
+            from services.pdfplumber_parser import validate_extraction
+            validation = validate_extraction(valid_programs, sci_data_for_excel)
+            validation_msg = ""
+            if validation['warnings']:
+                validation_msg = f" | {len(validation['warnings'])} avertissement(s)"
+            if validation['errors']:
+                validation_msg += f" | {len(validation['errors'])} erreur(s)"
+        except Exception as val_error:
+            logger.error(f"[Sync] Validation error: {str(val_error)}")
+            validation_msg = ""
+
         # Generate Excel and send email
         if EXCEL_AVAILABLE and valid_programs and SMTP_EMAIL:
             try:
@@ -983,7 +1084,7 @@ async def extract_pdf(
         lease_msg = f" + {sci_lease_count} taux SCI Lease" if sci_lease_count > 0 else ""
         return ExtractedDataResponse(
             success=True,
-            message=f"Extrait et sauvegardé {len(valid_programs)} programmes{lease_msg}" + (" - Excel envoyé par email!" if excel_sent else ""),
+            message=f"Extrait et sauvegardé {len(valid_programs)} programmes{lease_msg}{validation_msg}" + (" - Excel envoyé par email!" if excel_sent else ""),
             programs=valid_programs,
             raw_text="",
             sci_lease_count=sci_lease_count
@@ -1152,6 +1253,18 @@ async def _run_extraction_task(task_id: str, pdf_content: bytes, password: str,
             except Exception as excel_error:
                 logger.error(f"[Async] Excel email error: {str(excel_error)}")
 
+        # ── Step 5.5: Post-extraction validation ──
+        validation_msg = ""
+        try:
+            from services.pdfplumber_parser import validate_extraction
+            validation = validate_extraction(valid_programs, sci_lease_data_for_excel)
+            if validation['warnings']:
+                validation_msg = f" | {len(validation['warnings'])} avertissement(s)"
+            if validation['errors']:
+                validation_msg += f" | {len(validation['errors'])} erreur(s)"
+        except Exception as val_error:
+            logger.error(f"[Async] Validation error: {str(val_error)}")
+
         # ── Step 6: Mark task complete ──
         lease_msg = f" + {sci_lease_count} taux SCI Lease" if sci_lease_count > 0 else ""
         email_msg = " - Excel envoyé par email!" if excel_sent else ""
@@ -1159,7 +1272,7 @@ async def _run_extraction_task(task_id: str, pdf_content: bytes, password: str,
             {"task_id": task_id},
             {"$set": {
                 "status": "complete",
-                "message": f"Extrait et sauvegardé {len(valid_programs)} programmes{lease_msg}{email_msg}",
+                "message": f"Extrait et sauvegardé {len(valid_programs)} programmes{lease_msg}{email_msg}{validation_msg}",
                 "programs": valid_programs,
                 "sci_lease_count": sci_lease_count,
                 "completed_at": datetime.utcnow().isoformat()
@@ -1707,7 +1820,7 @@ async def save_programs(request: SaveProgramsRequest):
     
     # Force logout all users after data change
     await db.tokens.delete_many({})
-    logger.info(f"[PDF IMPORT] Tokens invalides pour forcer reconnexion")
+    logger.info("[PDF IMPORT] Tokens invalides pour forcer reconnexion")
 
     return {
         "success": True,

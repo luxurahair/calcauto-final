@@ -1,0 +1,92 @@
+{
+  "summary": "Backend testing of March 2026 PDF extraction bug fixes complete. 17/17 tests passed (100%). Verified: MSRP discount bug fix (Wagoneer S, Charger Daytona 2024 consumer_cash=0), SCI Lease column detection fix (Power Wagon lease_cash=$6,000), validation endpoint, Excel generation with 3 sheets.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_march_2026_bugfixes.py",
+    "/app/test_reports/pytest/pytest_march_bugfixes.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "parse_dollar() correctly filters MSRP discount lines containing 'msrp', '% off', 'discount' keywords",
+    "_detect_sci_columns() correctly detects lease_cash at col 2 (not col 4)",
+    "validate_extraction() properly generates warnings for Ram 2500/3500 without lease rates",
+    "Excel Rapport sheet correctly shows validation summary"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_march_2026_bugfixes.py"
+  ],
+  "success_rate": {
+    "backend": "100% (17/17 tests passed)",
+    "frontend": "N/A (backend only testing)"
+  },
+  "test_credentials": {
+    "admin_password": "Liana2018",
+    "march_pdf_path": "/app/backend/data/march2026_source.pdf",
+    "backend_url": "https://lease-extraction.preview.emergentagent.com"
+  },
+  "seed_data_creation": "No seed data created - used existing March 2026 data",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "All bug fixes verified working: (1) MSRP discount bug - parse_dollar now ignores lines with MSRP/% off/discount keywords, (2) SCI Lease column detection - _detect_sci_columns correctly identifies lease_cash at col 2 using 'LEASE CASH' header match, (3) Validation features added and working. 17 test cases cover all requested scenarios.",
+  "verified_features": {
+    "program_count_93": {
+      "status": "PASSED",
+      "counts": {"2026": 36, "2025": 43, "2024": 14}
+    },
+    "brand_distribution": {
+      "status": "PASSED",
+      "counts": {"Chrysler": 8, "Jeep": 39, "Dodge": 24, "Ram": 20, "Fiat": 2}
+    },
+    "msrp_discount_bug_fix": {
+      "status": "PASSED",
+      "wagoneer_s_2024": "consumer_cash=0 (not $2,619)",
+      "charger_daytona_rt_2024": "consumer_cash=0",
+      "charger_daytona_scat_pack_2024": "consumer_cash=0"
+    },
+    "sci_lease_column_detection_fix": {
+      "status": "PASSED",
+      "power_wagon_2026": "lease_cash=$6,000 (not $8)",
+      "detected_columns": "lease_cash=2, std_start=4, alt_start=19, bonus=30"
+    },
+    "sci_lease_vehicle_count": {
+      "status": "PASSED",
+      "v2026": 33,
+      "v2025": 40,
+      "total": 73
+    },
+    "validation_endpoint": {
+      "status": "PASSED",
+      "success": true,
+      "errors": 0,
+      "warnings": 3
+    },
+    "excel_generation": {
+      "status": "PASSED",
+      "sheets": ["Financement", "SCI Lease", "Rapport"],
+      "financement_rows": 96,
+      "financement_cols": 20,
+      "freeze_panes": "F4"
+    },
+    "bonus_cash": {
+      "status": "PASSED",
+      "fiat_500e_2025": "$5,000"
+    },
+    "loyalty_markers": {
+      "status": "PASSED",
+      "count": 17
+    },
+    "pdf_extraction": {
+      "status": "PASSED",
+      "programs": 93,
+      "sci_lease": 73
+    }
+  }
+}

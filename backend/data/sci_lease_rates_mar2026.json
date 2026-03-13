@@ -1630,7 +1630,8 @@
         "51": 1.99,
         "54": 1.99,
         "60": 4.99
-      }
+      },
+      "bonus_cash": 5000
     },
     {
       "model": "Ram 2500/3500 Gas Models (Excludes Chassis Cab models, Diesel Engine models)",
