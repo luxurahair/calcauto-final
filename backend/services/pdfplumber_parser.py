@@ -309,6 +309,21 @@ def parse_retail_programs(pdf_content: bytes, start_page: int, end_page: int) ->
             bonus_table = _find_bonus_table(tables)
             layout = 'B' if names_table is not None else 'A'
 
+            # Loyalty "P" marker columns in the rates table:
+            #   cc_col - 1 (col 2 for 24-col layout) = P for Consumer Cash
+            #   opt1_start - 1 (col 4 for 24-col layout) = P for Option 1 Rates
+            #   opt2_start - 1 (col 16 for 24-col layout) = P for Option 2 Rates
+            p_cc_col = cc_col - 1 if cc_col >= 1 else None
+            p_opt1_col = opt1_start - 1 if opt1_start >= 1 else None
+            p_opt2_col = (opt2_start - 1) if opt2_start and opt2_start >= 1 else None
+
+            def _is_p(row, col_idx):
+                """Check if a cell contains the loyalty 'P' marker."""
+                if col_idx is None or col_idx >= len(row):
+                    return False
+                v = str(row[col_idx]).strip() if row[col_idx] else ''
+                return v == 'P'
+
             if layout == 'A':
                 # ── Layout A: names + rates in same table (Jan/Feb) ──
                 current_brand = None
@@ -356,6 +371,11 @@ def parse_retail_programs(pdf_content: bytes, start_page: int, end_page: int) ->
                     if not consumer_cash and cc_col + 1 < len(row):
                         consumer_cash = parse_dollar(row[cc_col + 1])
 
+                    # Detect loyalty P markers
+                    loyalty_cash = _is_p(row, p_cc_col)
+                    loyalty_opt1 = _is_p(row, p_opt1_col)
+                    loyalty_opt2 = _is_p(row, p_opt2_col)
+
                     opt1 = {}
                     opt1_ok = False
                     for key, offset in zip(rate_keys, range(6)):
@@ -398,6 +418,9 @@ def parse_retail_programs(pdf_content: bytes, start_page: int, end_page: int) ->
                         'bonus_cash': bonus_cash,
                         'option1_rates': opt1,
                         'option2_rates': opt2,
+                        'loyalty_cash': loyalty_cash,
+                        'loyalty_opt1': loyalty_opt1,
+                        'loyalty_opt2': loyalty_opt2,
                     })
 
             else:
@@ -474,6 +497,11 @@ def parse_retail_programs(pdf_content: bytes, start_page: int, end_page: int) ->
 
                     consumer_cash = parse_dollar(rr[cc_col] if cc_col < len(rr) else None)
 
+                    # Detect loyalty P markers from rate row
+                    loyalty_cash = _is_p(rr, p_cc_col)
+                    loyalty_opt1 = _is_p(rr, p_opt1_col)
+                    loyalty_opt2 = _is_p(rr, p_opt2_col)
+
                     opt1 = {}
                     opt1_ok = False
                     for key, offset in zip(rate_keys, range(6)):
@@ -513,6 +541,9 @@ def parse_retail_programs(pdf_content: bytes, start_page: int, end_page: int) ->
                         'bonus_cash': bonus_cash,
                         'option1_rates': opt1,
                         'option2_rates': opt2,
+                        'loyalty_cash': loyalty_cash,
+                        'loyalty_opt1': loyalty_opt1,
+                        'loyalty_opt2': loyalty_opt2,
                     })
 
             logger.info(f"[RetailParser] Page {page_idx+1}: {len(programs)} programmes cumulés")

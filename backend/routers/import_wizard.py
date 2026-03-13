@@ -356,114 +356,142 @@ Avant de retourner le JSON, vérifie:
 
 
 def generate_excel_from_programs(programs: List[Dict[str, Any]], program_month: int, program_year: int, sci_lease_data: Dict = None) -> bytes:
-    """Génère un fichier Excel avec onglet Programmes + onglet SCI Lease (si données fournies)"""
+    """Génère un fichier Excel avec onglet Programmes + onglet SCI Lease (si données fournies).
+    Colonnes: Année | Marque | Modèle | Version | Loyauté |
+              Rabais Opt1 | 36m-96m Opt1 | Rabais Alt | 36m-96m Opt2 | Bonus
+    Premières colonnes et en-têtes figés pour faciliter la correction.
+    """
     if not EXCEL_AVAILABLE:
         raise HTTPException(status_code=500, detail="openpyxl non disponible")
-    
+
     wb = openpyxl.Workbook()
     ws = wb.active
-    ws.title = "Programmes"
-    
+    ws.title = "Financement"
+
     # Styles
-    header_font = Font(bold=True, color="FFFFFF")
+    header_font = Font(bold=True, color="FFFFFF", size=10)
     header_fill = PatternFill(start_color="1a1a2e", end_color="1a1a2e", fill_type="solid")
-    option1_fill = PatternFill(start_color="C62828", end_color="C62828", fill_type="solid")  # Rouge pour Option 1
-    option2_fill = PatternFill(start_color="1565C0", end_color="1565C0", fill_type="solid")  # Bleu pour Option 2
-    bonus_fill = PatternFill(start_color="2E7D32", end_color="2E7D32", fill_type="solid")  # Vert pour Bonus
+    option1_fill = PatternFill(start_color="C62828", end_color="C62828", fill_type="solid")
+    option2_fill = PatternFill(start_color="1565C0", end_color="1565C0", fill_type="solid")
+    bonus_fill = PatternFill(start_color="2E7D32", end_color="2E7D32", fill_type="solid")
+    loyalty_fill = PatternFill(start_color="FF6F00", end_color="FF6F00", fill_type="solid")
     header_alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
     thin_border = Border(
-        left=Side(style='thin'),
-        right=Side(style='thin'),
-        top=Side(style='thin'),
-        bottom=Side(style='thin')
+        left=Side(style='thin'), right=Side(style='thin'),
+        top=Side(style='thin'), bottom=Side(style='thin')
     )
-    
-    # Month names
-    month_names = ["", "Janvier", "Février", "Mars", "Avril", "Mai", "Juin", 
+
+    month_names = ["", "Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
                    "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"]
-    
-    # Title Row 1
-    ws.merge_cells('A1:S1')
+
+    # ── Row 1: Title ──
+    ws.merge_cells('A1:T1')
     ws['A1'] = f"PROGRAMMES DE FINANCEMENT RETAIL - {month_names[program_month].upper()} {program_year}"
-    ws['A1'].font = Font(bold=True, size=16, color="FFFFFF")
+    ws['A1'].font = Font(bold=True, size=14, color="FFFFFF")
     ws['A1'].fill = PatternFill(start_color="333333", end_color="333333", fill_type="solid")
     ws['A1'].alignment = Alignment(horizontal="center")
-    
-    # Sub-header Row 2 - Group headers
-    ws.merge_cells('A2:D2')
-    ws['A2'] = "VÉHICULE"
+
+    # ── Row 2: Group headers ──
+    # A-E: Véhicule
+    ws.merge_cells('A2:E2')
+    ws['A2'] = "VEHICULE"
     ws['A2'].font = header_font
     ws['A2'].fill = header_fill
     ws['A2'].alignment = header_alignment
-    
-    # Option 1 header with rabais
-    ws.merge_cells('E2:K2')
-    ws['E2'] = "OPTION 1 - Consumer Cash + Taux Standard"
-    ws['E2'].font = header_font
-    ws['E2'].fill = option1_fill
-    ws['E2'].alignment = header_alignment
-    
-    # Option 2 header with rabais
-    ws.merge_cells('L2:R2')
-    ws['L2'] = "OPTION 2 - Alternative Consumer Cash + Taux Réduit"
-    ws['L2'].font = header_font
-    ws['L2'].fill = option2_fill
-    ws['L2'].alignment = header_alignment
-    
-    # Bonus header
-    ws['S2'] = "BONUS"
-    ws['S2'].font = header_font
-    ws['S2'].fill = bonus_fill
-    ws['S2'].alignment = header_alignment
-    
-    # Detail Headers Row 3
+    for c in range(2, 6):
+        ws.cell(row=2, column=c).fill = header_fill
+
+    # F-L: Option 1
+    ws.merge_cells('F2:L2')
+    ws['F2'] = "OPTION 1 - Consumer Cash + Taux Standard"
+    ws['F2'].font = header_font
+    ws['F2'].fill = option1_fill
+    ws['F2'].alignment = header_alignment
+    for c in range(7, 13):
+        ws.cell(row=2, column=c).fill = option1_fill
+
+    # M-S: Option 2
+    ws.merge_cells('M2:S2')
+    ws['M2'] = "OPTION 2 - Alternative Cash + Taux Reduit"
+    ws['M2'].font = header_font
+    ws['M2'].fill = option2_fill
+    ws['M2'].alignment = header_alignment
+    for c in range(14, 20):
+        ws.cell(row=2, column=c).fill = option2_fill
+
+    # T: Bonus
+    ws['T2'] = "BONUS"
+    ws['T2'].font = header_font
+    ws['T2'].fill = bonus_fill
+    ws['T2'].alignment = header_alignment
+
+    ws.row_dimensions[2].height = 30
+
+    # ── Row 3: Column headers ──
+    # Cols: A=Année B=Marque C=Modèle D=Version E=Loyauté
+    #       F=Rabais($) G-L=36m..96m
+    #       M=Rabais Alt($) N-S=36m..96m
+    #       T=Bonus($)
     headers = [
-        "Marque", "Modèle", "Version", "Année",  # Véhicule (A-D)
-        "Rabais ($)", "36m", "48m", "60m", "72m", "84m", "96m",  # Option 1: Rabais + Taux (E-K)
-        "Rabais ($)", "36m", "48m", "60m", "72m", "84m", "96m",  # Option 2: Rabais + Taux (L-R)
-        "Bonus ($)"  # Bonus (S)
+        "Année", "Marque", "Modèle", "Version", "P",
+        "Rabais ($)", "36m", "48m", "60m", "72m", "84m", "96m",
+        "Rabais ($)", "36m", "48m", "60m", "72m", "84m", "96m",
+        "Bonus ($)"
     ]
-    
-    for col, header in enumerate(headers, 1):
+    col_fills = (
+        [header_fill]*4 + [loyalty_fill]
+        + [option1_fill]*7
+        + [option2_fill]*7
+        + [bonus_fill]
+    )
+    for col, (header, fill) in enumerate(zip(headers, col_fills), 1):
         cell = ws.cell(row=3, column=col, value=header)
         cell.font = Font(bold=True, size=9, color="FFFFFF")
         cell.alignment = header_alignment
         cell.border = thin_border
-        
-        if col <= 4:
-            cell.fill = header_fill
-        elif col <= 11:  # Option 1
-            cell.fill = option1_fill
-        elif col <= 18:  # Option 2
-            cell.fill = option2_fill
-        else:  # Bonus
-            cell.fill = bonus_fill
-    
-    # Data rows
+        cell.fill = fill
+    ws.row_dimensions[3].height = 25
+
+    # ── Data rows ──
+    # Light background fills for data cells
+    opt1_data_fill = PatternFill(start_color="FFEBEE", end_color="FFEBEE", fill_type="solid")
+    opt2_data_fill = PatternFill(start_color="E3F2FD", end_color="E3F2FD", fill_type="solid")
+    bonus_data_fill = PatternFill(start_color="E8F5E9", end_color="E8F5E9", fill_type="solid")
+    loyalty_data_fill = PatternFill(start_color="FFF3E0", end_color="FFF3E0", fill_type="solid")
+
+    def format_rate(rate):
+        if rate is None or rate == "-":
+            return "-"
+        try:
+            r = float(rate)
+            return f"{r:.2f}%"
+        except Exception:
+            return "-"
+
     for row_idx, prog in enumerate(programs, 4):
         opt1_rates = prog.get("option1_rates") or {}
         opt2_rates = prog.get("option2_rates") or {}
-        
         consumer_cash = prog.get("consumer_cash", 0) or 0
-        alt_consumer_cash = prog.get("alt_consumer_cash", 0) or 0  # Alternative Consumer Cash pour Option 2
+        alt_consumer_cash = prog.get("alt_consumer_cash", 0) or 0
         bonus_cash = prog.get("bonus_cash", 0) or 0
-        
-        # Format rate display
-        def format_rate(rate):
-            if rate is None or rate == "-":
-                return "-"
-            try:
-                r = float(rate)
-                return f"{r:.2f}%" if r > 0 else "0%"
-            except:
-                return "-"
-        
+
+        # Build loyalty string from P flags
+        loyalty_parts = []
+        if prog.get("loyalty_cash"):
+            loyalty_parts.append("$")
+        if prog.get("loyalty_opt1"):
+            loyalty_parts.append("O1")
+        if prog.get("loyalty_opt2"):
+            loyalty_parts.append("O2")
+        loyalty_str = "P" if loyalty_parts else ""
+
         data = [
+            prog.get("year", ""),
             prog.get("brand", ""),
             prog.get("model", ""),
             prog.get("trim", "") or "",
-            prog.get("year", ""),
-            # Option 1: Rabais + Taux
+            loyalty_str,
+            # Option 1
             f"${consumer_cash:,.0f}" if consumer_cash else "-",
             format_rate(opt1_rates.get("rate_36")) if opt1_rates else "-",
             format_rate(opt1_rates.get("rate_48")) if opt1_rates else "-",
@@ -471,7 +499,7 @@ def generate_excel_from_programs(programs: List[Dict[str, Any]], program_month: 
             format_rate(opt1_rates.get("rate_72")) if opt1_rates else "-",
             format_rate(opt1_rates.get("rate_84")) if opt1_rates else "-",
             format_rate(opt1_rates.get("rate_96")) if opt1_rates else "-",
-            # Option 2: Rabais + Taux
+            # Option 2
             f"${alt_consumer_cash:,.0f}" if alt_consumer_cash else "-",
             format_rate(opt2_rates.get("rate_36")) if opt2_rates else "-",
             format_rate(opt2_rates.get("rate_48")) if opt2_rates else "-",
@@ -482,31 +510,29 @@ def generate_excel_from_programs(programs: List[Dict[str, Any]], program_month: 
             # Bonus
             f"${bonus_cash:,.0f}" if bonus_cash else "-",
         ]
-        
+
         for col, value in enumerate(data, 1):
             cell = ws.cell(row=row_idx, column=col, value=value)
             cell.border = thin_border
             cell.alignment = Alignment(horizontal="center")
-            
-            # Color coding for columns
-            if col >= 5 and col <= 11:  # Option 1
-                cell.fill = PatternFill(start_color="FFEBEE", end_color="FFEBEE", fill_type="solid")
-            elif col >= 12 and col <= 18:  # Option 2
-                cell.fill = PatternFill(start_color="E3F2FD", end_color="E3F2FD", fill_type="solid")
-            elif col == 19:  # Bonus
-                cell.fill = PatternFill(start_color="E8F5E9", end_color="E8F5E9", fill_type="solid")
-    
-    # Adjust column widths
-    column_widths = [12, 18, 28, 7, 12, 8, 8, 8, 8, 8, 8, 12, 8, 8, 8, 8, 8, 8, 12]
-    for col, width in enumerate(column_widths, 1):
+            if col == 5:
+                cell.fill = loyalty_data_fill
+                if value == "P":
+                    cell.font = Font(bold=True, color="E65100")
+            elif 6 <= col <= 12:
+                cell.fill = opt1_data_fill
+            elif 13 <= col <= 19:
+                cell.fill = opt2_data_fill
+            elif col == 20:
+                cell.fill = bonus_data_fill
+
+    # ── Column widths ──
+    col_widths = [7, 12, 22, 40, 4, 12, 8, 8, 8, 8, 8, 8, 12, 8, 8, 8, 8, 8, 8, 12]
+    for col, width in enumerate(col_widths, 1):
         ws.column_dimensions[openpyxl.utils.get_column_letter(col)].width = width
-    
-    # Row height for headers
-    ws.row_dimensions[2].height = 30
-    ws.row_dimensions[3].height = 25
-    
-    # Freeze panes
-    ws.freeze_panes = 'E4'
+
+    # ── Freeze panes: fix Année+Marque+Modèle+Version+Loyauté columns + header rows ──
+    ws.freeze_panes = 'F4'
     
     # ============ ONGLET 2: SCI Lease (si données fournies) ============
     if sci_lease_data:
@@ -760,6 +786,46 @@ async def verify_password(password: str = Form(...)):
         raise HTTPException(status_code=401, detail="Mot de passe incorrect")
     return {"success": True, "message": "Mot de passe vérifié"}
 
+
+from fastapi.responses import StreamingResponse
+
+@router.get("/download-excel")
+async def download_excel(month: int = 3, year: int = 2026):
+    """Génère et télécharge le fichier Excel de vérification des programmes du mois."""
+    if not EXCEL_AVAILABLE:
+        raise HTTPException(status_code=500, detail="openpyxl non disponible")
+
+    programs = []
+    async for doc in db.programs.find(
+        {"program_month": month, "program_year": year},
+        {"_id": 0}
+    ):
+        programs.append(doc)
+
+    if not programs:
+        raise HTTPException(status_code=404, detail=f"Aucun programme trouvé pour {month}/{year}")
+
+    # Load SCI lease data
+    en_month_abbrev = ["", "jan", "feb", "mar", "apr", "may", "jun",
+                      "jul", "aug", "sep", "oct", "nov", "dec"]
+    sci_data = None
+    sci_path = ROOT_DIR / "data" / f"sci_lease_rates_{en_month_abbrev[month]}{year}.json"
+    if sci_path.exists():
+        with open(sci_path, 'r', encoding='utf-8') as f:
+            sci_data = json.load(f)
+
+    excel_data = generate_excel_from_programs(programs, month, year, sci_lease_data=sci_data)
+
+    month_names = ["", "Janvier", "Fevrier", "Mars", "Avril", "Mai", "Juin",
+                   "Juillet", "Aout", "Septembre", "Octobre", "Novembre", "Decembre"]
+    filename = f"Programmes_{month_names[month]}_{year}.xlsx"
+
+    return StreamingResponse(
+        io.BytesIO(excel_data),
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
+    )
+
 @router.post("/extract-pdf", response_model=ExtractedDataResponse)
 async def extract_pdf(
     file: UploadFile = File(...),
@@ -849,6 +915,9 @@ async def extract_pdf(
                     "alt_consumer_cash": prog.get("alt_consumer_cash", 0) or 0,
                     "option1_rates": opt1,
                     "option2_rates": prog.get("option2_rates"),
+                    "loyalty_cash": prog.get("loyalty_cash", False),
+                    "loyalty_opt1": prog.get("loyalty_opt1", False),
+                    "loyalty_opt2": prog.get("loyalty_opt2", False),
                     "program_month": program_month,
                     "program_year": program_year,
                     "created_at": datetime.utcnow().isoformat()
@@ -985,6 +1054,9 @@ async def _run_extraction_task(task_id: str, pdf_content: bytes, password: str,
                     "alt_consumer_cash": prog.get("alt_consumer_cash", 0) or 0,
                     "option1_rates": opt1,
                     "option2_rates": prog.get("option2_rates"),
+                    "loyalty_cash": prog.get("loyalty_cash", False),
+                    "loyalty_opt1": prog.get("loyalty_opt1", False),
+                    "loyalty_opt2": prog.get("loyalty_opt2", False),
                     "program_month": program_month,
                     "program_year": program_year,
                     "created_at": datetime.utcnow().isoformat()

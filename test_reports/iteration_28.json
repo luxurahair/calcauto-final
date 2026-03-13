@@ -1,0 +1,106 @@
+{
+  "summary": "Complete testing of March 2026 Excel export. Backend: 16/16 tests passed (100%). All Excel features verified: freeze panes at F4, correct headers, 93 programs (36x2026, 43x2025, 14x2024), vehicle data accuracy for Compass North, Durango SRT Hellcat, Fiat 500e, Ram 1500. Parser loyalty detection working correctly. SCI Lease sheet present with 75 data rows.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "Parser loyalty → DB → Excel flow", "issue": "Loyalty P markers detected by parser but not in Excel because current DB data was imported before loyalty detection was added. Fields will populate on next PDF import.", "priority": "LOW"}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_excel_export_march2026.py",
+    "/app/test_reports/pytest/pytest_excel_export.xml"
+  ],
+  "action_items": [
+    "NOTE: Loyalty P markers are correctly detected by parser (9 cash, 12 opt1, 5 opt2) but not shown in Excel because DB data predates loyalty detection. Re-import March PDF to populate loyalty fields in DB."
+  ],
+  "critical_code_review_comments": [
+    "Parser loyalty detection works correctly: _is_p() helper checks cols 2, 4, 16 for P markers",
+    "Excel generation correctly builds P column from loyalty_cash, loyalty_opt1, loyalty_opt2 fields",
+    "SCI Lease sheet generation working with 75 vehicles",
+    "Freeze panes correctly set at F4 for fixed first 5 columns + 3 header rows",
+    "All 20 headers in row 3 match expected French labels"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_excel_export_march2026.py"
+  ],
+  "success_rate": {
+    "backend": "100% (16/16 tests passed)",
+    "frontend": "N/A (backend only testing)"
+  },
+  "test_credentials": {
+    "march_pdf_path": "/app/backend/data/march2026_source.pdf",
+    "backend_url": "https://lease-extraction.preview.emergentagent.com"
+  },
+  "seed_data_creation": "No new seed data - using existing March 2026 data from DB",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Excel export fully tested and working. 16/16 tests pass. Parser correctly extracts loyalty P markers but DB needs re-import to populate loyalty fields. Key validations: freeze panes F4, 93 programs, correct vehicle data for Compass North ($3500 CC), Durango SRT Hellcat ($15500 CC), Fiat 500e 2025 ($6000 CC + $5000 bonus), Ram 1500 Laramie Opt2 rates.",
+  "verified_features": {
+    "GET_download_excel_returns_200": {
+      "status": "PASSED",
+      "file_size": "20869 bytes"
+    },
+    "excel_has_financement_sheet": {
+      "status": "PASSED",
+      "sheets": ["Financement", "SCI Lease"]
+    },
+    "excel_has_sci_lease_sheet": {
+      "status": "PASSED",
+      "data_rows": 75
+    },
+    "freeze_panes_at_f4": {
+      "status": "PASSED"
+    },
+    "headers_in_row_3": {
+      "status": "PASSED",
+      "headers": ["Année", "Marque", "Modèle", "Version", "P", "Rabais ($)", "36m-96m x2", "Bonus ($)"]
+    },
+    "program_count_93": {
+      "status": "PASSED",
+      "counts": {"2026": 36, "2025": 43, "2024": 14, "total": 93}
+    },
+    "compass_north_2026": {
+      "status": "PASSED",
+      "consumer_cash": 3500,
+      "opt1_rates": "all 4.99%",
+      "alt_rates": "0.00/0.00/0.00/1.49/1.99/3.49"
+    },
+    "durango_srt_hellcat_2026": {
+      "status": "PASSED",
+      "consumer_cash": 15500,
+      "opt1_rates": "all 4.99%",
+      "alt_rates": "0.00/0.00/0.00/1.49/2.49/3.49"
+    },
+    "fiat_500e_2025": {
+      "status": "PASSED",
+      "consumer_cash": 6000,
+      "bonus_cash": 5000,
+      "opt1_rates": "0.00/0.00/1.99/3.49/3.99/4.99"
+    },
+    "ram_1500_laramie_2026_opt2": {
+      "status": "PASSED",
+      "rates": "0.00/0.00/0.00/1.99/1.99/3.99"
+    },
+    "no_data_truncation": {
+      "status": "PASSED",
+      "long_trims_found": 22
+    },
+    "parser_loyalty_detection": {
+      "status": "PASSED",
+      "loyalty_cash_count": 9,
+      "loyalty_opt1_count": 12,
+      "loyalty_opt2_count": 5
+    },
+    "loyalty_vehicles_verified": {
+      "wrangler_4door_rubicon_2.0L": "P=cash+opt1",
+      "grand_cherokee_laredo": "P=opt1",
+      "ram_1500_tradesman": "P=opt2",
+      "fiat_500e_2026": "P=cash+opt1"
+    }
+  }
+}
