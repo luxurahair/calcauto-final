@@ -796,7 +796,7 @@ def _detect_sci_columns(rates_t: list) -> Dict:
             if not cell: continue
             cs = str(cell).strip().upper()
             if 'STACKABLE' in cs or 'TYPE OF SALE' in cs: continue
-            if result['lease_cash_col'] is None and 'LEASE CASH' in cs:
+            if result['lease_cash_col'] is None and cs == 'LEASE CASH':
                 result['lease_cash_col'] = ci
             elif result['std_start'] is None and 'SCI' in cs and 'STANDARD' in cs:
                 result['std_start'] = ci
@@ -852,8 +852,25 @@ def parse_sci_lease(pdf_content: bytes, start_page: int, end_page: int) -> Dict:
                                 break
 
             for ri in range(5, min(len(names_t), len(rates_t))):
-                vname = str(names_t[ri][1]).replace('\n', ' ').strip() if len(names_t[ri]) > 1 else ''
-                if not vname or any(k in vname.lower() for k in ['discount', 'stackable', 'type of sale']): continue
+                vname = str(names_t[ri][1]).replace('\n', ' ').strip() if len(names_t[ri]) > 1 and names_t[ri][1] else ''
+                if not vname: continue
+                # Filtrer en-têtes et lignes parasites
+                vname_lower = vname.lower()
+                if any(k in vname_lower for k in [
+                    'discount', 'stackable', 'type of sale', 'model year',
+                    'program period', 'before tax', 'after tax',
+                    'color key', 'see program', '*see',
+                ]): continue
+                # Ignorer les lignes sans aucun taux valide
+                rr = rates_t[ri]
+                has_any_rate = False
+                for idx in std_indices + alt_indices:
+                    if idx < len(rr):
+                        v = str(rr[idx]).strip() if rr[idx] else ''
+                        if '%' in v or v == '-':
+                            has_any_rate = True
+                            break
+                if not has_any_rate: continue
 
                 rr = rates_t[ri]
                 lease_cash = parse_dollar(rr[lease_cash_col] if lease_cash_col < len(rr) else None)
@@ -1392,6 +1409,12 @@ async def extract_stable_all(pdf_bytes: bytes) -> Dict:
     # Appel des parsers (ils continuent de marcher comme avant, mais sur les bonnes pages)
     programs = parse_retail_programs(pdf_bytes, pages.get('retail_start', 16), pages.get('retail_end', 25))
     sci = parse_sci_lease(pdf_bytes, pages.get('lease_start', 28), pages.get('lease_end', 29))
+
+    # Bonus Cash depuis page séparée (ex: Fiat 500e $5,000)
+    bonus_entries = parse_bonus_cash_page(pdf_bytes)
+    if bonus_entries:
+        apply_bonus_cash(programs, bonus_entries)
+        logger.info(f"[extract_stable_all] Bonus Cash appliqué: {len(bonus_entries)} entrées")
 
     # Nettoyage + corrections DB + product codes (inchangé)
     for p in programs:
