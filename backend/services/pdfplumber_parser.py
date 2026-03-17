@@ -811,7 +811,7 @@ def _detect_sci_columns(rates_t: list) -> Dict:
     return result
 
 def parse_sci_lease(pdf_content: bytes, start_page: int, end_page: int) -> Dict:
-    """Parse SCI Lease – VERSION FINALE sans lignes parasites"""
+    """Parse SCI Lease – VERSION CORRIGEE avec alignement correct noms/taux"""
     vehicles_2026 = []
     vehicles_2025 = []
     term_keys = ['24', '27', '36', '39', '42', '48', '51', '54', '60']
@@ -850,12 +850,42 @@ def parse_sci_lease(pdf_content: bytes, start_page: int, end_page: int) -> Dict:
                                 has_real_alt = True
                                 break
 
-            for ri in range(8, min(len(names_t), len(rates_t))):  # ← skip en-têtes (démarre plus tard)
-                vname = str(names_t[ri][1]).replace('\n', ' ').strip() if len(names_t[ri]) > 1 else ''
-                if not vname or vname == 'None' or any(k in vname.lower() for k in ['discount', 'stackable', 'type of sale', 'model year', 'program', 'stackability', 'important', 'color key', 'see program', 'before tax', 'after tax']):
-                    continue
+            # STEP 1: Extract vehicle names (skip header rows)
+            skip_keywords = ['discount', 'stackable', 'type of sale', 'model year',
+                             'program', 'stackability', 'important', 'color key',
+                             'see program', 'before tax', 'after tax']
+            vehicle_names = []
+            for ri in range(len(names_t)):
+                # Try column 1 first (common), then column 0
+                vname = ''
+                for col_idx in [1, 0]:
+                    if len(names_t[ri]) > col_idx and names_t[ri][col_idx]:
+                        candidate = str(names_t[ri][col_idx]).replace('\n', ' ').strip()
+                        if candidate and candidate != 'None' and not any(k in candidate.lower() for k in skip_keywords):
+                            vname = candidate
+                            break
+                if vname:
+                    vehicle_names.append((ri, vname))
 
+            # STEP 2: Extract rate data rows (skip header rows)
+            rate_data_rows = []
+            for ri in range(len(rates_t)):
                 rr = rates_t[ri]
+                # A data row has rate values (%) or lease cash ($)
+                has_rate = any(rr[i] and '%' in str(rr[i]) for i in std_indices + alt_indices if i < len(rr))
+                has_lc = lease_cash_col < len(rr) and rr[lease_cash_col] and '$' in str(rr[lease_cash_col])
+                has_sale_type = (lease_cash_col + 1) < len(rr) and rr[lease_cash_col + 1] and str(rr[lease_cash_col + 1]).strip() == 'P'
+                if has_rate or has_lc or has_sale_type:
+                    rate_data_rows.append((ri, rr))
+
+            # STEP 3: Zip vehicle names with rate data (1:1 mapping)
+            count = min(len(vehicle_names), len(rate_data_rows))
+            logger.info(f"[SCI Lease] Page {page_idx+1}: {len(vehicle_names)} noms, {len(rate_data_rows)} lignes de taux, {count} matches")
+
+            for vi in range(count):
+                _, vname = vehicle_names[vi]
+                _, rr = rate_data_rows[vi]
+
                 lease_cash = parse_dollar(rr[lease_cash_col] if lease_cash_col < len(rr) else None)
 
                 std = {}
@@ -872,6 +902,10 @@ def parse_sci_lease(pdf_content: bytes, start_page: int, end_page: int) -> Dict:
                 if alt and all(v is None or v == 0 for v in alt.values()):
                     alt = None
 
+                # If std rates are all None/dashes, set to None
+                if std and all(v is None or v == 0 for v in std.values()):
+                    std = None
+
                 brand = detect_brand_from_model(vname) or "Unknown"
 
                 vehicle = {
@@ -884,6 +918,7 @@ def parse_sci_lease(pdf_content: bytes, start_page: int, end_page: int) -> Dict:
 
                 target = vehicles_2026 if model_year == 2026 else vehicles_2025
                 target.append(vehicle)
+                logger.debug(f"[SCI Lease] {vname}: LC=${lease_cash}, STD={'YES' if std else 'NO'}, ALT={'YES' if alt else 'NO'}")
 
     return {'vehicles_2026': vehicles_2026, 'vehicles_2025': vehicles_2025}
 

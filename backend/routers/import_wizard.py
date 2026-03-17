@@ -1103,11 +1103,29 @@ async def _run_extraction_task(task_id: str, pdf_content: bytes, password: str,
         except Exception as save_error:
             logger.error(f"[Async] Save error: {str(save_error)}")
 
-        # ── Step 3: Merge SCI + Excel + email + validation (le reste de ton code original) ──
+        # ── Step 3: Merge SCI + Save JSON + Excel + email + validation ──
         if sci_data_for_excel:
             vehicles_2026 = sci_data_for_excel.get("vehicles_2026", [])
             vehicles_2025 = sci_data_for_excel.get("vehicles_2025", [])
             _merge_previous_sci_rates(vehicles_2026, vehicles_2025, program_month, program_year)
+
+            # Save SCI lease data to JSON file
+            en_month_abbrev = ["", "jan", "feb", "mar", "apr", "may", "jun",
+                              "jul", "aug", "sep", "oct", "nov", "dec"]
+            sci_json_path = ROOT_DIR / "data" / f"sci_lease_rates_{en_month_abbrev[program_month]}{program_year}.json"
+            try:
+                sci_save_data = {
+                    "program_period": f"{en_month_abbrev[program_month].capitalize()} {program_year}",
+                    "source": "pdfplumber_extraction",
+                    "terms": [24, 27, 36, 39, 42, 48, 51, 54, 60],
+                    "vehicles_2026": vehicles_2026,
+                    "vehicles_2025": vehicles_2025,
+                }
+                with open(sci_json_path, 'w', encoding='utf-8') as f:
+                    json.dump(sci_save_data, f, indent=2, ensure_ascii=False)
+                logger.info(f"[Async] SCI Lease saved: {sci_json_path} ({len(vehicles_2026)} v2026 + {len(vehicles_2025)} v2025)")
+            except Exception as json_err:
+                logger.error(f"[Async] SCI JSON save error: {json_err}")
 
         # Generate Excel and send email
         excel_sent = False
