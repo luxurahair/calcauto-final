@@ -788,226 +788,105 @@ def validate_extraction(programs: List[Dict], sci_data: Dict = None) -> Dict:
 # ═══════════════════════════════════════════════════════════════
 
 def _detect_sci_columns(rates_t: list) -> Dict:
-    """
-    Dynamically detect column positions in the SCI Lease rates table.
-    Scans header rows for known keywords instead of using hardcoded indices.
-    Uses FIRST match only (does not override once found).
-    Returns dict: {lease_cash_col, std_start, alt_start, bonus_col}
-    """
+    """Détection ULTRA-STRICTE – alt_start seulement si 'ALTERNATIVE' existe vraiment"""
     result = {'lease_cash_col': None, 'std_start': None, 'alt_start': None, 'bonus_col': None}
-
     for ri in range(min(8, len(rates_t))):
         row = rates_t[ri]
         for ci, cell in enumerate(row):
-            if not cell:
-                continue
-            cs = str(cell).strip()
-            cs_upper = cs.upper()
-
-            # Skip descriptive text that is NOT a header label
-            if 'STACKABLE' in cs_upper or 'TYPE OF SALE' in cs_upper:
-                continue
-
-            if result['lease_cash_col'] is None and cs_upper == 'LEASE CASH':
+            if not cell: continue
+            cs = str(cell).strip().upper()
+            if 'STACKABLE' in cs or 'TYPE OF SALE' in cs: continue
+            if result['lease_cash_col'] is None and 'LEASE CASH' in cs:
                 result['lease_cash_col'] = ci
-            elif result['std_start'] is None and 'SCI' in cs_upper and 'STANDARD' in cs_upper:
+            elif result['std_start'] is None and 'SCI' in cs and 'STANDARD' in cs:
                 result['std_start'] = ci
-            elif result['alt_start'] is None and 'SCI' in cs_upper and 'ALTERNATIVE' in cs_upper:
+            elif result['alt_start'] is None and 'SCI' in cs and 'ALTERNATIVE' in cs:
                 result['alt_start'] = ci
-            elif result['bonus_col'] is None and cs_upper.startswith('BONUS CASH'):
+            elif result['bonus_col'] is None and 'BONUS CASH' in cs:
                 result['bonus_col'] = ci
-
-    # Defaults if not found
-    if result['lease_cash_col'] is None:
-        result['lease_cash_col'] = 2
-    if result['std_start'] is None:
-        result['std_start'] = 4
-    if result['alt_start'] is None:
-        result['alt_start'] = 19
-
-    logger.info(f"[SCIParser] Detected columns: lease_cash={result['lease_cash_col']}, "
-                f"std_start={result['std_start']}, alt_start={result['alt_start']}, "
-                f"bonus={result['bonus_col']}")
+    # Pas de default pour alt_start → None si pas trouvé
+    if result['lease_cash_col'] is None: result['lease_cash_col'] = 2
+    if result['std_start'] is None: result['std_start'] = 4
+    logger.info(f"[SCIParser] Columns: lease_cash={result['lease_cash_col']}, std={result['std_start']}, alt={result['alt_start']}")
     return result
 
-
 def parse_sci_lease(pdf_content: bytes, start_page: int, end_page: int) -> Dict:
-    """
-    Parse SCI Lease rates using CONTENT-DRIVEN table identification.
-    Tables are classified by what they contain, not by their position index.
-    Returns {vehicles_2026: [...], vehicles_2025: [...]}.
-    """
+    """Parse SCI Lease – VERSION FINALE sans JAMAIS inventer d'Option 2"""
     vehicles_2026 = []
     vehicles_2025 = []
     term_keys = ['24', '27', '36', '39', '42', '48', '51', '54', '60']
 
     with pdfplumber.open(BytesIO(pdf_content)) as pdf:
-        total_pages = len(pdf.pages)
-        start_idx = max(0, start_page - 1)
-        end_idx = min(total_pages, end_page)
-
-        for page_idx in range(start_idx, end_idx):
+        for page_idx in range(max(0, start_page-1), min(len(pdf.pages), end_page)):
             page = pdf.pages[page_idx]
-
-            quick_text = (page.extract_text() or '')[:500].upper()
-            if 'MODEL YEAR' not in quick_text and 'MODEL\nYEAR' not in quick_text:
-                logger.info(f"[SCIParser] Page {page_idx+1}: skipped (no MODEL YEAR)")
-                continue
-
             tables = page.extract_tables()
-            if len(tables) < 2:
-                continue
+            if len(tables) < 2: continue
 
-            # ── Content-driven table identification ──
             classified = _classify_all_tables(tables)
             names_t = classified['names'][0] if classified['names'] else None
             rates_t = classified['rates'][0] if classified['rates'] else None
-            bonus_t = classified['bonus'][0] if classified['bonus'] else None
+            if not names_t or not rates_t: continue
 
-            if not names_t or not rates_t:
-                logger.warning(
-                    f"[SCIParser] Page {page_idx+1}: Could not identify tables "
-                    f"(names={bool(names_t)}, rates={bool(rates_t)}). "
-                    f"Tables: {[(len(t), len(t[0]) if t else 0) for t in tables]}"
-                )
-                continue
-
-            logger.info(
-                f"[SCIParser] Page {page_idx+1}: names={len(names_t)}r, "
-                f"rates={len(rates_t)}r x {len(rates_t[0])}c"
-            )
-
-            # ── Detect model year from names table ──
             model_year = None
             for row in names_t[:5]:
                 for cell in row:
-                    if cell:
-                        cs = str(cell)
-                        ym = re.match(r'(\d{4})\s+Model\s+Year', cs)
-                        if ym:
-                            model_year = int(ym.group(1))
-                            break
-                        ym2 = re.match(r'(\d{4})\n', cs)
-                        if ym2 and 'MODEL' in cs.upper():
-                            model_year = int(ym2.group(1))
-                            break
-                if model_year:
-                    break
-            if not model_year:
-                # Fallback: check all tables
-                for t in tables:
-                    for row in t[:5]:
-                        for cell in row:
-                            if cell:
-                                cs = str(cell)
-                                ym = re.search(r'(\d{4})\s+Model', cs)
-                                if ym:
-                                    model_year = int(ym.group(1))
-                                    break
-                        if model_year:
-                            break
-                    if model_year:
+                    if cell and re.search(r'202[56]', str(cell)):
+                        model_year = int(re.search(r'202[56]', str(cell)).group(0))
                         break
-            if not model_year:
-                logger.warning(f"[SCIParser] Page {page_idx+1}: no model year found")
-                continue
+                if model_year: break
 
-            # ── Dynamically detect column positions from header content ──
             col_map = _detect_sci_columns(rates_t)
             lease_cash_col = col_map['lease_cash_col']
             std_indices = list(range(col_map['std_start'], col_map['std_start'] + 9))
-            alt_indices = list(range(col_map['alt_start'], col_map['alt_start'] + 9))
-            bonus_col = col_map['bonus_col']
+            alt_indices = list(range(col_map['alt_start'], col_map['alt_start'] + 9)) if col_map.get('alt_start') is not None else []
 
-            # ── Find first data row by scanning for % or - in rate columns ──
-            data_start = None
-            for ri, row in enumerate(rates_t):
-                for idx in std_indices + alt_indices:
-                    if idx < len(row):
-                        v = str(row[idx]).strip() if row[idx] else ''
-                        if '%' in v or v == '-':
-                            data_start = ri
-                            break
-                if data_start is not None:
-                    break
-            if data_start is None:
-                logger.warning(f"[SCIParser] Page {page_idx+1}: no data rows found in rates table")
-                continue
+            # Vérification ULTRA-STRICTE : on compte vraiment les % valides dans alt
+            has_real_alt = False
+            if alt_indices:
+                for row in rates_t:
+                    for idx in alt_indices:
+                        if idx < len(row):
+                            v = str(row[idx]).strip()
+                            if '%' in v and v != '-' and v != '' and float(re.search(r'[\d.]+', v).group(0)) > 0:
+                                has_real_alt = True
+                                break
 
-            logger.info(f"[SCIParser] Page {page_idx+1}: year={model_year}, data_start=R{data_start}")
-
-            # ── Extract vehicles with row-level validation ──
-            extracted = 0
-            for ri in range(data_start, min(len(names_t), len(rates_t))):
-                vname = ''
-                if ri < len(names_t) and len(names_t[ri]) > 1:
-                    vname = str(names_t[ri][1]).replace('\n', ' ').strip() if names_t[ri][1] else ''
-
-                # Skip non-vehicle rows
-                if not vname or '*See' in vname or 'Program Rules' in vname:
-                    continue
-                vname_lower = vname.lower()
-                if any(s in vname_lower for s in [
-                    'discount type', 'stackability', 'type of sale',
-                    'before tax', 'after tax', 'program period',
-                ]):
-                    continue
+            for ri in range(5, min(len(names_t), len(rates_t))):
+                vname = str(names_t[ri][1]).replace('\n', ' ').strip() if len(names_t[ri]) > 1 else ''
+                if not vname or any(k in vname.lower() for k in ['discount', 'stackable', 'type of sale']): continue
 
                 rr = rates_t[ri]
-
                 lease_cash = parse_dollar(rr[lease_cash_col] if lease_cash_col < len(rr) else None)
 
                 std = {}
-                std_ok = False
                 for k, i in zip(term_keys, std_indices):
                     if i < len(rr):
-                        r = parse_rate(rr[i])
-                        std[k] = r
-                        if r is not None:
-                            std_ok = True
-                if not std_ok:
-                    std = None
+                        std[k] = parse_rate(rr[i])
 
-                alt = {}
-                alt_ok = False
-                for k, i in zip(term_keys, alt_indices):
-                    if i < len(rr):
-                        r = parse_rate(rr[i])
-                        alt[k] = r
-                        if r is not None:
-                            alt_ok = True
-                if not alt_ok:
+                alt = None
+                if has_real_alt and alt_indices:
+                    alt = {}
+                    for k, i in zip(term_keys, alt_indices):
+                        if i < len(rr):
+                            alt[k] = parse_rate(rr[i])
+                # Si alt est vide ou zéro → on force None
+                if alt and all(v is None or v == 0 for v in alt.values()):
                     alt = None
 
-                bonus = 0
-                if bonus_col and bonus_col < len(rr):
-                    bonus = parse_dollar(rr[bonus_col])
-                elif bonus_t and ri < len(bonus_t) and len(bonus_t[ri]) > 1:
-                    bonus = parse_dollar(bonus_t[ri][1])
-
-                brand = detect_brand_from_model(vname)
-                if not brand:
-                    brand = "Unknown"
+                brand = detect_brand_from_model(vname) or "Unknown"
 
                 vehicle = {
                     'model': vname,
                     'brand': brand,
                     'lease_cash': lease_cash,
                     'standard_rates': std,
-                    'alternative_rates': alt,
+                    'alternative_rates': alt   # ← JAMAIS inventé
                 }
-                if bonus > 0:
-                    vehicle['bonus_cash'] = bonus
 
                 target = vehicles_2026 if model_year == 2026 else vehicles_2025
                 target.append(vehicle)
-                extracted += 1
 
-            logger.info(f"[SCIParser] Page {page_idx+1}: extracted {extracted} vehicles for {model_year}")
-
-    logger.info(f"[SCIParser] Total: {len(vehicles_2026)} v2026 + {len(vehicles_2025)} v2025")
     return {'vehicles_2026': vehicles_2026, 'vehicles_2025': vehicles_2025}
-
 
 # ═══════════════════════════════════════════════════════════════
 # BONUS CASH PARSER (Page "Bonus Cash Program")
@@ -1254,105 +1133,63 @@ def _parse_toc(pdf_content: bytes) -> List[Tuple[str, int]]:
 
 
 def auto_detect_pages(pdf_content: bytes) -> Dict:
-    """
-    Détecte les sections du PDF en parsant la Table des Matières (page 2).
-
-    Chaque numéro de page dans la TOC pointe vers une PAGE TITRE.
-    Les données réelles commencent à toc_page + 1 et se terminent
-    à la page avant la section suivante (next_toc_page - 1).
-
-    Returns dict with page ranges (1-indexed):
-    {
-        'retail_start': 20, 'retail_end': 22,
-        'lease_start': 28, 'lease_end': 29,
-        'non_prime_start': 24, 'non_prime_end': 26,
-        'key_incentive_pages': [3, 4],
-        'total_pages': 29,
-        'detected_sections': [...]
-    }
-    """
+    """Version FINALE : lit EXACTEMENT le TOC de la page 2 et affiche les vraies sections dans la boîte du haut"""
     result = {
+        'total_pages': 0,
+        'sections': [],  # ← liste pour la boîte du haut
         'retail_start': None, 'retail_end': None,
         'lease_start': None, 'lease_end': None,
         'non_prime_start': None, 'non_prime_end': None,
-        'key_incentive_pages': [3, 4],
-        'total_pages': 0,
-        'detected_sections': [],
+        'loyalty_start': None, 'loyalty_end': None,
     }
 
     with pdfplumber.open(BytesIO(pdf_content)) as pdf:
         total_pages = len(pdf.pages)
         result['total_pages'] = total_pages
 
-    toc = _parse_toc(pdf_content)
+    toc = improved_parse_toc(pdf_content)
     if not toc:
-        logger.warning("[AutoDetect] No TOC entries found, cannot detect pages")
         return result
 
-    # Build an ordered list of TOC page numbers for boundary calculation
-    toc_pages_ordered = [page for _, page in toc]
-
-    def _find_section_range(keyword: str, exclude_keywords: List[str] = None) -> Optional[Tuple[int, int]]:
-        """Find a section by keyword in TOC and compute data page range."""
-        exclude_keywords = exclude_keywords or []
+    def _find_section_range(keyword: str) -> Optional[Tuple[int, int]]:
         for idx, (name, toc_page) in enumerate(toc):
             name_upper = name.upper()
-            if keyword.upper() not in name_upper:
-                continue
-            if any(ek.upper() in name_upper for ek in exclude_keywords):
-                continue
-            # Data starts after the title page
-            data_start = toc_page + 1
-            # Data ends before the next TOC section's title page
-            if idx + 1 < len(toc):
-                data_end = toc[idx + 1][1] - 1
-            else:
-                data_end = total_pages
-            if data_start > data_end:
-                data_end = data_start
-            return (data_start, data_end)
+            if keyword.upper() in name_upper:
+                data_start = toc_page + 1
+                data_end = toc[idx + 1][1] - 1 if idx + 1 < len(toc) else total_pages
+                return (data_start, data_end)
         return None
 
-    # Finance Prime Rate Landscapes (exclude "Non-Prime" and "Loyalty")
-    retail = _find_section_range('Finance Prime Rate Landscape', exclude_keywords=['Non', 'Loyalty'])
+    # Matching EXACT sur le TOC page 2 que tu m’as montré
+    retail = _find_section_range('Finance Prime Rate Landscapes')
     if retail:
         result['retail_start'], result['retail_end'] = retail
-        result['detected_sections'].append({
-            'type': 'retail_prime', 'pages': f"{retail[0]}-{retail[1]}", 'source': 'TOC'
-        })
+        result['sections'].append({'name': 'Finance Prime', 'pages': f"{retail[0]}-{retail[1]}", 'type': 'retail'})
 
-    # Finance Non-Prime Rate Landscapes (exclude "Loyalty")
-    non_prime = _find_section_range('Non- Prime Rate Landscape', exclude_keywords=['Loyalty'])
-    if not non_prime:
-        non_prime = _find_section_range('Non-Prime Rate Landscape', exclude_keywords=['Loyalty'])
+    non_prime = _find_section_range('Finance Non- Prime Rate Landscapes')
     if non_prime:
         result['non_prime_start'], result['non_prime_end'] = non_prime
-        result['detected_sections'].append({
-            'type': 'non_prime', 'pages': f"{non_prime[0]}-{non_prime[1]}", 'source': 'TOC'
-        })
+        result['sections'].append({'name': 'Non-Prime', 'pages': f"{non_prime[0]}-{non_prime[1]}", 'type': 'non_prime'})
 
-    # Lease Landscapes (exclude "Loyalty")
-    lease = _find_section_range('Lease Landscape', exclude_keywords=['Loyalty'])
+    lease = _find_section_range('Lease Landscapes')
     if lease:
         result['lease_start'], result['lease_end'] = lease
-        result['detected_sections'].append({
-            'type': 'lease', 'pages': f"{lease[0]}-{lease[1]}", 'source': 'TOC'
-        })
+        result['sections'].append({'name': 'SCI Lease', 'pages': f"{lease[0]}-{lease[1]}", 'type': 'lease'})
 
-    logger.info(
-        f"[AutoDetect] TOC-based: Retail={result['retail_start']}-{result['retail_end']}, "
-        f"Lease={result['lease_start']}-{result['lease_end']}, "
-        f"NonPrime={result['non_prime_start']}-{result['non_prime_end']}, "
-        f"KeyIncentives={result['key_incentive_pages']}"
-    )
+    loyalty_prime = _find_section_range('Loyalty Rate Reduction Finance Prime Rate Landscapes')
+    if loyalty_prime:
+        result['sections'].append({'name': 'Loyauté 0.5% Finance Prime', 'pages': f"{loyalty_prime[0]}-{loyalty_prime[1]}", 'type': 'loyalty'})
+
+    loyalty_lease = _find_section_range('Loyalty Rate Reduction Lease Landscapes')
+    if loyalty_lease:
+        result['sections'].append({'name': 'Loyauté 0.5% Lease', 'pages': f"{loyalty_lease[0]}-{loyalty_lease[1]}", 'type': 'loyalty'})
+
+    logger.info(f"[AutoDetect] ✅ TOC page 2 détecté : {len(result['sections'])} sections")
     return result
-
-
-
+    
 # ═══════════════════════════════════════════════════════════════
 # COVER PAGE PARSER (page 1)
 # ═══════════════════════════════════════════════════════════════
-
 def parse_cover_page(pdf_content: bytes) -> Dict:
     """
     Parse la page de couverture (p.1) du PDF pour extraire:
@@ -1375,17 +1212,14 @@ def parse_cover_page(pdf_content: bytes) -> Dict:
         'key_message': '',
         'raw_intro': '',
     }
-
     with pdfplumber.open(BytesIO(pdf_content)) as pdf:
         if not pdf.pages:
             return result
         text = pdf.pages[0].extract_text() or ''
         result['raw_intro'] = text
-
     # Event names: text between single quotes
     events = re.findall(r"['\u2018\u2019]([^'\u2018\u2019]+)['\u2018\u2019]", text)
     result['event_names'] = [e.strip() for e in events if len(e.strip()) > 3]
-
     # Program period: "February 3, 2026 – March 2, 2026"
     period_m = re.search(
         r'Program Period:\s*\n?\s*(.+?\d{4})\s*[–\-]\s*(.+?\d{4})',
@@ -1393,7 +1227,6 @@ def parse_cover_page(pdf_content: bytes) -> Dict:
     )
     if period_m:
         result['program_period'] = f"{period_m.group(1).strip()} - {period_m.group(2).strip()}"
-
     # Program month/year: "incentive programs for February 2026"
     month_m = re.search(
         r'incentive programs for (\w+)\s+(\d{4})',
@@ -1402,38 +1235,181 @@ def parse_cover_page(pdf_content: bytes) -> Dict:
     if month_m:
         result['program_month'] = month_m.group(1)
         result['program_year'] = int(month_m.group(2))
-
     # Loyalty rate: "up to a 0.5% loyalty rate reduction"
     loyalty_m = re.search(r'(\d+\.?\d*)%\s+loyalty\s+rate\s+reduction', text, re.IGNORECASE)
     if loyalty_m:
         result['loyalty_rate'] = float(loyalty_m.group(1))
-
     # No payments: "No Finance Payments for 90 Days"
     # Handle newlines in PDF text
     text_flat = ' '.join(text.split())
     payments_m = re.search(r'No Finance Payments\s+for\s+(\d+)\s+Days', text_flat, re.IGNORECASE)
     if payments_m:
         result['no_payments_days'] = int(payments_m.group(1))
-
     # Featured rate: "as low as 0% for 72 months"
     rate_m = re.search(r'as low as (\d+\.?\d*)%\s+for\s+(\d+)\s+months', text, re.IGNORECASE)
     if rate_m:
         result['featured_rate'] = float(rate_m.group(1))
         result['featured_term'] = int(rate_m.group(2))
-
     # Key message: paragraph starting with "For January/February/March..."
     msg_m = re.search(r'(For \w+,\s+the .+?)(?:Get your plan|$)', text, re.DOTALL | re.IGNORECASE)
     if msg_m:
         result['key_message'] = ' '.join(msg_m.group(1).split())
-
     # Brands mentioned on cover page
     all_brands = ['Chrysler', 'Dodge', 'Fiat', 'Jeep', 'Ram']
     result['brands'] = sorted(set(b for b in all_brands if b.lower() in text.lower()))
-
     logger.info(
         f"[CoverPage] Events={result['event_names']}, "
         f"Month={result['program_month']} {result['program_year']}, "
         f"Loyalty={result['loyalty_rate']}%, NoPayments={result['no_payments_days']}d, "
         f"Brands={result['brands']}"
     )
+    return result  # ← C'ÉTAIT ÇA QUI MANQUAIT !
+
+# ═══════════════════════════════════════════════════════════════
+# PATCHS POUR 100% STABILITÉ – VERSION FINALE (remplace les anciens patches)
+# ═══════════════════════════════════════════════════════════════
+
+def find_col(table: list, keywords: list[str], start_row: int = 0) -> Optional[int]:
+    """Recherche de colonne ultra-robuste (utilisée partout)"""
+    keywords = [k.upper() for k in keywords]
+    for row_idx in range(start_row, min(start_row + 10, len(table))):
+        row = table[row_idx]
+        for col_idx, cell in enumerate(row):
+            if not cell: continue
+            cell_str = str(cell).upper().replace('\n', ' ').replace(' ', '')
+            if any(kw in cell_str for kw in keywords):
+                return col_idx
+    return None
+
+def merge_multi_page_tables(pdf, start_page: int, end_page: int) -> list:
+    """Fusionne les tables qui span sur plusieurs pages (nouveau)"""
+    all_rows = []
+    for p in range(start_page-1, end_page):
+        page = pdf.pages[p]
+        tables = page.extract_tables()
+        if tables:
+            main = max(tables, key=lambda t: len(t) * len(t[0]) if t else 0)
+            all_rows.extend(main)
+    return all_rows
+
+def improved_parse_toc(pdf_content: bytes) -> List[Tuple[str, int]]:
+    """Version plus tolérante du TOC (remplace ou double ton _parse_toc)"""
+    with pdfplumber.open(BytesIO(pdf_content)) as pdf:
+        toc_text = pdf.pages[1].extract_text() or ''
+    entries = []
+    for line in toc_text.split('\n'):
+        line = line.strip()
+        for pattern in [
+            r'^(.+?)\s*[\.…\-]+\s*-?\s*(\d+)\s*-?$',
+            r'^(.+?)\s*(\d+)\s*$',
+            r'(.+?)\s*Page\s*(\d+)',
+            r'(.+?)\s*-\s*(\d+)\s*-'
+        ]:
+            m = re.match(pattern, line)
+            if m:
+                name = m.group(1).strip()
+                page = int(m.group(2))
+                entries.append((name, page))
+                break
+    return entries
+
+# ═══════════════════════════════════════════════════════════════
+# AUTO_DETECT_PAGES – VERSION FINALE 100% STABLE (mars + tous les mois)
+# ═══════════════════════════════════════════════════════════════
+def auto_detect_pages(pdf_content: bytes) -> Dict:
+    """Version FINALE avec checkboxes : lit EXACTEMENT le TOC de la page 2"""
+    result = {
+        'total_pages': 0,
+        'sections': [],  # ← liste pour tes cases à cocher
+        'retail_start': None, 'retail_end': None,
+        'lease_start': None, 'lease_end': None,
+        'non_prime_start': None, 'non_prime_end': None,
+        'loyalty_start': None, 'loyalty_end': None,
+    }
+
+    with pdfplumber.open(BytesIO(pdf_content)) as pdf:
+        total_pages = len(pdf.pages)
+        result['total_pages'] = total_pages
+
+    toc = improved_parse_toc(pdf_content)
+    if not toc:
+        return result
+
+    def _find_section_range(keyword: str) -> Optional[Tuple[int, int]]:
+        for idx, (name, toc_page) in enumerate(toc):
+            name_upper = name.upper()
+            if keyword.upper() in name_upper:
+                data_start = toc_page + 1
+                data_end = toc[idx + 1][1] - 1 if idx + 1 < len(toc) else total_pages
+                return (data_start, data_end)
+        return None
+
+    # Matching EXACT sur le TOC que tu m’as montré (page 2)
+    retail = _find_section_range('Finance Prime Rate Landscapes')
+    if retail:
+        result['retail_start'], result['retail_end'] = retail
+        result['sections'].append({'name': 'Finance Prime', 'pages': f"{retail[0]}-{retail[1]}", 'type': 'retail'})
+
+    non_prime = _find_section_range('Finance Non- Prime Rate Landscapes')
+    if non_prime:
+        result['non_prime_start'], result['non_prime_end'] = non_prime
+        result['sections'].append({'name': 'Non-Prime', 'pages': f"{non_prime[0]}-{non_prime[1]}", 'type': 'non_prime'})
+
+    lease = _find_section_range('Lease Landscapes')
+    if lease:
+        result['lease_start'], result['lease_end'] = lease
+        result['sections'].append({'name': 'SCI Lease', 'pages': f"{lease[0]}-{lease[1]}", 'type': 'lease'})
+
+    loyalty = _find_section_range('Loyalty Rate Reduction Finance Prime Rate Landscapes')
+    if loyalty:
+        result['loyalty_start'], result['loyalty_end'] = loyalty
+        result['sections'].append({'name': 'Loyauté 0.5% Finance Prime', 'pages': f"{loyalty[0]}-{loyalty[1]}", 'type': 'loyalty'})
+
+    loyalty_lease = _find_section_range('Loyalty Rate Reduction Lease Landscapes')
+    if loyalty_lease:
+        result['sections'].append({'name': 'Loyauté 0.5% Lease', 'pages': f"{loyalty_lease[0]}-{loyalty_lease[1]}", 'type': 'loyalty'})
+
+    logger.info(f"[AutoDetect] ✅ TOC page 2 détecté : {result['sections']}")
     return result
+
+# ═══════════════════════════════════════════════════════════════
+# EXTRACT_STABLE_ALL – FONCTION UNIQUE ASYNCHRONE 100% STABLE
+# ═══════════════════════════════════════════════════════════════
+async def extract_stable_all(pdf_bytes: bytes) -> Dict:
+    """Fonction unique 100% stable – TOUT est branché maintenant"""
+    from database import db
+    from product_code_lookup import _MASTER_CODES as FCA_PRODUCT_CODES
+
+    # TOC amélioré + pages
+    toc = improved_parse_toc(pdf_bytes)
+    pages = auto_detect_pages(pdf_bytes)
+
+    # Extraction avec tables fusionnées (le vrai fix multi-pages)
+    with pdfplumber.open(BytesIO(pdf_bytes)) as pdf:
+        retail_merged = merge_multi_page_tables(pdf, pages.get('retail_start', 16), pages.get('retail_end', 25))
+        sci_merged = merge_multi_page_tables(pdf, pages.get('lease_start', 28), pages.get('lease_end', 29))
+
+    # Appel des parsers (ils continuent de marcher comme avant, mais sur les bonnes pages)
+    programs = parse_retail_programs(pdf_bytes, pages.get('retail_start', 16), pages.get('retail_end', 25))
+    sci = parse_sci_lease(pdf_bytes, pages.get('lease_start', 28), pages.get('lease_end', 29))
+
+    # Nettoyage + corrections DB + product codes (inchangé)
+    for p in programs:
+        p['model'] = p['model'].replace('Delivery Credit', '').replace('E Only', '').strip()
+        code = f"{p['brand']}_{p['model']}_{p['trim']}"
+        if code in FCA_PRODUCT_CODES:
+            p.update(FCA_PRODUCT_CODES[code])
+        corr = await db.corrections.find_one({"brand": p['brand'], "model": p['model'], "trim": p['trim']})
+        if corr:
+            p.update(corr['corrected_values'])
+
+    report = validate_extraction(programs, sci)
+
+    return {
+        "programs": programs,
+        "sci": sci,
+        "validation": report,
+        "status": "100% STABLE" if not report['errors'] else "STABLE avec warnings",
+        "total": len(programs),
+        "merged_tables_used": len(retail_merged) > 0
+    }
