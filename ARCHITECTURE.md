@@ -1,6 +1,7 @@
 # CalcAuto AiPro - Architecture & Guide de Deploiement
 
 > Document complet pour comprendre, deployer et maintenir l'application de maniere independante.
+> Derniere mise a jour : 17 mars 2026
 
 ---
 
@@ -10,20 +11,21 @@
 2. [Architecture Backend (FastAPI)](#2-architecture-backend-fastapi)
 3. [Architecture Frontend (Expo React)](#3-architecture-frontend-expo-react)
 4. [Base de donnees (MongoDB)](#4-base-de-donnees-mongodb)
-5. [Deploiement](#5-deploiement)
-   - [GitHub](#51-github)
-   - [Backend sur Render](#52-backend-sur-render)
-   - [Frontend sur Vercel](#53-frontend-sur-vercel)
-6. [Variables d'environnement](#6-variables-denvironnement)
-7. [Flux de donnees](#7-flux-de-donnees)
-8. [Maintenance et operations courantes](#8-maintenance-et-operations-courantes)
-9. [Depannage](#9-depannage)
+5. [Stockage persistant (Supabase)](#5-stockage-persistant-supabase)
+6. [Deploiement](#6-deploiement)
+   - [GitHub](#61-github)
+   - [Backend sur Render](#62-backend-sur-render)
+   - [Frontend sur Vercel](#63-frontend-sur-vercel)
+7. [Variables d'environnement](#7-variables-denvironnement)
+8. [Flux de donnees](#8-flux-de-donnees)
+9. [Maintenance et operations courantes](#9-maintenance-et-operations-courantes)
+10. [Depannage](#10-depannage)
 
 ---
 
 ## 1. Vue d'ensemble
 
-**CalcAuto AiPro** est une application full-stack de financement vehiculaire composee de 3 parties :
+**CalcAuto AiPro** est une application full-stack de financement vehiculaire composee de 4 parties :
 
 ```
 ┌─────────────────┐       ┌─────────────────┐       ┌─────────────────┐
@@ -32,6 +34,13 @@
 │   Expo/React    │       │   FastAPI       │       │   (MongoDB      │
 │   TypeScript    │       │   Python 3.11   │       │    Atlas)       │
 └─────────────────┘       └─────────────────┘       └─────────────────┘
+                                │
+                                │
+                          ┌─────▼─────────────┐
+                          │   STOCKAGE        │
+                          │   (Supabase       │
+                          │    Storage)       │
+                          └───────────────────┘
 ```
 
 | Composant | Technologie | Hebergement |
@@ -39,10 +48,10 @@
 | Frontend  | Expo (React) + TypeScript | Vercel |
 | Backend   | FastAPI + Python 3.11 | Render |
 | Base de donnees | MongoDB | MongoDB Atlas (cloud) |
+| Stockage fichiers | Supabase Storage | Supabase (cloud) |
 
-**Repositories GitHub (compte `Lianag2018`):**
-- Backend : `Lianag2018/calcauto-backend` (ou similaire)
-- Frontend : `Lianag2018/calcauto-frontend` (ou similaire)
+**Repository GitHub (compte `Lianag2018`):**
+- Monorepo : `Lianag2018/calcauto-aipro` (backend/ + frontend/)
 
 ---
 
@@ -53,41 +62,56 @@
 ```
 backend/
 ├── server.py              # Point d'entree principal (FastAPI app)
+│                          #   - Startup: sync Supabase -> cache local
+│                          #   - Startup: migration auto des donnees
 ├── database.py            # Connexion MongoDB + configuration globale
 ├── models.py              # Modeles Pydantic (validation des donnees)
 ├── dependencies.py        # Fonctions utilitaires (auth, calculs)
-├── validation.py          # Validation de donnees
-├── vin_utils.py           # Utilitaires VIN (decodage vehicule)
-├── product_code_lookup.py # Referentiel codes produits FCA
-├── fca_parser.py          # Parseur de programmes FCA depuis PDF
-├── ocr.py                 # Logique OCR pour scan de factures
-├── ocr_zones.py           # Zones de detection OCR
-├── parser.py              # Parseur de factures
 │
 ├── routers/               # Endpoints API (chaque fichier = un groupe)
-│   ├── auth.py            # /api/auth/register, /api/auth/login, /api/auth/logout
-│   ├── programs.py        # /api/programs (CRUD), /api/calculate, /api/import, /api/seed
+│   ├── auth.py            # /api/auth/* (register, login, demo-login)
+│   ├── programs.py        # /api/programs (CRUD), /api/calculate, /api/seed
+│   ├── import_wizard.py   # /api/scan-pdf, /api/extract-pdf-async, /api/import-wizard
+│   │                      #   - Scan TOC -> checkboxes -> extraction selective
+│   │                      #   - Upload resultats vers Supabase apres extraction
+│   ├── sci.py             # /api/sci/* (taux location SCI, residuels)
+│   │                      #   - Lit depuis le cache local (sync Supabase au demarrage)
 │   ├── submissions.py     # /api/submissions (CRM: soumissions clients)
 │   ├── contacts.py        # /api/contacts (carnet d'adresses)
 │   ├── inventory.py       # /api/inventory (gestion vehicules en stock)
 │   ├── invoice.py         # /api/invoice/scan (scanner factures OCR/IA)
 │   ├── email.py           # /api/email/send (envoi emails de calcul)
-│   ├── import_wizard.py   # /api/import-wizard (import PDF/Excel programmes)
-│   ├── sci.py             # /api/sci/* (taux location SCI, residuels)
-│   └── admin.py           # /api/admin/* (gestion utilisateurs, stats)
+│   ├── admin.py           # /api/admin/* (gestion utilisateurs, stats)
+│   └── pdf_parser.py      # /api/corrections (gestion corrections manuelles)
 │
 ├── services/
-│   ├── email_service.py   # Service SMTP (envoi emails via Gmail)
-│   └── window_sticker.py  # Recuperation Window Sticker Stellantis
+│   ├── pdfplumber_parser.py  # Logique d'extraction PDF (pdfplumber)
+│   │                         #   - improved_parse_toc: lecture TOC
+│   │                         #   - parse_retail_programs_content_driven: programmes finance
+│   │                         #   - parse_sci_lease_programs: taux location SCI
+│   │                         #   - parse_bonus_cash_page: bonus cash
+│   ├── storage.py            # Module Supabase Storage (upload/download/sync)
+│   ├── email_service.py      # Service SMTP (envoi emails via Gmail)
+│   └── window_sticker.py     # Recuperation Window Sticker Stellantis
 │
 ├── scripts/
 │   └── setup_trim_orders.py  # Script pour configurer l'ordre des trims
 │
-├── data/                  # Fichiers de donnees statiques
-│   ├── sci_residuals_feb2026.json      # Valeurs residuelles SCI
-│   ├── sci_lease_rates_feb2026.json    # Taux de location SCI
-│   ├── fca_product_codes_2026.json     # Codes produits FCA
-│   └── ...
+├── data/                  # Cache local (sync depuis Supabase au demarrage)
+│   ├── sci_lease_rates_*.json     # Taux location SCI (par mois)
+│   ├── key_incentives_*.json      # Incitatifs cles (par mois)
+│   ├── program_meta_*.json        # Metadonnees programmes (par mois)
+│   ├── sci_residuals_*.json       # Valeurs residuelles (par mois)
+│   ├── fca_product_codes_2026.json  # Codes produits FCA (reference)
+│   ├── code_program_mapping.json    # Mapping codes -> programmes
+│   └── FCA_Master_Codes.xlsx        # Master reference codes produits
+│
+├── tests/                 # Tests unitaires et integration
+│   ├── test_ci_unit.py             # Tests pour CI/CD
+│   ├── test_content_driven_parser.py
+│   ├── test_march_2026_extraction.py
+│   ├── test_sci_lease.py
+│   └── ... (30+ fichiers de test)
 │
 ├── requirements.txt       # Dependances Python
 ├── Procfile               # Commande de demarrage (Render)
@@ -99,58 +123,67 @@ backend/
 
 #### `server.py` - Point d'entree
 C'est le fichier principal qui demarre l'application FastAPI. Il:
-- Cree l'application FastAPI
-- Importe et enregistre tous les routers sous le prefixe `/api`
-- Configure le CORS (Cross-Origin Resource Sharing) pour permettre au frontend de communiquer
-- Gere la fermeture propre de la connexion MongoDB
+- Cree l'application FastAPI avec tous les routers sous `/api`
+- Configure le CORS (toutes origines autorisees)
+- **Sync Supabase au demarrage:** Telecharge les JSON mensuels depuis Supabase vers `/data`
+- **Migration auto:** Corrige les donnees 2025/2026 au premier demarrage (bonus_cash, inversions)
+- Gere la fermeture propre de MongoDB
 
-**Tous les endpoints API sont prefixes par `/api`** grace a la ligne :
-```python
-api_router = APIRouter(prefix="/api")
-```
+#### `services/pdfplumber_parser.py` - Parseur PDF
+Le coeur de l'application. Utilise `pdfplumber` pour extraire les donnees des PDF d'incitatifs mensuels :
+- **`improved_parse_toc()`** : Lit la Table des Matieres (page 2) et retourne toutes les sections avec leurs numeros de page
+- **`parse_retail_programs_content_driven()`** : Extrait les programmes de financement (taux Option 1/2, consumer cash, bonus cash)
+- **`parse_sci_lease_programs()`** : Extrait les taux de location SCI avec alignement correct des noms/taux
+- **`parse_bonus_cash_page()`** : Extrait les bonus cash depuis une page separee et les fusionne avec les programmes
 
-#### `database.py` - Configuration
-Ce fichier gere :
-- La connexion a MongoDB via `motor` (driver async)
-- La lecture des variables d'environnement (`.env`)
-- Les constantes globales : `ADMIN_PASSWORD`, `OPENAI_API_KEY`, `SMTP_*`
+#### `services/storage.py` - Supabase Storage
+Module centralise pour toutes les operations de fichiers :
+- **`sync_from_supabase()`** : Au demarrage, telecharge tous les JSON mensuels dans le cache local
+- **`upload_monthly_json()`** : Apres extraction, uploade les JSON vers Supabase
+- **`upload_local_file()` / `download_to_local()`** : Operations generiques upload/download
 
-#### `models.py` - Modeles de donnees
-Definit tous les schemas Pydantic pour la validation :
-- `VehicleProgram` : Programme de financement (marque, modele, trim, taux Option 1/2, bonus cash, sort_order)
-- `Submission` : Soumission client (CRM)
-- `InventoryVehicle` : Vehicule en inventaire
-- `User` : Utilisateur de l'application
-- `Contact` : Contact importe
-- Et d'autres modeles de requete/reponse...
-
-#### `dependencies.py` - Utilitaires
-Contient :
-- `hash_password()` : Hachage de mot de passe (SHA256)
-- `generate_token()` : Generation de jetons d'authentification
-- `get_current_user()` : Middleware d'authentification
-- `calculate_monthly_payment()` : Formule d'amortissement pour les paiements
-- `get_rate_for_term()` : Extraction du taux pour un terme donne
+#### `routers/import_wizard.py` - Pipeline d'import
+Orchestre le flux complet d'import PDF :
+1. `/scan-pdf` : Upload le PDF, lit la TOC, retourne les sections trouvees
+2. `/extract-pdf-async` : Recoit les sections selectionnees, lance l'extraction en arriere-plan
+3. Sauvegarde les resultats en JSON local + upload vers Supabase
+4. Genere un fichier Excel de validation
 
 ### Endpoints API principaux
 
 | Methode | Endpoint | Description |
 |---------|----------|-------------|
+| **Authentification** | | |
 | POST | `/api/auth/register` | Inscription d'un utilisateur |
 | POST | `/api/auth/login` | Connexion (retourne un token) |
-| GET | `/api/programs` | Liste des programmes de financement (tries par sort_order) |
+| POST | `/api/auth/demo-login` | Connexion mode demo (sans mot de passe) |
+| **Programmes** | | |
+| GET | `/api/programs` | Liste des programmes de financement |
 | POST | `/api/calculate` | Calcul de financement pour un vehicule |
-| POST | `/api/import` | Import de programmes (protege par mot de passe admin) |
 | PUT | `/api/programs/reorder` | Reordonnement des programmes (admin) |
+| GET | `/api/periods` | Periodes disponibles (mois/annee) |
+| GET | `/api/program-meta` | Metadonnees du programme mensuel |
+| **Import PDF** | | |
+| POST | `/api/scan-pdf` | Scan TOC du PDF -> retourne sections avec checkboxes |
+| POST | `/api/extract-pdf-async` | Extraction selective des sections choisies |
+| GET | `/api/extract-status/{task_id}` | Statut de l'extraction async |
+| **SCI (Location)** | | |
+| GET | `/api/sci/lease-rates` | Taux de location SCI (depuis cache local) |
+| GET | `/api/sci/residuals` | Valeurs residuelles SCI |
+| **CRM** | | |
+| GET/POST | `/api/submissions` | Gestion des soumissions clients |
+| GET/POST | `/api/contacts` | Gestion des contacts |
+| **Inventaire** | | |
 | GET/POST | `/api/inventory` | Gestion de l'inventaire vehiculaire |
+| **Corrections** | | |
+| GET/POST | `/api/corrections` | Corrections manuelles des programmes |
+| **Utilitaires** | | |
 | POST | `/api/invoice/scan` | Scanner une facture (OCR) |
 | POST | `/api/email/send` | Envoyer un calcul par email |
-| GET/POST | `/api/submissions` | Gestion des soumissions (CRM) |
-| GET/POST | `/api/contacts` | Gestion des contacts |
-| GET | `/api/sci/residuals` | Valeurs residuelles SCI |
-| GET | `/api/sci/lease-rates` | Taux de location SCI |
-| GET | `/api/admin/users` | Liste des utilisateurs (admin) |
-| GET | `/api/admin/stats` | Statistiques globales (admin) |
+| GET/HEAD | `/api/ping` | Keep-alive (UptimeRobot) |
+| **Admin** | | |
+| GET | `/api/admin/users` | Liste des utilisateurs |
+| GET | `/api/admin/stats` | Statistiques globales |
 
 ---
 
@@ -161,34 +194,38 @@ Contient :
 ```
 frontend/
 ├── app/
-│   ├── _layout.tsx              # Layout racine (authentification, navigation)
+│   ├── _layout.tsx              # Layout racine (auth, navigation, splash screen)
 │   ├── login.tsx                # Page de connexion
-│   ├── import.tsx               # Page d'import de programmes
+│   ├── import.tsx               # Page d'import PDF (checkboxes de sections)
 │   ├── manage.tsx               # Page de gestion
 │   └── (tabs)/
 │       ├── _layout.tsx          # Configuration des onglets (barre de navigation)
-│       ├── index.tsx            # Onglet "Calcul" (calculateur principal)
+│       ├── index.tsx            # Onglet "Calcul" (calculateur principal ~3000+ lignes)
 │       ├── inventory.tsx        # Onglet "Inventaire"
 │       ├── clients.tsx          # Onglet "CRM" (soumissions + contacts)
 │       └── admin.tsx            # Onglet "Admin" (visible admin seulement)
+│       └── styles/              # Styles des onglets
 │
 ├── components/
-│   ├── AnimatedSplashScreen.tsx # Animation d'ecran de demarrage
+│   ├── AnimatedSplashScreen.tsx # Animation d'ecran de demarrage (comete)
 │   ├── EmailModal.tsx           # Modal d'envoi d'email
+│   ├── EventBanner.tsx          # Banniere d'evenements promotionnels
 │   ├── FilterBar.tsx            # Barre de filtres
 │   ├── LanguageSelector.tsx     # Selecteur de langue (FR/EN)
-│   ├── LoadingBorderAnimation.tsx
+│   ├── LoadingBorderAnimation.tsx # Animation de chargement
+│   ├── index.ts                 # Barrel exports
 │   └── calculator/              # Composants du calculateur
-│       ├── CalculatorInputs.tsx
-│       ├── CostBreakdown.tsx
-│       ├── PaymentResult.tsx
-│       ├── ProgramSelector.tsx
+│       ├── CalculatorInputs.tsx # Champs de saisie du calculateur
+│       ├── CostBreakdown.tsx    # Decomposition des couts
+│       ├── PaymentResult.tsx    # Resultat de paiement
+│       ├── ProgramSelector.tsx  # Selecteur de programme vehicule
 │       └── index.ts
 │
 ├── contexts/
-│   └── AuthContext.tsx           # Contexte d'authentification (login, token, user)
+│   └── AuthContext.tsx           # Contexte d'authentification (login, token, user, demo)
 │
 ├── hooks/
+│   ├── index.ts
 │   ├── useCalculator.ts         # Hook du calculateur
 │   ├── useFinancingCalculation.ts # Calculs de financement
 │   ├── useNetCost.ts            # Calcul du cout net
@@ -196,7 +233,8 @@ frontend/
 │
 ├── utils/
 │   ├── api.ts                   # Configuration de l'URL backend
-│   └── i18n.ts                  # Internationalisation (FR/EN)
+│   ├── i18n.ts                  # Internationalisation (FR/EN)
+│   └── leaseCalculator.ts      # Calcul taux location + matching strict vehicule
 │
 ├── locales/
 │   ├── fr.json                  # Traductions francaises
@@ -206,40 +244,32 @@ frontend/
 │   └── calculator.ts            # Types TypeScript du calculateur
 │
 ├── assets/                      # Images et polices
-├── package.json                 # Dependances NPM
+├── public/                      # Fichiers statiques web
+├── package.json                 # Dependances (yarn)
 ├── vercel.json                  # Configuration de deploiement Vercel
 ├── app.json                     # Configuration Expo
+├── metro.config.js              # Configuration Metro bundler
 └── tsconfig.json                # Configuration TypeScript
 ```
 
 ### Fichiers cles expliques
 
-#### `utils/api.ts` - Communication avec le backend
-Ce fichier determine l'URL du backend :
-- **Sur le web (Vercel):** Utilise `window.location.origin` (les appels API sont rediriges vers Render via les `rewrites` de Vercel)
-- **En developpement:** Utilise `EXPO_PUBLIC_BACKEND_URL` ou `http://localhost:8001`
+#### `app/import.tsx` - Import PDF avec checkboxes
+Nouveau flux d'import base sur la Table des Matieres :
+1. L'admin uploade un PDF
+2. Le backend lit la TOC et retourne les sections trouvees
+3. Le frontend affiche des checkboxes pour chaque section
+4. L'admin selectionne les sections a extraire et lance l'extraction
+5. Un indicateur de progression montre l'avancement
+
+#### `utils/leaseCalculator.ts` - Calcul location
+Contient la logique de matching vehicule pour les taux de location SCI. Utilise un **matching strict** pour eviter les confusions (ex: "Cherokee" vs "Grand Cherokee").
 
 #### `contexts/AuthContext.tsx` - Authentification
 Gere tout le cycle d'authentification :
+- Login/Logout/Register standard
+- **Mode Demo:** Connexion automatique comme `demo@calcauto.ca` avec acces admin
 - Stockage du token (localStorage sur web, AsyncStorage sur mobile)
-- Login/Logout/Register
-- Verification automatique du token au demarrage
-- Detection du role admin
-
-#### `app/(tabs)/_layout.tsx` - Navigation
-Configure les 4 onglets de l'application :
-1. **Calcul** (`index.tsx`) - Calculateur de financement
-2. **Inventaire** (`inventory.tsx`) - Gestion du stock
-3. **CRM** (`clients.tsx`) - Clients et soumissions
-4. **Admin** (`admin.tsx`) - Administration (visible uniquement pour les admins)
-
-#### `app/(tabs)/index.tsx` - Calculateur principal
-C'est le fichier le plus important et le plus volumineux (~3000+ lignes). Il gere :
-- Selection du vehicule (marque, modele, trim)
-- Calcul des paiements (financement + location)
-- Comparaison Option 1 vs Option 2
-- Partage par SMS/screenshot
-- Integration avec l'inventaire
 
 #### `vercel.json` - Configuration Vercel
 ```json
@@ -253,11 +283,7 @@ C'est le fichier le plus important et le plus volumineux (~3000+ lignes). Il ger
   ]
 }
 ```
-- **buildCommand:** Compile le frontend Expo en site web statique
-- **outputDirectory:** Le dossier `dist/` contient les fichiers compiles
-- **rewrites:** 
-  - Toute requete commencant par `/api/` est redirigee vers le backend Render
-  - Toute autre requete sert `index.html` (Single Page Application)
+> **Important:** L'URL de destination dans `rewrites` doit pointer vers votre backend Render actuel.
 
 ---
 
@@ -265,7 +291,6 @@ C'est le fichier le plus important et le plus volumineux (~3000+ lignes). Il ger
 
 ### Connexion
 L'application utilise **MongoDB Atlas** (cloud) via le driver `motor` (async Python).
-
 La chaine de connexion est stockee dans la variable `MONGO_URL` du fichier `.env` backend.
 
 ### Collections principales
@@ -281,337 +306,325 @@ La chaine de connexion est stockee dans la variable `MONGO_URL` du fichier `.env
 | `inventory` | Vehicules en stock | `id`, `owner_id`, `stock_no`, `vin`, `brand`, `model`, `msrp`, `status` |
 | `vehicle_options` | Options/equipements | `stock_no`, `product_code`, `description`, `amount` |
 | `window_stickers` | Window Stickers caches | `vin`, `data`, `images` |
-| `parsing_metrics` | Metriques de scan OCR | `owner_id`, `vin`, `score`, `status`, `duration_sec` |
-
-### Tri logique (sort_order)
-Le champ `sort_order` dans la collection `programs` determine l'ordre d'affichage des vehicules. Cet ordre est base sur le document PDF officiel d'incentives FCA/Stellantis, et non pas alphabetique.
-
-La collection `trim_orders` stocke l'ordre de reference pour chaque marque/modele, ce qui permet de recalculer automatiquement le `sort_order` lors de futurs imports.
+| `corrections` | Corrections manuelles | `model`, `trim`, `field`, `old_value`, `new_value`, `month`, `year` |
+| `extract_tasks` | Taches d'extraction async | `task_id`, `status`, `progress`, `results` |
+| `migrations` | Migrations executees | `key`, `executed_at` |
 
 ---
 
-## 5. Deploiement
+## 5. Stockage persistant (Supabase)
 
-### 5.1 GitHub
+### Pourquoi Supabase ?
+Render (backend) utilise un **filesystem ephemere** : les fichiers locaux sont perdus a chaque redemarrage. Supabase Storage sert de source de verite persistante pour tous les fichiers de donnees.
 
-Le code source est stocke dans vos repositories GitHub sous le compte `Lianag2018`.
+### Architecture de stockage
 
-**Structure recommandee :** 2 repositories separes pour faciliter le deploiement :
-- Un repository pour le **backend** (contenu du dossier `backend/`)
-- Un repository pour le **frontend** (contenu du dossier `frontend/`)
-
-#### Pousser le code vers GitHub
-```bash
-# Depuis le dossier backend/
-cd backend
-git init
-git remote add origin https://github.com/Lianag2018/calcauto-backend.git
-git add .
-git commit -m "Initial commit"
-git push -u origin main
-
-# Depuis le dossier frontend/
-cd frontend
-git init
-git remote add origin https://github.com/Lianag2018/calcauto-frontend.git
-git add .
-git commit -m "Initial commit"
-git push -u origin main
+```
+Supabase Storage (Bucket: calcauto-data)
+├── monthly/
+│   ├── feb2026/
+│   │   ├── sci_lease_rates.json     # Taux location SCI fevrier
+│   │   ├── key_incentives.json      # Incitatifs fevrier
+│   │   ├── program_meta.json        # Metadonnees fevrier
+│   │   ├── sci_residuals.json       # Residuels fevrier
+│   │   └── source.pdf               # PDF source fevrier
+│   ├── mar2026/
+│   │   ├── sci_lease_rates.json
+│   │   ├── key_incentives.json
+│   │   ├── program_meta.json
+│   │   └── source.pdf
+│   └── ... (un dossier par mois)
+│
+└── reference/
+    ├── 2025_pdfs/                   # Guides residuels (65 PDFs)
+    ├── calcauto/                    # Guides residuels supplementaires
+    ├── fca_product_codes_2025.json  # Codes produits 2025
+    └── fca_product_codes_2026.json  # Codes produits 2026
 ```
 
-> **Note :** Sur la plateforme Emergent, utilisez le bouton "Save to GitHub" dans l'interface pour pousser automatiquement votre code.
+### Flux de synchronisation
+
+```
+DEMARRAGE DU SERVEUR (Render)
+    │
+    ▼
+sync_from_supabase() dans server.py
+    │
+    ▼
+Telecharge tous les JSON mensuels + references
+    │
+    ▼
+Sauvegarde dans backend/data/ (cache local)
+    │
+    ▼
+Les APIs lisent depuis le cache local (rapide)
+
+
+APRES UNE EXTRACTION PDF
+    │
+    ▼
+Sauvegarde JSON en local
+    │
+    ▼
+Upload JSON + PDF vers Supabase (persistant)
+    │
+    ▼
+Disponible au prochain demarrage
+```
 
 ---
 
-### 5.2 Backend sur Render
+## 6. Deploiement
 
-#### Etape 1 : Creer un compte Render
-Allez sur [render.com](https://render.com) et connectez-vous avec votre compte GitHub.
+### 6.1 GitHub
 
-#### Etape 2 : Creer un nouveau "Web Service"
-1. Cliquez sur **"New +"** > **"Web Service"**
-2. Connectez votre repository GitHub `calcauto-backend`
-3. Configurez :
+Le code source est stocke sur GitHub sous le compte `Lianag2018`.
+
+**Important - .gitignore :**
+Le `.gitignore` exclut correctement :
+- `node_modules/` (41 654 fichiers supprimes du suivi Git)
+- `.metro-cache/` (cache Metro bundler)
+- `__pycache__/` (cache Python)
+- `backend/data/*.json` mensuels (sync depuis Supabase)
+- `*.env` (variables d'environnement)
+
+> **Note :** Sur la plateforme Emergent, utilisez le bouton "Save to GitHub" pour pousser votre code.
+
+---
+
+### 6.2 Backend sur Render
+
+#### Configuration
 
 | Parametre | Valeur |
 |-----------|--------|
-| **Name** | `calcauto-backend` (ou un nom de votre choix) |
-| **Region** | `Oregon (US West)` (ou la plus proche) |
-| **Branch** | `main` |
-| **Root Directory** | *(laisser vide si le repo contient directement les fichiers backend)* |
+| **Name** | `calcauto-backend` |
 | **Runtime** | `Python 3` |
 | **Build Command** | `pip install -r requirements.txt` |
 | **Start Command** | `uvicorn server:app --host 0.0.0.0 --port $PORT` |
 
-#### Etape 3 : Variables d'environnement
-Dans la section **"Environment"** de Render, ajoutez :
-
-| Variable | Description | Exemple |
-|----------|-------------|---------|
-| `MONGO_URL` | Chaine de connexion MongoDB Atlas | `mongodb+srv://user:pass@cluster.mongodb.net/` |
-| `DB_NAME` | Nom de la base de donnees | `calcauto_prod` |
-| `ADMIN_PASSWORD` | Mot de passe admin pour les imports | `Liana2018` |
-| `OPENAI_API_KEY` | Cle API OpenAI (pour OCR/IA) | `sk-proj-...` |
-| `GOOGLE_VISION_API_KEY` | Cle API Google Cloud Vision (OCR) | `AIzaSy...` |
-| `SMTP_EMAIL` | Email Gmail pour envoi | `danielgiroux007@gmail.com` |
-| `SMTP_PASSWORD` | Mot de passe d'application Gmail | `xxxx xxxx xxxx xxxx` |
-| `SMTP_HOST` | Serveur SMTP | `smtp.gmail.com` |
-| `SMTP_PORT` | Port SMTP | `587` |
-
-> **Important :** Pour `SMTP_PASSWORD`, vous devez generer un **mot de passe d'application** dans les parametres de securite de votre compte Google (Parametres > Securite > Verification en 2 etapes > Mots de passe d'application).
-
-#### Etape 4 : Deploiement automatique
-- Render deploie automatiquement a chaque `git push` sur la branche `main`
-- L'URL de votre backend sera quelque chose comme : `https://calcauto-backend.onrender.com`
-- Testez avec : `https://votre-backend.onrender.com/api/ping` (devrait retourner `{"status": "ok"}`)
-
 #### Fichiers de configuration Render
-Le repository contient deja les fichiers necessaires :
 - **`Procfile`** : `web: uvicorn server:app --host 0.0.0.0 --port $PORT`
 - **`runtime.txt`** : `python-3.11.4`
 - **`render.yaml`** : Configuration declarative complete
 
+#### Deploiement automatique
+- Deploie a chaque `git push` sur `main`
+- URL : `https://calcauto-final-backend.onrender.com`
+- Test : `GET /api/ping` → `{"status": "ok"}`
+
 ---
 
-### 5.3 Frontend sur Vercel
+### 6.3 Frontend sur Vercel
 
-#### Etape 1 : Creer un compte Vercel
-Allez sur [vercel.com](https://vercel.com) et connectez-vous avec votre compte GitHub.
-
-#### Etape 2 : Importer le projet
-1. Cliquez sur **"Add New..."** > **"Project"**
-2. Selectionnez votre repository `calcauto-frontend`
-3. Vercel detectera automatiquement la configuration grace au fichier `vercel.json`
-
-#### Etape 3 : Configuration du build
-Vercel utilisera automatiquement `vercel.json`, mais verifiez que :
+#### Configuration
 
 | Parametre | Valeur |
 |-----------|--------|
 | **Build Command** | `npx expo export -p web` |
 | **Output Directory** | `dist` |
-| **Framework Preset** | `Other` (pas React, pas Next.js) |
-| **Install Command** | `yarn install` (par defaut) |
+| **Framework Preset** | `Other` |
+| **Install Command** | `yarn install` |
 
-#### Etape 4 : Configuration des rewrites (CRUCIAL)
-Le fichier `vercel.json` contient deja les regles de redirection :
-
-```json
-{
-  "rewrites": [
-    { "source": "/api/(.*)", "destination": "https://calcauto-final-backend.onrender.com/api/$1" },
-    { "source": "/(.*)", "destination": "/index.html" }
-  ]
-}
-```
-
-**Vous devez mettre a jour l'URL de destination** avec l'URL reelle de votre backend Render :
-```json
-"destination": "https://VOTRE-BACKEND.onrender.com/api/$1"
-```
-
-Cette configuration fait en sorte que :
-- Les appels a `/api/*` sont rediriges vers votre backend Render
-- Toutes les autres requetes servent l'application frontend (SPA)
-
-#### Etape 5 : Deploiement automatique
-- Vercel deploie automatiquement a chaque `git push` sur la branche `main`
-- L'URL sera quelque chose comme : `https://calcauto-frontend.vercel.app`
-- Vous pouvez ajouter un domaine personnalise dans les parametres Vercel
+#### Rewrites (CRUCIAL)
+Les requetes `/api/*` sont redirigees vers le backend Render via `vercel.json`.
+Mettez a jour l'URL si vous changez de serveur backend.
 
 ---
 
-## 6. Variables d'environnement
+## 7. Variables d'environnement
 
 ### Backend (`.env`)
 
-```env
-MONGO_URL=mongodb+srv://user:password@cluster.mongodb.net/
-DB_NAME=calcauto_prod
-ADMIN_PASSWORD=Liana2018
-OPENAI_API_KEY=sk-proj-...
-GOOGLE_VISION_API_KEY=AIzaSy...
-SMTP_EMAIL=danielgiroux007@gmail.com
-SMTP_PASSWORD=xxxx xxxx xxxx xxxx
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=587
-```
+| Variable | Description | Requis |
+|----------|-------------|--------|
+| `MONGO_URL` | Chaine de connexion MongoDB Atlas | Oui |
+| `DB_NAME` | Nom de la base de donnees | Oui |
+| `ADMIN_PASSWORD` | Mot de passe admin pour imports | Oui |
+| `SUPABASE_URL` | URL du projet Supabase | Oui |
+| `SUPABASE_SERVICE_KEY` | Cle de service Supabase | Oui |
+| `OPENAI_API_KEY` | Cle API OpenAI (OCR/IA) | Oui |
+| `GOOGLE_VISION_API_KEY` | Cle Google Cloud Vision (OCR) | Optionnel |
+| `SMTP_EMAIL` | Email Gmail pour envoi | Oui |
+| `SMTP_PASSWORD` | Mot de passe d'application Gmail | Oui |
+| `SMTP_HOST` | Serveur SMTP (`smtp.gmail.com`) | Oui |
+| `SMTP_PORT` | Port SMTP (`587`) | Oui |
 
-> **MONGO_URL :** Obtenez cette URL depuis votre dashboard MongoDB Atlas :
-> 1. Connectez-vous a [cloud.mongodb.com](https://cloud.mongodb.com)
-> 2. Cliquez sur **"Connect"** pour votre cluster
-> 3. Choisissez **"Connect your application"**
-> 4. Copiez la chaine de connexion et remplacez `<password>` par votre mot de passe
+> **SMTP_PASSWORD :** Doit etre un **mot de passe d'application** Google (Parametres > Securite > Verification en 2 etapes > Mots de passe d'application).
+
+> **SUPABASE_SERVICE_KEY :** Trouvable dans Supabase Dashboard > Project Settings > API > `service_role` key.
 
 ### Frontend
 Le frontend n'a **pas besoin de variables d'environnement en production** sur Vercel. La communication avec le backend se fait via les `rewrites` de `vercel.json`.
 
-Pour le developpement local uniquement :
-```env
+Pour le developpement local :
+```
 EXPO_PUBLIC_BACKEND_URL=http://localhost:8001
 ```
 
 ---
 
-## 7. Flux de donnees
+## 8. Flux de donnees
+
+### Flux d'import PDF (nouveau - avec checkboxes)
+```
+1. L'admin televerse un PDF d'incitatifs mensuels
+   │
+2. POST /api/scan-pdf → Backend lit la TOC (page 2)
+   │
+3. Frontend affiche les sections trouvees avec checkboxes
+   │
+4. L'admin selectionne les sections a extraire
+   │
+5. POST /api/extract-pdf-async (sections selectionnees)
+   │
+6. Backend extrait les donnees en arriere-plan :
+   │  - Programmes de financement (taux, cash)
+   │  - Taux de location SCI
+   │  - Bonus cash
+   │  - Residuels
+   │
+7. Resultats sauvegardes :
+   │  - MongoDB (programmes, SCI rates)
+   │  - JSON local (cache)
+   │  - Supabase Storage (persistant)
+   │  - Fichier Excel (validation)
+   │
+8. Frontend affiche le rapport d'extraction
+```
 
 ### Flux d'un calcul de financement
 ```
-1. L'utilisateur selectionne un vehicule dans le frontend
+1. L'utilisateur selectionne un vehicule
    │
-2. Le frontend appelle GET /api/programs
+2. GET /api/programs → programmes tries par sort_order
    │
-3. Le backend retourne les programmes tries par sort_order
+3. L'utilisateur entre un prix et choisit un terme
    │
-4. L'utilisateur entre un prix et choisit un terme
+4. POST /api/calculate → paiements Option 1 et Option 2
    │
-5. Le frontend appelle POST /api/calculate avec le program_id et le prix
+5. GET /api/sci/lease-rates → taux location SCI (cache local)
    │
-6. Le backend calcule les paiements Option 1 et Option 2
+6. Frontend affiche les resultats (financement + location)
    │
-7. Le frontend affiche les resultats avec la comparaison
-   │
-8. L'utilisateur peut envoyer par email (POST /api/email/send)
-   ou creer une soumission CRM (POST /api/submissions)
-```
-
-### Flux de l'import de programmes
-```
-1. L'admin televerse un PDF/Excel de programmes
-   │
-2. Le backend parse le fichier (pdfplumber/openpyxl)
-   │
-3. Les programmes extraits sont presentes pour validation
-   │
-4. L'admin confirme l'import (avec mot de passe)
-   │
-5. Les anciens programmes du mois sont supprimes
-   │
-6. Les nouveaux programmes sont inseres avec le sort_order calcule
+7. Option: envoyer par email ou creer une soumission CRM
 ```
 
 ### Flux d'authentification
 ```
-1. L'utilisateur entre email + mot de passe
+1. Email + mot de passe → POST /api/auth/login
+   OU
+   Mode Demo → POST /api/auth/demo-login (auto login demo@calcauto.ca)
    │
-2. POST /api/auth/login
+2. Backend retourne un token JWT
    │
-3. Le backend verifie les credentials et retourne un token
+3. Token stocke dans localStorage (web) / AsyncStorage (mobile)
    │
-4. Le token est stocke dans localStorage (web) ou AsyncStorage (mobile)
-   │
-5. Chaque requete suivante inclut le token dans le header Authorization
-   │
-6. Le backend verifie le token via get_current_user()
+4. Chaque requete inclut: Authorization: Bearer <token>
 ```
 
 ---
 
-## 8. Maintenance et operations courantes
+## 9. Maintenance et operations courantes
 
 ### Mettre a jour les programmes mensuels
 1. Connectez-vous en tant qu'admin
 2. Allez dans l'onglet **Admin** > **Import**
-3. Televersez le nouveau PDF ou Excel des programmes
-4. Validez et confirmez l'import
+3. Televersez le nouveau PDF des programmes
+4. Le systeme affiche les sections trouvees avec des checkboxes
+5. Selectionnez les sections pertinentes et lancez l'extraction
+6. Verifiez le rapport genere (Excel)
 
 ### Modifier l'ordre des vehicules
-1. Connectez-vous en tant qu'admin
-2. Allez dans l'onglet **Admin** > **Ordre vehicules**
-3. Faites glisser-deposer les vehicules dans l'ordre souhaite
-4. Sauvegardez (mot de passe admin requis : `Liana2018`)
-
-### Ajouter un utilisateur
-Les utilisateurs peuvent s'inscrire eux-memes via la page de connexion. L'admin peut ensuite bloquer/debloquer des utilisateurs depuis l'onglet Admin.
+1. Onglet Admin > Ordre vehicules
+2. Faites glisser-deposer dans l'ordre souhaite
+3. Sauvegardez (mot de passe admin requis)
 
 ### Forcer un redeploiement
-- **Backend (Render):** Allez sur le dashboard Render > votre service > cliquez "Manual Deploy"
-- **Frontend (Vercel):** Allez sur le dashboard Vercel > votre projet > "Redeploy"
-
-Ou simplement poussez un commit sur la branche `main` de GitHub.
+- **Render:** Dashboard > Manual Deploy
+- **Vercel:** Dashboard > Redeploy
+- Ou simplement poussez un commit sur `main`
 
 ### Surveiller les erreurs
-- **Render:** Dashboard > Logs (en temps reel)
+- **Render:** Dashboard > Logs
 - **Vercel:** Dashboard > Deployments > Logs
+- **Supabase:** Dashboard > Storage (verifier les fichiers)
 - **MongoDB Atlas:** Dashboard > Monitoring
 
 ### Sauvegarder la base de donnees
-Depuis MongoDB Atlas :
-1. Allez dans votre cluster > **Collections**
-2. Vous pouvez exporter des collections en JSON
-3. Ou utilisez `mongodump` en ligne de commande :
 ```bash
 mongodump --uri="mongodb+srv://user:pass@cluster.mongodb.net/calcauto_prod" --out=./backup
 ```
 
 ---
 
-## 9. Depannage
+## 10. Depannage
 
 ### Le backend ne demarre pas sur Render
 - Verifiez les logs dans le dashboard Render
-- Assurez-vous que toutes les variables d'environnement sont configurees
+- Assurez-vous que TOUTES les variables d'environnement sont configurees (incluant Supabase)
 - Verifiez que `MONGO_URL` est accessible (whitelist IP dans MongoDB Atlas)
 
+### Les donnees SCI (location) ne s'affichent pas
+1. Verifiez que les fichiers JSON existent dans Supabase Storage (`monthly/{mois}{annee}/`)
+2. Verifiez les logs du backend au demarrage (`[Storage] Synced:` doit apparaitre)
+3. Si les fichiers manquent, relancez une extraction PDF
+
 ### "CORS error" dans le navigateur
-- Le CORS est configure pour accepter toutes les origines (`allow_origins=["*"]`)
-- Si vous voyez une erreur CORS, c'est probablement que le backend n'est pas accessible
+- Le CORS accepte toutes les origines (`allow_origins=["*"]`)
+- Si erreur CORS, le backend n'est probablement pas accessible
 - Verifiez l'URL dans `vercel.json` > `rewrites`
 
 ### Les programmes ne s'affichent pas
-- Verifiez que la base de donnees contient des programmes : `GET /api/programs`
-- Si la reponse est vide, executez un import de programmes via l'interface admin
+- `GET /api/programs` → si vide, relancez un import PDF
+- Verifiez que `program_month` et `program_year` correspondent au mois en cours
 
 ### Les emails ne sont pas envoyes
-- Verifiez que `SMTP_EMAIL` et `SMTP_PASSWORD` sont correctement configures
-- Le `SMTP_PASSWORD` doit etre un **mot de passe d'application** Google, pas votre mot de passe Gmail normal
-- Activez la verification en 2 etapes dans votre compte Google, puis generez un mot de passe d'application
+- `SMTP_PASSWORD` doit etre un **mot de passe d'application** Google
+- Activez la verification en 2 etapes dans votre compte Google
 
 ### MongoDB Atlas : whitelist des IP
-Sur MongoDB Atlas, vous devez autoriser les IP de Render a se connecter :
-1. Allez dans **Network Access** dans le dashboard Atlas
-2. Ajoutez `0.0.0.0/0` pour autoriser toutes les IP (simple mais moins securise)
-3. Ou ajoutez les IP statiques de Render (disponibles dans leur documentation)
+- Network Access > ajoutez `0.0.0.0/0` (toutes les IP)
 
 ### Le frontend affiche une page blanche
-- Verifiez que le build a reussi sur Vercel (dashboard > derniere deploiement)
-- Verifiez la console du navigateur (F12) pour les erreurs JavaScript
-- Assurez-vous que `vercel.json` est correct et que la rewrite vers le backend fonctionne
+- Verifiez le build sur Vercel
+- Console navigateur (F12) pour les erreurs
+- Verifiez que `vercel.json` est correct
 
 ---
 
 ## Annexe : Dependances principales
 
 ### Backend (Python)
-| Package | Version | Usage |
-|---------|---------|-------|
-| fastapi | 0.110.1 | Framework web API |
-| uvicorn | 0.25.0 | Serveur ASGI |
-| motor | 3.3.1 | Driver MongoDB async |
-| pymongo | 4.5.0 | Driver MongoDB |
-| pydantic | 2.12.5 | Validation de donnees |
-| openai | 1.99.9 | API OpenAI (OCR/IA) |
-| openpyxl | 3.1.2 | Lecture/ecriture Excel |
-| PyMuPDF | 1.27.1 | Conversion PDF en images |
-| pdfplumber | 0.11.9 | Extraction texte PDF |
-| pytesseract | 0.3.13 | OCR Tesseract |
-| Pillow | 10.4.0 | Traitement d'images |
-| opencv-python-headless | 4.10.0.84 | Vision par ordinateur |
-| PyJWT | 2.8.0 | Tokens JWT |
-| python-dotenv | 1.2.1 | Variables d'environnement |
+
+| Package | Usage |
+|---------|-------|
+| fastapi | Framework web API |
+| uvicorn | Serveur ASGI |
+| motor | Driver MongoDB async |
+| pydantic | Validation de donnees |
+| pdfplumber | Extraction texte/tables PDF |
+| openpyxl | Lecture/ecriture Excel |
+| supabase | Client Supabase Storage |
+| openai | API OpenAI (OCR/IA) |
+| PyMuPDF | Conversion PDF en images |
+| pytesseract | OCR Tesseract |
+| Pillow | Traitement d'images |
+| PyJWT | Tokens JWT |
+| python-dotenv | Variables d'environnement |
 
 ### Frontend (JavaScript/TypeScript)
-| Package | Version | Usage |
-|---------|---------|-------|
-| expo | 54.0.33 | Framework React Native/Web |
-| react | 19.1.0 | Bibliotheque UI |
-| react-native-web | 0.21.0 | React Native sur le web |
-| axios | 1.13.4 | Requetes HTTP |
-| zustand | 5.0.11 | Gestion d'etat |
-| html2canvas | 1.4.1 | Screenshots pour SMS |
-| expo-router | 6.0.22 | Routing (navigation) |
-| expo-document-picker | 14.0.8 | Selection de fichiers |
-| expo-file-system | 19.0.21 | Systeme de fichiers |
+
+| Package | Usage |
+|---------|-------|
+| expo ~54 | Framework React Native/Web |
+| react 19 | Bibliotheque UI |
+| react-native-web | React Native sur le web |
+| axios | Requetes HTTP |
+| zustand | Gestion d'etat |
+| expo-router | Routing (navigation) |
+| expo-document-picker | Selection de fichiers |
+| html2canvas | Screenshots pour partage |
 
 ---
 
@@ -619,8 +632,10 @@ Sur MongoDB Atlas, vous devez autoriser les IP de Render a se connecter :
 
 | Service | URL | Identifiants |
 |---------|-----|-------------|
+| Application (demo) | *(votre URL Vercel)* | Auto-login `demo@calcauto.ca` |
 | Application (login) | *(votre URL Vercel)* | `danielgiroux007@gmail.com` / `Liana2018$` |
 | Admin (import/gestion) | *(meme app, onglet Admin)* | Mot de passe: `Liana2018` |
+| Supabase Dashboard | supabase.com | *(votre compte)* |
 | MongoDB Atlas | cloud.mongodb.com | *(votre compte)* |
 | Render Dashboard | dashboard.render.com | *(votre compte GitHub)* |
 | Vercel Dashboard | vercel.com/dashboard | *(votre compte GitHub)* |
@@ -628,4 +643,17 @@ Sur MongoDB Atlas, vous devez autoriser les IP de Render a se connecter :
 
 ---
 
-*Document genere le 27 fevrier 2026 pour CalcAuto AiPro*
+## Annexe : Historique des bugs critiques resolus
+
+| Date | Bug | Cause | Fix |
+|------|-----|-------|-----|
+| Mars 2026 | Taux SCI assignes au mauvais vehicule | Offset de 2 rangees entre les tables PDF | Correction dans `parse_sci_lease_programs` |
+| Mars 2026 | Cherokee affiche taux du Grand Cherokee | Matching partiel de chaine ("Cherokee" dans "Grand Cherokee") | Matching strict dans `leaseCalculator.ts` |
+| Mars 2026 | JSON SCI non sauvegarde apres extraction | `import_wizard.py` n'ecrivait pas le fichier JSON | Ajout de la sauvegarde locale + upload Supabase |
+| Fev 2026 | Bonus Cash manquant (Fiat 500e) | Bonus Cash sur une page separee non parsee | Ajout de `parse_bonus_cash_page()` |
+| Fev 2026 | "All-New" extrait comme nom de modele | Regex trop permissive | Filtre dans le parseur |
+| Fev 2026 | "Grand Cherokee Laredo" → "aredo" | Conflit avec le modele "Grand Cherokee L" | Logique de priorite dans le parseur |
+
+---
+
+*Document mis a jour le 17 mars 2026 pour CalcAuto AiPro v4*
