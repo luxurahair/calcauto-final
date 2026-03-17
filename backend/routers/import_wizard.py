@@ -1161,38 +1161,44 @@ async def extract_pdf_async(
     start_page: Optional[int] = Form(None),
     end_page: Optional[int] = Form(None),
     lease_start_page: Optional[int] = Form(None),
-    lease_end_page: Optional[int] = Form(None)
+    lease_end_page: Optional[int] = Form(None),
+    selected_sections: Optional[str] = Form(None)
 ):
-    """Upload PDF and start extraction in background. Auto-detects pages if not provided."""
+    """Upload PDF and start extraction in background. Uses selected sections from frontend checkboxes."""
     if password != ADMIN_PASSWORD:
         raise HTTPException(status_code=401, detail="Mot de passe incorrect")
 
     pdf_content = await file.read()
 
-    # ALWAYS auto-detect pages from TOC - ignore manual overrides
-    from services.pdfplumber_parser import auto_detect_pages
-    detected = auto_detect_pages(pdf_content)
-    auto_retail_start = detected.get('retail_start')
-    auto_retail_end = detected.get('retail_end')
-    auto_lease_start = detected.get('lease_start')
-    auto_lease_end = detected.get('lease_end')
-    logger.info(f"[AsyncExtract] Auto-detected: retail={auto_retail_start}-{auto_retail_end}, lease={auto_lease_start}-{auto_lease_end}")
+    # Parse selected sections from frontend (JSON array)
+    sections_list = []
+    if selected_sections:
+        try:
+            sections_list = json.loads(selected_sections)
+            logger.info(f"[AsyncExtract] Received {len(sections_list)} selected sections from frontend")
+        except json.JSONDecodeError:
+            logger.warning("[AsyncExtract] Failed to parse selected_sections JSON")
 
-    if auto_retail_start and auto_retail_end:
-        if start_page and end_page and (start_page != auto_retail_start or end_page != auto_retail_end):
-            logger.warning(f"[AsyncExtract] Overriding manual pages ({start_page}-{end_page}) with auto-detected ({auto_retail_start}-{auto_retail_end})")
-        start_page = auto_retail_start
-        end_page = auto_retail_end
+    # Extract page ranges from selected sections
+    if sections_list:
+        for s in sections_list:
+            stype = s.get('type', '')
+            if stype == 'retail':
+                start_page = s.get('start_page')
+                end_page = s.get('end_page')
+            elif stype == 'lease':
+                lease_start_page = s.get('start_page')
+                lease_end_page = s.get('end_page')
+        logger.info(f"[AsyncExtract] From selections: retail={start_page}-{end_page}, lease={lease_start_page}-{lease_end_page}")
     else:
-        start_page = start_page or 1
-        end_page = end_page or start_page
-
-    if auto_lease_start and auto_lease_end:
-        lease_start_page = auto_lease_start
-        lease_end_page = auto_lease_end
-    elif not lease_start_page:
-        lease_start_page = detected.get('lease_start')
-        lease_end_page = detected.get('lease_end')
+        # Fallback: auto-detect from TOC
+        from services.pdfplumber_parser import auto_detect_pages
+        detected = auto_detect_pages(pdf_content)
+        start_page = detected.get('retail_start') or start_page or 1
+        end_page = detected.get('retail_end') or end_page or start_page
+        lease_start_page = detected.get('lease_start') or lease_start_page
+        lease_end_page = detected.get('lease_end') or lease_end_page
+        logger.info(f"[AsyncExtract] Auto-detected fallback: retail={start_page}-{end_page}, lease={lease_start_page}-{lease_end_page}")
 
     task_id = str(uuid.uuid4())
 
@@ -1212,7 +1218,7 @@ async def extract_pdf_async(
         lease_start_page, lease_end_page
     ))
 
-    return {"task_id": task_id, "status": "queued", "message": "Extraction démarrée en arrière-plan"}
+    return {"task_id": task_id, "status": "queued", "message": "Extraction demarree en arriere-plan"}
 
 
 @router.get("/extract-task/{task_id}")

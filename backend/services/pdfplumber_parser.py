@@ -900,7 +900,7 @@ def parse_bonus_cash_page(pdf_content: bytes) -> List[Dict]:
     Returns list of dicts:
       [{'year': 2025, 'model': 'FIAT 500e', 'amount': 5000, 'tax_type': 'After Tax'}, ...]
     """
-    toc = _parse_toc(pdf_content)
+    toc = improved_parse_toc(pdf_content)
     bonus_page = None
     for name, page_num in toc:
         if 'Bonus Cash' in name:
@@ -1100,93 +1100,6 @@ def _detect_loyalty(text: str) -> float:
 
 
 # ═══════════════════════════════════════════════════════════════
-# AUTO-DETECTION DES PAGES (TOC-first strategy)
-# ═══════════════════════════════════════════════════════════════
-
-def _parse_toc(pdf_content: bytes) -> List[Tuple[str, int]]:
-    """
-    Parse the Table of Contents on page 2 of the PDF.
-    Returns ordered list of (section_name, page_number).
-
-    TOC format example:
-        Finance Prime Rate Landscapes ..... - 19 -
-        Lease Landscapes ..................... - 27 -
-        General Rules ......................... 5
-    """
-    with pdfplumber.open(BytesIO(pdf_content)) as pdf:
-        if len(pdf.pages) < 2:
-            return []
-        toc_text = pdf.pages[1].extract_text() or ''
-
-    entries = []
-    for line in toc_text.split('\n'):
-        # Match: "Section Name ..... - 19 -" or "Section Name ..... 19"
-        m = re.match(r'^(.+?)\s*[\.…]+\s*-?\s*(\d+)\s*-?\s*$', line.strip())
-        if m:
-            name = m.group(1).strip()
-            page = int(m.group(2))
-            entries.append((name, page))
-
-    logger.info(f"[TOC] Parsed {len(entries)} entries: {[(n, p) for n, p in entries]}")
-    return entries
-
-
-def auto_detect_pages(pdf_content: bytes) -> Dict:
-    """Version FINALE : lit EXACTEMENT le TOC de la page 2 et affiche les vraies sections dans la boîte du haut"""
-    result = {
-        'total_pages': 0,
-        'sections': [],  # ← liste pour la boîte du haut
-        'retail_start': None, 'retail_end': None,
-        'lease_start': None, 'lease_end': None,
-        'non_prime_start': None, 'non_prime_end': None,
-        'loyalty_start': None, 'loyalty_end': None,
-    }
-
-    with pdfplumber.open(BytesIO(pdf_content)) as pdf:
-        total_pages = len(pdf.pages)
-        result['total_pages'] = total_pages
-
-    toc = improved_parse_toc(pdf_content)
-    if not toc:
-        return result
-
-    def _find_section_range(keyword: str) -> Optional[Tuple[int, int]]:
-        for idx, (name, toc_page) in enumerate(toc):
-            name_upper = name.upper()
-            if keyword.upper() in name_upper:
-                data_start = toc_page + 1
-                data_end = toc[idx + 1][1] - 1 if idx + 1 < len(toc) else total_pages
-                return (data_start, data_end)
-        return None
-
-    # Matching EXACT sur le TOC page 2 que tu m’as montré
-    retail = _find_section_range('Finance Prime Rate Landscapes')
-    if retail:
-        result['retail_start'], result['retail_end'] = retail
-        result['sections'].append({'name': 'Finance Prime', 'pages': f"{retail[0]}-{retail[1]}", 'type': 'retail'})
-
-    non_prime = _find_section_range('Finance Non- Prime Rate Landscapes')
-    if non_prime:
-        result['non_prime_start'], result['non_prime_end'] = non_prime
-        result['sections'].append({'name': 'Non-Prime', 'pages': f"{non_prime[0]}-{non_prime[1]}", 'type': 'non_prime'})
-
-    lease = _find_section_range('Lease Landscapes')
-    if lease:
-        result['lease_start'], result['lease_end'] = lease
-        result['sections'].append({'name': 'SCI Lease', 'pages': f"{lease[0]}-{lease[1]}", 'type': 'lease'})
-
-    loyalty_prime = _find_section_range('Loyalty Rate Reduction Finance Prime Rate Landscapes')
-    if loyalty_prime:
-        result['sections'].append({'name': 'Loyauté 0.5% Finance Prime', 'pages': f"{loyalty_prime[0]}-{loyalty_prime[1]}", 'type': 'loyalty'})
-
-    loyalty_lease = _find_section_range('Loyalty Rate Reduction Lease Landscapes')
-    if loyalty_lease:
-        result['sections'].append({'name': 'Loyauté 0.5% Lease', 'pages': f"{loyalty_lease[0]}-{loyalty_lease[1]}", 'type': 'loyalty'})
-
-    logger.info(f"[AutoDetect] ✅ TOC page 2 détecté : {len(result['sections'])} sections")
-    return result
-    
-# ═══════════════════════════════════════════════════════════════
 # COVER PAGE PARSER (page 1)
 # ═══════════════════════════════════════════════════════════════
 def parse_cover_page(pdf_content: bytes) -> Dict:
@@ -1292,83 +1205,107 @@ def merge_multi_page_tables(pdf, start_page: int, end_page: int) -> list:
     return all_rows
 
 def improved_parse_toc(pdf_content: bytes) -> List[Tuple[str, int]]:
-    """Version plus tolérante du TOC (remplace ou double ton _parse_toc)"""
+    """Parse le TOC de la page 2 — filtre les lignes parasites"""
     with pdfplumber.open(BytesIO(pdf_content)) as pdf:
         toc_text = pdf.pages[1].extract_text() or ''
     entries = []
+    # Mots-clés à ignorer (lignes parasites, pas des sections)
+    ignore_keywords = ['internal use only', 'for internal use', 'confidential', 'table of contents']
     for line in toc_text.split('\n'):
         line = line.strip()
+        if not line:
+            continue
+        # Ignorer les lignes parasites
+        if any(kw in line.lower() for kw in ignore_keywords):
+            continue
         for pattern in [
-            r'^(.+?)\s*[\.…\-]+\s*-?\s*(\d+)\s*-?$',
-            r'^(.+?)\s*(\d+)\s*$',
-            r'(.+?)\s*Page\s*(\d+)',
-            r'(.+?)\s*-\s*(\d+)\s*-'
+            r'^(.+?)\s*[\.…]+\s*-?\s*(\d+)\s*-?\s*$',
+            r'(.+?)\s*-\s*(\d+)\s*-',
         ]:
             m = re.match(pattern, line)
             if m:
                 name = m.group(1).strip()
                 page = int(m.group(2))
-                entries.append((name, page))
+                if page >= 3 and name:  # Page 1-2 = couverture + TOC, pas des sections
+                    entries.append((name, page))
                 break
+    logger.info(f"[TOC] {len(entries)} entrées: {[(n, p) for n, p in entries]}")
     return entries
 
 # ═══════════════════════════════════════════════════════════════
-# AUTO_DETECT_PAGES – VERSION FINALE 100% STABLE (mars + tous les mois)
 # ═══════════════════════════════════════════════════════════════
-def auto_detect_pages(pdf_content: bytes) -> Dict:
-    """Version FINALE avec checkboxes : lit EXACTEMENT le TOC de la page 2"""
-    result = {
-        'total_pages': 0,
-        'sections': [],  # ← liste pour tes cases à cocher
-        'retail_start': None, 'retail_end': None,
-        'lease_start': None, 'lease_end': None,
-        'non_prime_start': None, 'non_prime_end': None,
-        'loyalty_start': None, 'loyalty_end': None,
-    }
+# AUTO_DETECT_PAGES - LECTURE COMPLETE DU TOC AVEC CHECKBOXES
+# ═══════════════════════════════════════════════════════════════
 
+# Mapping section TOC -> type pour le frontend
+_SECTION_TYPE_MAP = [
+    ('loyalty rate reduction finance', 'loyalty_finance'),
+    ('loyalty rate reduction lease', 'loyalty_lease'),
+    ('loyalty program', 'loyalty_info'),
+    ('loyalty addendum', 'info'),
+    ('go to market', 'info'),
+    ('key incentives', 'info'),
+    ('general rules', 'info'),
+    ('bonus cash', 'bonus'),
+    ('msrp discount', 'info'),
+    ('addendum', 'info'),
+    ('finance prime rate', 'retail'),
+    ('finance non', 'non_prime'),
+    ('lease landscape', 'lease'),
+]
+
+def _classify_toc_section(name: str) -> str:
+    """Determine le type d'une section TOC par son nom."""
+    name_lower = name.lower()
+    for keyword, stype in _SECTION_TYPE_MAP:
+        if keyword in name_lower:
+            return stype
+    return 'other'
+
+def auto_detect_pages(pdf_content: bytes) -> Dict:
+    """Lit TOUTES les sections du TOC (page 2) et retourne chacune avec start_page/end_page pour checkboxes."""
     with pdfplumber.open(BytesIO(pdf_content)) as pdf:
         total_pages = len(pdf.pages)
-        result['total_pages'] = total_pages
 
     toc = improved_parse_toc(pdf_content)
     if not toc:
-        return result
+        return {'total_pages': total_pages, 'sections': [],
+                'retail_start': None, 'retail_end': None,
+                'lease_start': None, 'lease_end': None}
 
-    def _find_section_range(keyword: str) -> Optional[Tuple[int, int]]:
-        for idx, (name, toc_page) in enumerate(toc):
-            name_upper = name.upper()
-            if keyword.upper() in name_upper:
-                data_start = toc_page + 1
-                data_end = toc[idx + 1][1] - 1 if idx + 1 < len(toc) else total_pages
-                return (data_start, data_end)
-        return None
+    sections = []
+    for idx, (name, toc_page) in enumerate(toc):
+        start = toc_page + 1
+        end = toc[idx + 1][1] - 1 if idx + 1 < len(toc) else total_pages
+        if end < start:
+            end = start
 
-    # Matching EXACT sur le TOC que tu m’as montré (page 2)
-    retail = _find_section_range('Finance Prime Rate Landscapes')
-    if retail:
-        result['retail_start'], result['retail_end'] = retail
-        result['sections'].append({'name': 'Finance Prime', 'pages': f"{retail[0]}-{retail[1]}", 'type': 'retail'})
+        stype = _classify_toc_section(name)
+        sections.append({
+            'name': name,
+            'type': stype,
+            'start_page': start,
+            'end_page': end,
+            'toc_page': toc_page,
+        })
 
-    non_prime = _find_section_range('Finance Non- Prime Rate Landscapes')
-    if non_prime:
-        result['non_prime_start'], result['non_prime_end'] = non_prime
-        result['sections'].append({'name': 'Non-Prime', 'pages': f"{non_prime[0]}-{non_prime[1]}", 'type': 'non_prime'})
+    # Extraire retail_start/end et lease_start/end pour compatibilite
+    retail_start = retail_end = lease_start = lease_end = None
+    for s in sections:
+        if s['type'] == 'retail' and retail_start is None:
+            retail_start, retail_end = s['start_page'], s['end_page']
+        if s['type'] == 'lease' and lease_start is None:
+            lease_start, lease_end = s['start_page'], s['end_page']
 
-    lease = _find_section_range('Lease Landscapes')
-    if lease:
-        result['lease_start'], result['lease_end'] = lease
-        result['sections'].append({'name': 'SCI Lease', 'pages': f"{lease[0]}-{lease[1]}", 'type': 'lease'})
-
-    loyalty = _find_section_range('Loyalty Rate Reduction Finance Prime Rate Landscapes')
-    if loyalty:
-        result['loyalty_start'], result['loyalty_end'] = loyalty
-        result['sections'].append({'name': 'Loyauté 0.5% Finance Prime', 'pages': f"{loyalty[0]}-{loyalty[1]}", 'type': 'loyalty'})
-
-    loyalty_lease = _find_section_range('Loyalty Rate Reduction Lease Landscapes')
-    if loyalty_lease:
-        result['sections'].append({'name': 'Loyauté 0.5% Lease', 'pages': f"{loyalty_lease[0]}-{loyalty_lease[1]}", 'type': 'loyalty'})
-
-    logger.info(f"[AutoDetect] ✅ TOC page 2 détecté : {result['sections']}")
+    result = {
+        'total_pages': total_pages,
+        'sections': sections,
+        'retail_start': retail_start,
+        'retail_end': retail_end,
+        'lease_start': lease_start,
+        'lease_end': lease_end,
+    }
+    logger.info(f"[AutoDetect] TOC: {len(sections)} sections detectees")
     return result
 
 # ═══════════════════════════════════════════════════════════════

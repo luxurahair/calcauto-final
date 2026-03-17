@@ -88,6 +88,7 @@ export default function ImportScreen() {
   
   // Auto-detection state
   const [detectedSections, setDetectedSections] = useState<any>(null);
+  const [selectedSections, setSelectedSections] = useState<Set<number>>(new Set());
   const [scanning, setScanning] = useState(false);
   
   // Loading states
@@ -192,7 +193,16 @@ export default function ImportScreen() {
         setTotalPages(d.total_pages);
         setDetectedSections(d);
         
-        // Auto-fill page ranges from detection
+        // Auto-select extractible sections (retail, non_prime, lease, bonus)
+        const autoSelect = new Set<number>();
+        (d.sections || []).forEach((s: any, idx: number) => {
+          if (['retail', 'non_prime', 'lease', 'bonus', 'loyalty_finance', 'loyalty_lease'].includes(s.type)) {
+            autoSelect.add(idx);
+          }
+        });
+        setSelectedSections(autoSelect);
+        
+        // Auto-fill page ranges from detection for backward compatibility
         if (d.retail_start) setPageStart(String(d.retail_start));
         if (d.retail_end) setPageEnd(String(d.retail_end));
         if (d.lease_start) setLeasePageStart(String(d.lease_start));
@@ -241,6 +251,15 @@ export default function ImportScreen() {
       formData.append('password', password);
       formData.append('program_month', String(selectedMonth));
       formData.append('program_year', String(selectedYear));
+      
+      // Send selected sections with their page ranges
+      const sections = detectedSections?.sections || [];
+      const selectedList = Array.from(selectedSections)
+        .map((idx: number) => sections[idx])
+        .filter(Boolean);
+      formData.append('selected_sections', JSON.stringify(selectedList));
+      
+      // Also send page ranges for backward compatibility
       if (pageStart) formData.append('start_page', pageStart);
       if (pageEnd) formData.append('end_page', pageEnd);
       if (leasePageStart) formData.append('lease_start_page', leasePageStart);
@@ -683,134 +702,179 @@ export default function ImportScreen() {
     </View>
   );
 
-  // Render Step: Select Pages
-  const renderSelectPagesStep = () => (
+  // Toggle section selection
+  const toggleSection = (idx: number) => {
+    setSelectedSections(prev => {
+      const next = new Set(prev);
+      if (next.has(idx)) next.delete(idx);
+      else next.add(idx);
+      return next;
+    });
+  };
+
+  const selectAllSections = () => {
+    if (detectedSections?.sections) {
+      setSelectedSections(new Set(detectedSections.sections.map((_: any, i: number) => i)));
+    }
+  };
+
+  const deselectAllSections = () => {
+    setSelectedSections(new Set());
+  };
+
+  // Get icon and color for section type
+  const getSectionStyle = (type: string) => {
+    switch (type) {
+      case 'retail': return { icon: 'calculator' as const, color: '#4ECDC4', label: 'Finance' };
+      case 'non_prime': return { icon: 'trending-down' as const, color: '#FF6B6B', label: 'Non-Prime' };
+      case 'lease': return { icon: 'car-sport' as const, color: '#FFB347', label: 'Location' };
+      case 'bonus': return { icon: 'gift' as const, color: '#A78BFA', label: 'Bonus' };
+      case 'loyalty_finance': return { icon: 'heart' as const, color: '#F472B6', label: 'Loyaute' };
+      case 'loyalty_lease': return { icon: 'heart-circle' as const, color: '#F472B6', label: 'Loyaute' };
+      case 'loyalty_info': return { icon: 'information-circle' as const, color: '#F472B6', label: 'Loyaute' };
+      case 'info': return { icon: 'document-text' as const, color: '#6B7280', label: 'Info' };
+      default: return { icon: 'help-circle' as const, color: '#6B7280', label: 'Autre' };
+    }
+  };
+
+  // Render Step: Select Pages (CHECKBOXES)
+  const renderSelectPagesStep = () => {
+    const sections = detectedSections?.sections || [];
+    const selectedCount = selectedSections.size;
+    
+    return (
     <View style={styles.stepContainer}>
-      <Text style={styles.stepTitle}>Sélectionner les pages</Text>
+      <Text style={styles.stepTitle}>Sections detectees</Text>
       <Text style={styles.stepDescription}>
-        Le PDF "{pdfFileName}" contient {totalPages} pages
+        PDF "{pdfFileName}" - {totalPages} pages - {sections.length} sections trouvees
       </Text>
       
-      {/* Auto-detection banner */}
-      {detectedSections && (
-        <View style={{ backgroundColor: '#1a3a2a', borderRadius: 12, padding: 16, marginBottom: 16, borderWidth: 1, borderColor: '#4ECDC4' }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
-            <Ionicons name="checkmark-circle" size={20} color="#4ECDC4" />
-            <Text style={{ color: '#4ECDC4', fontWeight: '700', fontSize: 14, marginLeft: 8 }}>
-              Sections auto-detectees
-            </Text>
-          </View>
-          <Text style={{ color: '#ccc', fontSize: 12, lineHeight: 18 }}>
-            {detectedSections.retail_start ? `Finance Prime: pages ${detectedSections.retail_start}-${detectedSections.retail_end}` : 'Finance Prime: non detecte'}
-            {'\n'}
-            {detectedSections.lease_start ? `SCI Lease: pages ${detectedSections.lease_start}-${detectedSections.lease_end}` : 'SCI Lease: non detecte'}
-            {detectedSections.non_prime_start ? `\nNon-Prime: pages ${detectedSections.non_prime_start}-${detectedSections.non_prime_end}` : ''}
-            {detectedSections.key_incentive_pages?.length ? `\nKey Incentives: pages ${detectedSections.key_incentive_pages.join(', ')}` : ''}
-          </Text>
-        </View>
-      )}
-      
-      {/* Page Selection - Retail */}
-      <View style={styles.periodSection}>
-        <Text style={styles.periodLabel}>Programme Retail (Financement)</Text>
-        <Text style={styles.pageHint}>Pages contenant les taux Option 1 & 2 + Consumer Cash</Text>
-        <View style={styles.pageRow}>
-          <View style={styles.pageField}>
-            <Text style={styles.pageLabel}>De la page:</Text>
-            <TextInput
-              style={styles.pageInput}
-              value={pageStart}
-              onChangeText={setPageStart}
-              keyboardType="numeric"
-              placeholder="auto"
-              placeholderTextColor="#666"
-            />
-          </View>
-          <View style={styles.pageField}>
-            <Text style={styles.pageLabel}>A la page:</Text>
-            <TextInput
-              style={styles.pageInput}
-              value={pageEnd}
-              onChangeText={setPageEnd}
-              keyboardType="numeric"
-              placeholder="auto"
-              placeholderTextColor="#666"
-            />
-          </View>
-        </View>
+      {/* Select all / deselect all */}
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', width: '100%', marginBottom: 12 }}>
+        <TouchableOpacity onPress={selectAllSections} style={{ flexDirection: 'row', alignItems: 'center', padding: 8 }}
+          data-testid="select-all-sections-btn">
+          <Ionicons name="checkbox" size={18} color="#4ECDC4" />
+          <Text style={{ color: '#4ECDC4', marginLeft: 6, fontSize: 13, fontWeight: '600' }}>Tout selectionner</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={deselectAllSections} style={{ flexDirection: 'row', alignItems: 'center', padding: 8 }}
+          data-testid="deselect-all-sections-btn">
+          <Ionicons name="square-outline" size={18} color="#888" />
+          <Text style={{ color: '#888', marginLeft: 6, fontSize: 13 }}>Tout deselectionner</Text>
+        </TouchableOpacity>
       </View>
-      
-      {/* Page Selection - SCI Lease */}
-      <View style={[styles.periodSection, { borderColor: '#FFB347' }]}>
-        <Text style={[styles.periodLabel, { color: '#FFB347' }]}>Programme SCI Lease (Location)</Text>
-        <Text style={styles.pageHint}>Pages contenant les taux location + Lease Cash / Bonus Cash</Text>
-        <View style={styles.pageRow}>
-          <View style={styles.pageField}>
-            <Text style={styles.pageLabel}>De la page:</Text>
-            <TextInput
-              style={[styles.pageInput, { borderColor: '#FFB347' }]}
-              value={leasePageStart}
-              onChangeText={setLeasePageStart}
-              keyboardType="numeric"
-              placeholder="auto"
-              placeholderTextColor="#666"
-            />
-          </View>
-          <View style={styles.pageField}>
-            <Text style={styles.pageLabel}>A la page:</Text>
-            <TextInput
-              style={[styles.pageInput, { borderColor: '#FFB347' }]}
-              value={leasePageEnd}
-              onChangeText={setLeasePageEnd}
-              keyboardType="numeric"
-              placeholder="auto"
-              placeholderTextColor="#666"
-            />
-          </View>
-        </View>
+
+      {/* Section list with checkboxes */}
+      <View style={{ width: '100%', gap: 6 }}>
+        {sections.map((section: any, idx: number) => {
+          const isSelected = selectedSections.has(idx);
+          const style = getSectionStyle(section.type);
+          
+          return (
+            <TouchableOpacity
+              key={idx}
+              onPress={() => toggleSection(idx)}
+              data-testid={`section-checkbox-${idx}`}
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                backgroundColor: isSelected ? 'rgba(78, 205, 196, 0.08)' : '#2d2d44',
+                borderRadius: 10,
+                padding: 12,
+                borderWidth: 1.5,
+                borderColor: isSelected ? style.color : '#3d3d54',
+              }}
+            >
+              {/* Checkbox */}
+              <Ionicons
+                name={isSelected ? 'checkbox' : 'square-outline'}
+                size={22}
+                color={isSelected ? style.color : '#555'}
+              />
+              
+              {/* Icon */}
+              <View style={{
+                width: 32, height: 32, borderRadius: 8,
+                backgroundColor: `${style.color}22`,
+                alignItems: 'center', justifyContent: 'center',
+                marginLeft: 10,
+              }}>
+                <Ionicons name={style.icon} size={16} color={style.color} />
+              </View>
+              
+              {/* Section info */}
+              <View style={{ flex: 1, marginLeft: 10 }}>
+                <Text style={{ color: '#fff', fontSize: 13, fontWeight: '600' }} numberOfLines={1}>
+                  {section.name}
+                </Text>
+                <Text style={{ color: '#888', fontSize: 11, marginTop: 2 }}>
+                  Pages {section.start_page}-{section.end_page}
+                </Text>
+              </View>
+              
+              {/* Type badge */}
+              <View style={{
+                backgroundColor: `${style.color}22`,
+                paddingHorizontal: 8, paddingVertical: 3,
+                borderRadius: 6,
+              }}>
+                <Text style={{ color: style.color, fontSize: 10, fontWeight: '700' }}>
+                  {style.label}
+                </Text>
+              </View>
+            </TouchableOpacity>
+          );
+        })}
       </View>
-      
-      <Text style={styles.pageValidation}>
-        Retail: pages {pageStart || 'auto'}-{pageEnd || 'auto'}  |  SCI Lease: pages {leasePageStart || 'auto'}-{leasePageEnd || 'auto'}
-      </Text>
+
+      {/* Selected summary */}
+      <View style={{
+        backgroundColor: '#1a3a2a', borderRadius: 10, padding: 12,
+        marginTop: 16, width: '100%',
+        borderWidth: 1, borderColor: selectedCount > 0 ? '#4ECDC4' : '#333',
+      }}>
+        <Text style={{ color: selectedCount > 0 ? '#4ECDC4' : '#888', fontSize: 13, textAlign: 'center', fontWeight: '600' }}>
+          {selectedCount} section{selectedCount !== 1 ? 's' : ''} selectionnee{selectedCount !== 1 ? 's' : ''}
+        </Text>
+      </View>
       
       <TouchableOpacity
-        style={[styles.extractButton, extracting && styles.buttonDisabled]}
+        style={[styles.extractButton, (extracting || selectedCount === 0) && styles.buttonDisabled]}
         onPress={handleExtractPages}
-        disabled={extracting}
+        disabled={extracting || selectedCount === 0}
+        data-testid="extract-btn"
       >
         {extracting ? (
           <View style={styles.extractingContainer}>
             <ActivityIndicator size="large" color="#4ECDC4" />
             <Text style={styles.extractingText}>{extractionStatus || 'Extraction en cours...'}</Text>
-            <Text style={styles.extractingSubtext}>Retail: pages {pageStart}-{pageEnd} | SCI Lease: pages {leasePageStart}-{leasePageEnd}</Text>
             <Text style={styles.extractingWait}>Veuillez patienter (2-4 minutes)</Text>
           </View>
         ) : (
           <>
             <Ionicons name="analytics" size={24} color="#fff" />
             <Text style={styles.extractButtonText}>
-              Extraire les programmes
+              Extraire {selectedCount} section{selectedCount !== 1 ? 's' : ''}
             </Text>
           </>
         )}
       </TouchableOpacity>
       
-      {/* Change PDF button */}
       <TouchableOpacity
         style={styles.changePdfButton}
         onPress={() => {
           setPdfFile(null);
           setPdfFileName('');
           setTotalPages(0);
+          setSelectedSections(new Set());
           setCurrentStep('upload');
         }}
         disabled={extracting}
       >
-        <Text style={styles.changePdfButtonText}>← Changer de PDF</Text>
+        <Text style={styles.changePdfButtonText}>Changer de PDF</Text>
       </TouchableOpacity>
     </View>
-  );
+    );
+  };
 
   // Original upload step render (now simplified)
   const renderUploadStepOld = () => (
