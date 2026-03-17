@@ -83,3 +83,7 @@ backend/data/*.pdf
 test_reports/
 test_result.md
 download_files/
+-e 
+# Environment files
+*.env
+*.env.*
