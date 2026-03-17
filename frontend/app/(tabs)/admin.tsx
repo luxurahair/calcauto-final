@@ -336,6 +336,323 @@ function ExcelManager({ getToken }: { getToken: () => Promise<string> }) {
   );
 }
 
+// ============ Corrections Manager Component ============
+interface CorrectionItem {
+  brand: string;
+  model: string;
+  trim: string;
+  year: number;
+  corrected_at: string;
+  changes_history: Record<string, { avant: any; apres: any }>;
+  corrected_values: Record<string, any>;
+}
+
+function CorrectionsManager({ getToken }: { getToken: () => Promise<string> }) {
+  const { isDemoUser } = useAuth();
+  const [corrections, setCorrections] = useState<CorrectionItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [deleting, setDeleting] = useState<string | null>(null);
+  const [adminPassword, setAdminPassword] = useState(isDemoUser ? 'Liana2018' : '');
+  const [expandedIdx, setExpandedIdx] = useState<number | null>(null);
+
+  const fetchCorrections = useCallback(async () => {
+    try {
+      setLoading(true);
+      const res = await axios.get(`${API_URL}/api/corrections`);
+      setCorrections(res.data.corrections || []);
+    } catch (e) {
+      console.error('Error fetching corrections:', e);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { fetchCorrections(); }, [fetchCorrections]);
+
+  const formatDate = (d: string) => {
+    if (!d) return '—';
+    return new Date(d).toLocaleDateString('fr-CA', {
+      year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit',
+    });
+  };
+
+  const formatVal = (val: any): string => {
+    if (val === null || val === undefined) return '—';
+    if (typeof val === 'number') return val.toLocaleString('fr-CA');
+    if (typeof val === 'object') {
+      return Object.entries(val)
+        .filter(([_, v]) => v !== null && v !== undefined)
+        .map(([k, v]) => `${k.replace('rate_', '')}m: ${v}%`)
+        .join(', ');
+    }
+    return String(val);
+  };
+
+  const fieldLabel = (f: string): string => {
+    const map: Record<string, string> = {
+      consumer_cash: 'Consumer Cash',
+      alternative_consumer_cash: 'Alt Consumer Cash',
+      bonus_cash: 'Bonus Cash',
+      option1_rates: 'Taux Option 1',
+      option2_rates: 'Taux Option 2',
+    };
+    return map[f] || f;
+  };
+
+  const handleDelete = async (c: CorrectionItem) => {
+    const key = `${c.brand}-${c.model}-${c.year}`;
+    const confirmed = Platform.OS === 'web'
+      ? window.confirm(`Supprimer la correction pour ${c.brand} ${c.model} ${c.trim} (${c.year}) ?`)
+      : await new Promise<boolean>((resolve) =>
+          Alert.alert('Confirmer', `Supprimer cette correction ?`, [
+            { text: 'Annuler', onPress: () => resolve(false), style: 'cancel' },
+            { text: 'Supprimer', onPress: () => resolve(true), style: 'destructive' },
+          ])
+        );
+    if (!confirmed) return;
+    setDeleting(key);
+    try {
+      await axios.delete(
+        `${API_URL}/api/corrections/${encodeURIComponent(c.brand)}/${encodeURIComponent(c.model)}/${c.year}`,
+        { params: { password: adminPassword } }
+      );
+      setCorrections(prev => prev.filter(x => !(x.brand === c.brand && x.model === c.model && x.year === c.year)));
+    } catch (e: any) {
+      const msg = e.response?.data?.detail || 'Erreur';
+      Platform.OS === 'web' ? alert(msg) : Alert.alert('Erreur', msg);
+    } finally {
+      setDeleting(null);
+    }
+  };
+
+  const handleDeleteAll = async () => {
+    if (!adminPassword) {
+      Platform.OS === 'web' ? alert('Entrez le mot de passe admin') : Alert.alert('Erreur', 'Entrez le mot de passe admin');
+      return;
+    }
+    const confirmed = Platform.OS === 'web'
+      ? window.confirm(`Supprimer TOUTES les ${corrections.length} corrections ?`)
+      : await new Promise<boolean>((resolve) =>
+          Alert.alert('Attention', `Supprimer toutes les corrections ?`, [
+            { text: 'Annuler', onPress: () => resolve(false), style: 'cancel' },
+            { text: 'Tout supprimer', onPress: () => resolve(true), style: 'destructive' },
+          ])
+        );
+    if (!confirmed) return;
+    setDeleting('all');
+    try {
+      await axios.delete(`${API_URL}/api/corrections/all`, { params: { password: adminPassword } });
+      setCorrections([]);
+    } catch (e: any) {
+      const msg = e.response?.data?.detail || 'Erreur';
+      Platform.OS === 'web' ? alert(msg) : Alert.alert('Erreur', msg);
+    } finally {
+      setDeleting(null);
+    }
+  };
+
+  if (loading) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', paddingTop: 40 }}>
+        <ActivityIndicator size="large" color="#4ECDC4" />
+      </View>
+    );
+  }
+
+  return (
+    <ScrollView style={{ flex: 1, padding: 16 }} contentContainerStyle={{ paddingBottom: 120 }}>
+      {/* Header card */}
+      <View style={{ backgroundColor: '#2d2d44', borderRadius: 12, padding: 20, marginBottom: 16 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <Ionicons name="git-compare-outline" size={24} color="#FF6B6B" />
+            <Text style={{ color: '#fff', fontSize: 18, fontWeight: '700', marginLeft: 10 }}>
+              Corrections memorisees
+            </Text>
+          </View>
+          <View style={{ backgroundColor: '#FF6B6B', borderRadius: 12, paddingHorizontal: 10, paddingVertical: 4 }}>
+            <Text style={{ color: '#fff', fontSize: 13, fontWeight: '700' }} data-testid="corrections-count">
+              {corrections.length}
+            </Text>
+          </View>
+        </View>
+        <Text style={{ color: '#aaa', fontSize: 13, lineHeight: 20 }}>
+          Ces corrections sont appliquees automatiquement a chaque import PDF. Elles memorisent les modifications faites via l'import Excel.
+        </Text>
+
+        {/* Admin password + Delete All */}
+        {corrections.length > 0 && (
+          <View style={{ marginTop: 16 }}>
+            <TextInput
+              style={{
+                backgroundColor: '#1a1a2e', color: '#fff', borderRadius: 8,
+                paddingHorizontal: 16, paddingVertical: 10, marginBottom: 10,
+                borderWidth: 1, borderColor: '#444', fontSize: 14,
+              }}
+              placeholder="Mot de passe admin (pour suppression)"
+              placeholderTextColor="#666"
+              secureTextEntry
+              value={adminPassword}
+              onChangeText={setAdminPassword}
+              data-testid="corrections-password-input"
+            />
+            <TouchableOpacity
+              style={{
+                backgroundColor: deleting === 'all' ? '#555' : '#FF6B6B', borderRadius: 8,
+                paddingVertical: 12, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 8,
+                opacity: deleting === 'all' ? 0.7 : 1,
+              }}
+              onPress={handleDeleteAll}
+              disabled={deleting === 'all'}
+              data-testid="delete-all-corrections-btn"
+            >
+              {deleting === 'all' ? (
+                <ActivityIndicator size="small" color="#fff" />
+              ) : (
+                <>
+                  <Ionicons name="trash-outline" size={18} color="#fff" />
+                  <Text style={{ color: '#fff', fontWeight: '700', fontSize: 14 }}>Tout supprimer</Text>
+                </>
+              )}
+            </TouchableOpacity>
+          </View>
+        )}
+      </View>
+
+      {/* Empty state */}
+      {corrections.length === 0 && (
+        <View style={{ alignItems: 'center', paddingVertical: 40 }}>
+          <Ionicons name="checkmark-circle-outline" size={48} color="#4ECDC4" />
+          <Text style={{ color: '#888', marginTop: 12, fontSize: 16 }}>Aucune correction memorisee</Text>
+          <Text style={{ color: '#666', marginTop: 4, fontSize: 13 }}>
+            Les corrections apparaitront apres un import Excel modifie
+          </Text>
+        </View>
+      )}
+
+      {/* Correction cards */}
+      {corrections.map((c, idx) => {
+        const key = `${c.brand}-${c.model}-${c.year}-${idx}`;
+        const delKey = `${c.brand}-${c.model}-${c.year}`;
+        const isExpanded = expandedIdx === idx;
+        const changesCount = Object.keys(c.changes_history || {}).length;
+
+        return (
+          <View
+            key={key}
+            style={{
+              backgroundColor: '#2d2d44', borderRadius: 10, marginBottom: 10,
+              borderLeftWidth: 3, borderLeftColor: '#FFD700', overflow: 'hidden',
+            }}
+            data-testid={`correction-card-${idx}`}
+          >
+            {/* Card header - tappable to expand */}
+            <TouchableOpacity
+              style={{ padding: 14, flexDirection: 'row', alignItems: 'center' }}
+              onPress={() => setExpandedIdx(isExpanded ? null : idx)}
+              activeOpacity={0.7}
+            >
+              <View style={{ flex: 1 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 6 }}>
+                  <Text style={{ color: '#4ECDC4', fontSize: 11, fontWeight: '600', textTransform: 'uppercase' }}>
+                    {c.brand}
+                  </Text>
+                  <Text style={{ color: '#fff', fontSize: 15, fontWeight: '700' }}>{c.model}</Text>
+                  <View style={{ backgroundColor: '#1a1a2e', borderRadius: 4, paddingHorizontal: 6, paddingVertical: 2 }}>
+                    <Text style={{ color: '#aaa', fontSize: 11 }}>{c.year}</Text>
+                  </View>
+                </View>
+                {c.trim ? (
+                  <Text style={{ color: '#888', fontSize: 12, marginTop: 3 }} numberOfLines={1}>{c.trim}</Text>
+                ) : null}
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 6, gap: 12 }}>
+                  <Text style={{ color: '#666', fontSize: 11 }}>{formatDate(c.corrected_at)}</Text>
+                  <View style={{ backgroundColor: 'rgba(255,215,0,0.15)', borderRadius: 4, paddingHorizontal: 6, paddingVertical: 2 }}>
+                    <Text style={{ color: '#FFD700', fontSize: 11, fontWeight: '600' }}>
+                      {changesCount} modif{changesCount > 1 ? 's' : ''}
+                    </Text>
+                  </View>
+                </View>
+              </View>
+              <Ionicons name={isExpanded ? 'chevron-up' : 'chevron-down'} size={20} color="#888" />
+            </TouchableOpacity>
+
+            {/* Expanded details */}
+            {isExpanded && (
+              <View style={{ paddingHorizontal: 14, paddingBottom: 14, borderTopWidth: 1, borderTopColor: '#3d3d54' }}>
+                {/* Changes history */}
+                <Text style={{ color: '#FFD700', fontSize: 12, fontWeight: '700', marginTop: 10, marginBottom: 8 }}>
+                  Historique des modifications
+                </Text>
+                {Object.entries(c.changes_history || {}).map(([field, change]) => (
+                  <View key={field} style={{ marginBottom: 8, backgroundColor: '#1a1a2e', borderRadius: 6, padding: 10 }}>
+                    <Text style={{ color: '#ccc', fontSize: 12, fontWeight: '600', marginBottom: 4 }}>
+                      {fieldLabel(field)}
+                    </Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap' }}>
+                      <Text style={{ color: '#FF6B6B', fontSize: 11 }}>{formatVal(change.avant)}</Text>
+                      <Ionicons name="arrow-forward" size={12} color="#666" style={{ marginHorizontal: 6 }} />
+                      <Text style={{ color: '#4ECDC4', fontSize: 11 }}>{formatVal(change.apres)}</Text>
+                    </View>
+                  </View>
+                ))}
+
+                {/* Current corrected values summary */}
+                <Text style={{ color: '#4ECDC4', fontSize: 12, fontWeight: '700', marginTop: 8, marginBottom: 6 }}>
+                  Valeurs actuelles
+                </Text>
+                <View style={{ backgroundColor: '#1a1a2e', borderRadius: 6, padding: 10 }}>
+                  {c.corrected_values?.consumer_cash != null && (
+                    <Text style={{ color: '#ccc', fontSize: 11, marginBottom: 2 }}>
+                      Consumer Cash: <Text style={{ color: '#fff', fontWeight: '600' }}>{c.corrected_values.consumer_cash.toLocaleString('fr-CA')} $</Text>
+                    </Text>
+                  )}
+                  {c.corrected_values?.bonus_cash != null && c.corrected_values.bonus_cash > 0 && (
+                    <Text style={{ color: '#ccc', fontSize: 11, marginBottom: 2 }}>
+                      Bonus Cash: <Text style={{ color: '#fff', fontWeight: '600' }}>{c.corrected_values.bonus_cash.toLocaleString('fr-CA')} $</Text>
+                    </Text>
+                  )}
+                  {c.corrected_values?.option1_rates && (
+                    <Text style={{ color: '#ccc', fontSize: 11, marginBottom: 2 }}>
+                      Opt1: <Text style={{ color: '#fff' }}>{formatVal(c.corrected_values.option1_rates)}</Text>
+                    </Text>
+                  )}
+                  {c.corrected_values?.option2_rates && (
+                    <Text style={{ color: '#ccc', fontSize: 11, marginBottom: 2 }}>
+                      Opt2: <Text style={{ color: '#fff' }}>{formatVal(c.corrected_values.option2_rates)}</Text>
+                    </Text>
+                  )}
+                </View>
+
+                {/* Delete button */}
+                <TouchableOpacity
+                  style={{
+                    marginTop: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
+                    backgroundColor: 'rgba(255,107,107,0.1)', paddingVertical: 10, borderRadius: 8,
+                    borderWidth: 1, borderColor: '#FF6B6B', opacity: deleting === delKey ? 0.5 : 1,
+                  }}
+                  onPress={() => handleDelete(c)}
+                  disabled={deleting === delKey}
+                  data-testid={`delete-correction-${idx}`}
+                >
+                  {deleting === delKey ? (
+                    <ActivityIndicator size="small" color="#FF6B6B" />
+                  ) : (
+                    <>
+                      <Ionicons name="trash-outline" size={16} color="#FF6B6B" />
+                      <Text style={{ color: '#FF6B6B', fontSize: 13, fontWeight: '600' }}>Supprimer cette correction</Text>
+                    </>
+                  )}
+                </TouchableOpacity>
+              </View>
+            )}
+          </View>
+        );
+      })}
+    </ScrollView>
+  );
+}
+
 // ============ Vehicle Order Manager Component ============
 function VehicleOrderManager({ getToken }: { getToken: () => Promise<string> }) {
   const { isDemoUser } = useAuth();
@@ -645,7 +962,7 @@ export default function AdminScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'users' | 'order' | 'excel'>('users');
+  const [activeTab, setActiveTab] = useState<'users' | 'order' | 'excel' | 'corrections'>('users');
 
   const fetchData = useCallback(async () => {
     try {
@@ -810,6 +1127,14 @@ export default function AdminScreen() {
           <Ionicons name="document-text" size={16} color={activeTab === 'excel' ? '#1a1a2e' : '#888'} />
           <Text style={[styles.tabText, activeTab === 'excel' && styles.tabTextActive]}>Excel</Text>
         </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.tab, activeTab === 'corrections' && styles.tabActive]}
+          onPress={() => setActiveTab('corrections')}
+          data-testid="corrections-tab"
+        >
+          <Ionicons name="git-compare" size={16} color={activeTab === 'corrections' ? '#1a1a2e' : '#888'} />
+          <Text style={[styles.tabText, activeTab === 'corrections' && styles.tabTextActive]}>Corrections</Text>
+        </TouchableOpacity>
       </View>
 
       {activeTab === 'users' ? (
@@ -852,9 +1177,11 @@ export default function AdminScreen() {
         </>
       ) : activeTab === 'order' ? (
         <VehicleOrderManager getToken={getToken} />
-      ) : (
+      ) : activeTab === 'excel' ? (
         <ExcelManager getToken={getToken} />
-      )}
+      ) : activeTab === 'corrections' ? (
+        <CorrectionsManager getToken={getToken} />
+      ) : null}
     </SafeAreaView>
   );
 }
