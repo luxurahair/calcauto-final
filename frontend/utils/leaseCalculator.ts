@@ -228,22 +228,48 @@ export function findRateEntry(
   trim: string
 ): any | null {
   const brandLower = brand.toLowerCase();
-  const modelLower = model.toLowerCase();
-  const trimLower = (trim || '').toLowerCase();
+  const modelLower = model.toLowerCase().trim();
+  const trimLower = (trim || '').toLowerCase().trim();
 
-  // Get ALL entries that match brand + model
+  // Strict model matching: prevent "Cherokee" from matching "Grand Cherokee"
+  // and "Grand Cherokee L" from matching "Grand Cherokee Laredo"
+  const isStrictMatch = (vModel: string, searchModel: string): boolean => {
+    // Cherokee vs Grand Cherokee
+    if (searchModel === 'cherokee' && vModel.includes('grand cherokee')) return false;
+    // Grand Cherokee L vs Grand Cherokee Laredo/etc
+    if (searchModel === 'grand cherokee l') {
+      // Must contain "grand cherokee l " (with space after L) or end with "grand cherokee l"
+      const hasGCL = vModel.includes('grand cherokee l ') || vModel.endsWith('grand cherokee l');
+      // But NOT just "grand cherokee la..." (Laredo etc) without being a true L model  
+      if (!hasGCL) return false;
+      return true;
+    }
+    // Grand Cherokee (no L) - match Grand Cherokee but also Grand Cherokee/Grand Cherokee L
+    if (searchModel === 'grand cherokee') {
+      // Match "grand cherokee" entries but not "grand cherokee l " entries (those are the L variant)
+      if (vModel.includes('grand cherokee l ') && !vModel.includes('/')) return false;
+      return vModel.includes('grand cherokee');
+    }
+    // Combined "Grand Cherokee/Grand Cherokee L" - match all GC entries  
+    if (searchModel.includes('grand cherokee/grand cherokee l')) {
+      return vModel.includes('grand cherokee');
+    }
+    return vModel.includes(searchModel) || searchModel.includes(vModel);
+  };
+
+  // Get ALL entries that match brand + model (strict)
   const candidates = (vehicleList || []).filter((v: any) => {
     const vModel = v.model.toLowerCase();
     const vBrand = v.brand.toLowerCase();
     if (vBrand !== brandLower) return false;
-    return vModel.includes(modelLower) || modelLower.includes(vModel);
+    return isStrictMatch(vModel, modelLower);
   });
 
   if (candidates.length === 0) return null;
   if (candidates.length === 1) return candidates[0];
 
   // Multiple matches — pick the best one based on trim
-  // 1. Exact trim match (e.g., trim="Base" → "Cherokee Base")
+  // 1. Exact trim match (e.g., trim="Base" -> "Cherokee Base")
   if (trimLower) {
     const trimMatch = candidates.find((v: any) => {
       const vModel = v.model.toLowerCase();
