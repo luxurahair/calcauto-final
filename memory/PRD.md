@@ -1,54 +1,43 @@
 # CalcAuto AiPro - PRD
 
-## Original Problem Statement
-Application CRM pour concessionnaires automobiles Stellantis/FCA Canada. Extraction déterministe des programmes de financement à partir de PDFs mensuels via pdfplumber.
-
-## Core Features
-1. **Parser PDF déterministe** (pdfplumber) pour extraire programmes retail et SCI Lease
-2. **Mode Démo** - accès sans mot de passe via `demo@calcauto.ca`
-3. **UI Dynamique** - bannière événement + toggles fidélité/paiement différé
-4. **Calcul de financement** - logique complète avec options 1/2, taxes QC, accessoires, échange
-5. **CI/CD** - GitHub Actions avec tests unitaires, déploiement Render/Vercel
+## Problem Statement
+Car dealership CRM that parses FCA Canada monthly incentive PDFs to extract retail programs, SCI lease rates, and display them via a dynamic calculator UI. Originally used AI/OCR; now uses deterministic pdfplumber parsing.
 
 ## Architecture
-- **Frontend**: React/Expo web (TypeScript)
-- **Backend**: FastAPI (Python)
-- **Database**: MongoDB (users, programs, submissions) + fichiers JSON (data/)
-- **PDF Parsing**: pdfplumber + regex
+- **Backend:** FastAPI + pdfplumber + pandas, file-based storage in `backend/data/`
+- **Frontend:** React/Expo (static export), served from `dist/`
+- **DB:** MongoDB (users, submissions)
+- **CI/CD:** GitHub Actions -> Render (backend) + Vercel (frontend)
 
-## What's Been Implemented
+## Completed Features
+1. **Deterministic PDF Parser** (pdfplumber) - replaces old AI/OCR
+2. **TOC-based Auto-Detection** - parses Table of Contents on page 2 for section pages
+3. **Retail Program Parser** - extracts Option 1, Option 2, Consumer Cash, Bonus Cash
+4. **SCI Lease Parser** - extracts vehicle names, lease cash, standard/alternative rates (FIXED: row alignment bug)
+5. **Bonus Cash Parser** - separate page parsing for bonus cash (e.g., Fiat 500e $5,000)
+6. **Dynamic Event Banner** - shows promotional info from PDF cover page
+7. **Loyalty Rate & 90-day Deferred Payment** - calculation modifiers in UI
+8. **Demo Mode** - password-free access via demo@calcauto.ca
+9. **CI/CD Pipeline** - GitHub Actions with pytest + deploy hooks
+10. **Animated Splash Screen** - comet trail loading animation
 
-### Completed (Mar 7, 2026 - Session courante)
-- **TOC-first auto-detection** - Parse la Table des Matières (page 2) au lieu de scanner chaque page
-- **Support dual-layout retail parser** - Layout A (Jan/Feb 25+ cols) et Layout B (Mars 24 cols séparés)
-- **Détection dynamique des colonnes** - Indices de colonnes détectés depuis les headers
-- **Bonus Cash parser** - Extraction des bonus cash de la page 8 (Bonus Cash Program)
-- **Fix "All-New" prefix** - Suppression du préfixe "All-New" pour les modèles 2024
-- **Fix word boundary** - "Grand Cherokee L" ne mange plus le "L" de "Laredo"
-- **Animation comète** - Traînée de particules améliorée (code utilisateur)
-- **Correction metadata Mars** - `no_payments_days=0`, `loyalty_rate=0.5`
+## Key Bug Fixes (March 2026)
+- **SCI Lease Row Alignment (P0):** Fixed 2-row offset between names table (row 14) and rates table (row 12). Now uses zip of filtered lists instead of same-index iteration.
+- **Missing Bonus Cash:** Added `parse_bonus_cash_page()` for separate bonus page
+- **Model Name Prefix:** Fixed "All-New" prefix handling for Charger Daytona, Hornet
+- **Trim Parsing:** Fixed "Grand Cherokee Laredo" split into "Grand Cherokee L" + "aredo"
 
-### Résultats validés
-- Janvier: 90 programmes, 83 SCI Lease, 1 bonus cash
-- Février: 95 programmes, 74 SCI Lease, 1 bonus cash
-- Mars: 93 programmes, 73 SCI Lease, 1 bonus cash (Fiat 500e $5000)
-- 0 erreurs de noms sur les 3 mois
-
-## Prioritized Backlog
-
-### P1 - UI Gestion des Corrections
-- Interface frontend admin pour `/api/corrections` APIs existantes
-
-### P2 - Refactoring Frontend
-- Découper `index.tsx`, `inventory.tsx`, `clients.tsx`
-
-## Key Files
-- `backend/services/pdfplumber_parser.py` - Parsers PDF (TOC, retail, bonus, lease)
-- `backend/routers/import_wizard.py` - API import
-- `frontend/components/AnimatedSplashScreen.tsx` - Animation comète
-- `frontend/components/EventBanner.tsx` - Bannière événement
-- `frontend/hooks/useCalculator.ts` - Logique calcul
+## API Endpoints
+- `POST /api/scan-pdf` - auto-detect section pages
+- `POST /api/extract-pdf` - full PDF extraction pipeline
+- `POST /api/corrections` - manage program corrections
+- `GET /api/programs/:month/:year` - get programs by month
 
 ## Credentials
-- Admin: `Liana2018`
+- Admin: password `Liana2018`
 - Demo: auto-login `demo@calcauto.ca`
+
+## Upcoming Tasks
+- **(P1)** UI for Correction Management (admin panel frontend)
+- **(P2)** Refactor large frontend components (index.tsx, inventory.tsx, clients.tsx)
+- **(P3)** Parse Loyalty Rate Landscapes (pages 34-39 in March PDF)
