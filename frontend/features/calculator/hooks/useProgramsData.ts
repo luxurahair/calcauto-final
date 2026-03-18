@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import axios from 'axios';
 import { API_URL } from '../../../utils/api';
 import { ProgramPeriod, VehicleProgram } from '../../../types/calculator';
@@ -76,19 +76,25 @@ export function useProgramsData({
     return filtered;
   }, [programs, selectedYear, selectedBrand]);
 
+  const currentPeriodRef = useRef<{ month: number; year: number } | null>(null);
+  const onMetaLoadedRef = useRef(onProgramMetaLoaded);
+  onMetaLoadedRef.current = onProgramMetaLoaded;
+
   const loadPeriods = useCallback(async () => {
     try {
       const res = await axios.get(`${API_URL}/api/periods`);
       const periods = Array.isArray(res.data) ? res.data : [];
       setAvailablePeriods(periods);
 
-      if (!currentPeriod && periods.length > 0) {
-        setCurrentPeriod({ month: periods[0].month, year: periods[0].year });
+      if (!currentPeriodRef.current && periods.length > 0) {
+        const initial = { month: periods[0].month, year: periods[0].year };
+        currentPeriodRef.current = initial;
+        setCurrentPeriod(initial);
       }
     } catch (error) {
       console.log('Could not load periods:', error);
     }
-  }, [currentPeriod]);
+  }, []);
 
   const loadProgramMeta = useCallback(
     async (month: number, year: number) => {
@@ -98,14 +104,14 @@ export function useProgramsData({
         });
         const meta = res.data && res.data.event_names ? res.data : null;
         setProgramMeta(meta);
-        onProgramMetaLoaded?.(meta);
+        onMetaLoadedRef.current?.(meta);
       } catch (error) {
         console.log('Could not load program meta:', error);
         setProgramMeta(null);
-        onProgramMetaLoaded?.(null);
+        onMetaLoadedRef.current?.(null);
       }
     },
-    [onProgramMetaLoaded]
+    []
   );
 
   const loadPrograms = useCallback(
@@ -138,11 +144,13 @@ export function useProgramsData({
         setPrograms(sorted);
 
         if (periodMonth && periodYear) {
-          setCurrentPeriod({ month: periodMonth, year: periodYear });
+          const newPeriod = { month: periodMonth, year: periodYear };
+          currentPeriodRef.current = newPeriod;
+          setCurrentPeriod(newPeriod);
           await loadProgramMeta(periodMonth, periodYear);
         } else {
           setProgramMeta(null);
-          onProgramMetaLoaded?.(null);
+          onMetaLoadedRef.current?.(null);
         }
 
         setSelectedProgram((previous) => findMatchingProgram(sorted, previous));
@@ -158,12 +166,13 @@ export function useProgramsData({
         setProgramsLoading(false);
       }
     },
-    [loadPeriods, loadProgramMeta, onProgramMetaLoaded]
+    [loadPeriods, loadProgramMeta]
   );
 
   useEffect(() => {
     loadPrograms();
-  }, [loadPrograms]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
