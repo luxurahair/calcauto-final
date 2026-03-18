@@ -88,3 +88,7 @@ download_files/
 # Environment files
 *.env
 *.env.*
+-e 
+# Environment files
+*.env
+*.env.*
