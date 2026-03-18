@@ -14,7 +14,6 @@ from services.email_service import send_email
 @router.post("/submissions")
 async def create_submission(submission: SubmissionCreate, authorization: Optional[str] = Header(None)):
     """Créer une nouvelle soumission avec rappel automatique 24h"""
-    from datetime import timedelta
     
     user = await get_current_user(authorization)
     
@@ -90,7 +89,6 @@ async def get_reminders(authorization: Optional[str] = Header(None)):
     }).sort("reminder_date", 1).to_list(100)
     
     # Get upcoming reminders (next 7 days)
-    from datetime import timedelta
     next_week = now + timedelta(days=7)
     
     reminders_upcoming = await db.submissions.find({
@@ -284,84 +282,129 @@ async def compare_programs_with_submissions(authorization: Optional[str] = Heade
         all_terms = [36, 48, 60, 72, 84, 96]
         
         for sub in submissions:
-            # Find NEW program (current month)
-            new_program = await db.programs.find_one({
+            # Find ALL new program variants (current month) - not just the first one
+            new_programs = await db.programs.find({
                 "brand": sub.get("vehicle_brand"),
                 "model": sub.get("vehicle_model"),
                 "year": sub.get("vehicle_year"),
                 "program_month": current_month,
                 "program_year": current_year
-            })
-            if not new_program:
+            }).to_list(20)
+            if not new_programs:
                 continue
             
-            # Find OLD program (from the submission's month)
-            old_program = await db.programs.find_one({
+            # Find ALL old program variants (from the submission's month)
+            old_programs = await db.programs.find({
                 "brand": sub.get("vehicle_brand"),
                 "model": sub.get("vehicle_model"),
                 "year": sub.get("vehicle_year"),
                 "program_month": sub.get("program_month"),
                 "program_year": sub.get("program_year")
-            })
+            }).to_list(20)
             
             term = int(sub.get("term", 72))
             old_actual_payment = float(sub.get("payment_monthly", 0))
             vehicle_price = float(sub.get("vehicle_price", 0))
             old_rate = float(sub.get("rate", 0))
+            old_selected_option = str(sub.get("selected_option", "1"))
             
             if old_actual_payment <= 0 or vehicle_price <= 0:
                 continue
             
-            # Old program params (from DB or defaults)
+            # Find the old program variant that best matches the submission
+            old_program = None
+            if old_programs:
+                rate_key = f"rate_{term}"
+                for op in old_programs:
+                    if old_selected_option == "2":
+                        op_rates = op.get("option2_rates") or {}
+                    else:
+                        op_rates = op.get("option1_rates") or {}
+                    rate_val = op_rates.get(rate_key)
+                    if op_rates and rate_val is not None and float(rate_val) == old_rate:
+                        old_program = op
+                        break
+                if not old_program:
+                    old_program = old_programs[0]
+            
+            # Old program params
             old_cc = float(old_program.get("consumer_cash", 0)) if old_program else 0
             old_bonus = float(old_program.get("bonus_cash", 0)) if old_program else 0
+            if old_selected_option == "2" and old_program:
+                old_cc = float(old_program.get("alternative_consumer_cash", old_program.get("alt_consumer_cash", 0)) or 0)
             
-            # New program params
-            new_cc = float(new_program.get("consumer_cash", 0))
-            new_bonus = float(new_program.get("bonus_cash", 0))
-            new_alt_cc = float(new_program.get("alternative_consumer_cash", new_program.get("alt_consumer_cash", 0)) or 0)
-            opt1_rates = new_program.get("option1_rates", {})
-            opt2_rates = new_program.get("option2_rates")
-            
-            rate_key = f"rate_{term}"
-            new_opt1_rate = float(opt1_rates.get(rate_key, 0))
-            
-            # DELTA METHOD: compare theoretical payments (same base, no taxes)
             old_principal = vehicle_price - old_cc - old_bonus
-            new_opt1_principal = vehicle_price - new_cc - new_bonus
-            
             if old_principal <= 0:
                 continue
             
             old_theoretical = _calc_payment(old_principal, old_rate, term)
             
-            # Check Option 1
-            best_new_rate = new_opt1_rate
-            best_new_principal = new_opt1_principal
+            # Check ALL new program variants and find the BEST deal
+            rate_key = f"rate_{term}"
+            best_delta = -999999
+            best_variant = None
+            best_new_rate = 0
             best_option_label = "1"
-            best_new_theoretical = _calc_payment(new_opt1_principal, new_opt1_rate, term) if new_opt1_principal > 0 else 999999
+            best_new_cc = 0
+            best_new_bonus = 0
+            best_new_alt_cc = 0
+            best_opt1_rates = {}
+            best_opt2_rates = None
             
-            # Also check Option 2 - this is critical for finding better deals!
-            if opt2_rates:
-                new_opt2_rate = float(opt2_rates.get(rate_key, 0) or 0)
-                new_opt2_principal = vehicle_price - new_alt_cc - new_bonus
-                if new_opt2_principal > 0 and new_opt2_rate >= 0:
-                    new_opt2_theoretical = _calc_payment(new_opt2_principal, new_opt2_rate, term)
-                    if new_opt2_theoretical < best_new_theoretical:
-                        best_new_rate = new_opt2_rate
-                        best_new_principal = new_opt2_principal
-                        best_option_label = "2"
-                        best_new_theoretical = new_opt2_theoretical
+            for np in new_programs:
+                np_cc = float(np.get("consumer_cash", 0))
+                np_bonus = float(np.get("bonus_cash", 0))
+                np_alt_cc = float(np.get("alternative_consumer_cash", np.get("alt_consumer_cash", 0)) or 0)
+                np_opt1_rates = np.get("option1_rates", {})
+                np_opt2_rates = np.get("option2_rates")
+                
+                # Check Option 1
+                o1_rate_raw = np_opt1_rates.get(rate_key)
+                o1_rate = float(o1_rate_raw) if o1_rate_raw is not None else None
+                o1_principal = vehicle_price - np_cc - np_bonus
+                if o1_principal > 0 and o1_rate is not None:
+                    o1_theo = _calc_payment(o1_principal, o1_rate, term)
+                    o1_delta = old_theoretical - o1_theo
+                    if o1_delta > best_delta:
+                        best_delta = o1_delta
+                        best_variant = np
+                        best_new_rate = o1_rate
+                        best_option_label = "1"
+                        best_new_cc = np_cc
+                        best_new_bonus = np_bonus
+                        best_new_alt_cc = np_alt_cc
+                        best_opt1_rates = np_opt1_rates
+                        best_opt2_rates = np_opt2_rates
+                
+                # Check Option 2
+                if np_opt2_rates:
+                    o2_rate_raw = np_opt2_rates.get(rate_key)
+                    o2_rate = float(o2_rate_raw) if o2_rate_raw is not None else None
+                    o2_principal = vehicle_price - np_alt_cc - np_bonus
+                    if o2_principal > 0 and o2_rate is not None:
+                        o2_theo = _calc_payment(o2_principal, o2_rate, term)
+                        o2_delta = old_theoretical - o2_theo
+                        if o2_delta > best_delta:
+                            best_delta = o2_delta
+                            best_variant = np
+                            best_new_rate = o2_rate
+                            best_option_label = "2"
+                            best_new_cc = np_cc
+                            best_new_bonus = np_bonus
+                            best_new_alt_cc = np_alt_cc
+                            best_opt1_rates = np_opt1_rates
+                            best_opt2_rates = np_opt2_rates
             
-            new_rate = best_new_rate
-            new_principal = best_new_principal
-            new_theoretical = best_new_theoretical
-            
-            # Delta = how much the payment drops due to better rate/rebates
-            delta = old_theoretical - new_theoretical
-            
-            if delta < 10:
+            if best_delta < 10 or not best_variant:
                 continue  # Less than $10 real savings
+            
+            delta = best_delta
+            new_rate = best_new_rate
+            new_cc = best_new_cc
+            new_bonus = best_new_bonus
+            new_alt_cc = best_new_alt_cc
+            opt1_rates = best_opt1_rates
+            opt2_rates = best_opt2_rates
             
             # Apply delta to the actual payment
             new_estimated_payment = round(old_actual_payment - delta, 2)
@@ -375,24 +418,32 @@ async def compare_programs_with_submissions(authorization: Optional[str] = Heade
                 
                 # Old theoretical for this term
                 if old_program:
-                    old_t_rate = float(old_program.get("option1_rates", {}).get(rk, old_rate))
+                    if old_selected_option == "2":
+                        old_t_rate_raw = (old_program.get("option2_rates") or {}).get(rk)
+                    else:
+                        old_t_rate_raw = (old_program.get("option1_rates") or {}).get(rk)
+                    old_t_rate = float(old_t_rate_raw) if old_t_rate_raw is not None else old_rate
                 else:
                     old_t_rate = old_rate
                 old_t_theo = _calc_payment(old_principal, old_t_rate, t)
                 
-                # New Option 1 for this term
-                o1_rate = float(opt1_rates.get(rk, 0))
-                o1_theo = _calc_payment(new_principal, o1_rate, t)
+                # New Option 1 for this term (best variant)
+                o1_rate_raw = opt1_rates.get(rk)
+                o1_rate = float(o1_rate_raw) if o1_rate_raw is not None else 0
+                o1_principal = vehicle_price - new_cc - new_bonus
+                o1_theo = _calc_payment(o1_principal, o1_rate, t) if o1_principal > 0 else 999999
                 o1_delta = round(old_t_theo - o1_theo, 2)
                 
-                # New Option 2 for this term
+                # New Option 2 for this term (best variant)
                 o2_rate = None
                 o2_delta = None
                 if opt2_rates:
-                    o2_rate = float(opt2_rates.get(rk, 0))
-                    o2_principal = vehicle_price - new_alt_cc - new_bonus
-                    o2_theo = _calc_payment(o2_principal, o2_rate, t)
-                    o2_delta = round(old_t_theo - o2_theo, 2)
+                    o2_rate_raw = opt2_rates.get(rk)
+                    o2_rate = float(o2_rate_raw) if o2_rate_raw is not None else None
+                    if o2_rate is not None:
+                        o2_principal = vehicle_price - new_alt_cc - new_bonus
+                        o2_theo = _calc_payment(o2_principal, o2_rate, t) if o2_principal > 0 else 999999
+                        o2_delta = round(old_t_theo - o2_theo, 2)
                 
                 payments_by_term[str(t)] = {
                     "opt1_rate": round(o1_rate, 2),
@@ -424,7 +475,7 @@ async def compare_programs_with_submissions(authorization: Optional[str] = Heade
                 "term": term,
                 "old_program": f"{sub.get('program_month', '?')}/{sub.get('program_year', '?')}",
                 "new_program": f"{current_month}/{current_year}",
-                "old_selected_option": str(sub.get("selected_option", "1")),
+                "old_selected_option": old_selected_option,
                 "approved": False,
                 "email_sent": False,
                 "calculator_state": sub.get("calculator_state") if isinstance(sub.get("calculator_state"), dict) else None,

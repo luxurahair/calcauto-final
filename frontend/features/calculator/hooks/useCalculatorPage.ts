@@ -1064,7 +1064,22 @@ export function useCalculatorPage() {
       const data = await response.json();
 
       if (data.success) {
-        const token = await getToken();
+        // Get token, auto-refresh if missing or invalid
+        let token = await getToken();
+        if (!token) {
+          try {
+            const refreshRes = await fetch(`${API_URL}/api/auth/demo-login`, { method: 'POST', headers: { 'Content-Type': 'application/json' } });
+            const refreshData = await refreshRes.json();
+            if (refreshData.success && refreshData.token) {
+              token = refreshData.token;
+              const AsyncStorageMod = (await import('@react-native-async-storage/async-storage')).default;
+              await AsyncStorageMod.setItem('auth_token', refreshData.token);
+              if (refreshData.user) await AsyncStorageMod.setItem('user_data', JSON.stringify(refreshData.user));
+            }
+          } catch (refreshErr) {
+            console.error('Token refresh failed:', refreshErr);
+          }
+        }
         const authHeaders: Record<string, string> = token
           ? { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
           : { 'Content-Type': 'application/json' };
@@ -1111,9 +1126,7 @@ export function useCalculatorPage() {
         let submissionSaved = false;
         try {
           const activeOption = selectedOption || '1';
-          const subResponse = await fetch(`${API_URL}/api/submissions`, {
-            method: 'POST', headers: authHeaders,
-            body: JSON.stringify({
+          const submissionBody = JSON.stringify({
               client_name: clientName || 'Client',
               client_email: clientEmail,
               client_phone: clientPhone,
@@ -1142,8 +1155,25 @@ export function useCalculatorPage() {
                   msrp: selectedInventory.msrp, pdco: selectedInventory.pdco,
                 } : null,
               },
-            }),
           });
+          let subResponse = await fetch(`${API_URL}/api/submissions`, {
+            method: 'POST', headers: authHeaders, body: submissionBody,
+          });
+          // Retry with fresh token if 401
+          if (subResponse.status === 401 && token) {
+            try {
+              const retryRes = await fetch(`${API_URL}/api/auth/demo-login`, { method: 'POST', headers: { 'Content-Type': 'application/json' } });
+              const retryData = await retryRes.json();
+              if (retryData.success && retryData.token) {
+                const freshHeaders = { 'Authorization': `Bearer ${retryData.token}`, 'Content-Type': 'application/json' };
+                subResponse = await fetch(`${API_URL}/api/submissions`, {
+                  method: 'POST', headers: freshHeaders, body: submissionBody,
+                });
+              }
+            } catch (retryErr) {
+              console.error('Submission retry failed:', retryErr);
+            }
+          }
           if (subResponse.ok) {
             submissionSaved = true;
           } else {
