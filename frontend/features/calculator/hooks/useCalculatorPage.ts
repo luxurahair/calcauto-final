@@ -1108,8 +1108,10 @@ export function useCalculatorPage() {
         }
 
         // Save submission to server
+        let submissionSaved = false;
         try {
-          await fetch(`${API_URL}/api/submissions`, {
+          const activeOption = selectedOption || '1';
+          const subResponse = await fetch(`${API_URL}/api/submissions`, {
             method: 'POST', headers: authHeaders,
             body: JSON.stringify({
               client_name: clientName || 'Client',
@@ -1120,13 +1122,13 @@ export function useCalculatorPage() {
               vehicle_year: selectedProgram.year,
               vehicle_price: parseFloat(vehiclePrice) || 0,
               term: selectedTerm,
-              payment_monthly: localResult.option1Monthly,
-              payment_biweekly: localResult.option1Biweekly,
-              payment_weekly: localResult.option1Weekly,
-              selected_option: selectedOption || '1',
-              rate: localResult.option1Rate,
-              program_month: currentPeriod?.month || 2,
-              program_year: currentPeriod?.year || 2026,
+              payment_monthly: activeOption === '2' ? localResult.option2Monthly : localResult.option1Monthly,
+              payment_biweekly: activeOption === '2' ? localResult.option2Biweekly : localResult.option1Biweekly,
+              payment_weekly: activeOption === '2' ? localResult.option2Weekly : localResult.option1Weekly,
+              selected_option: activeOption,
+              rate: activeOption === '2' ? localResult.option2Rate : localResult.option1Rate,
+              program_month: currentPeriod?.month || new Date().getMonth() + 1,
+              program_year: currentPeriod?.year || new Date().getFullYear(),
               calculator_state: {
                 selectedProgram, vehiclePrice, selectedTerm, selectedOption, paymentFrequency,
                 customBonusCash, comptantTxInclus, fraisDossier, taxePneus, fraisRDPRM,
@@ -1142,8 +1144,14 @@ export function useCalculatorPage() {
               },
             }),
           });
+          if (subResponse.ok) {
+            submissionSaved = true;
+          } else {
+            const errData = await subResponse.json().catch(() => ({}));
+            console.error('Submission save failed:', subResponse.status, errData);
+          }
         } catch (subErr) {
-          console.log('Error saving submission to server:', subErr);
+          console.error('Error saving submission to server:', subErr);
         }
 
         // Save locally
@@ -1175,8 +1183,8 @@ export function useCalculatorPage() {
         setClientPhone('');
 
         const successMsg = lang === 'fr'
-          ? `Email envoye!\n\n${contactStatus}\nSoumission enregistree`
-          : `Email sent!\n\n${contactStatus}\nSubmission saved`;
+          ? `Email envoye!\n\n${contactStatus}\n${submissionSaved ? 'Soumission enregistree' : 'ATTENTION: Soumission non enregistree dans l\'historique'}`
+          : `Email sent!\n\n${contactStatus}\n${submissionSaved ? 'Submission saved' : 'WARNING: Submission not saved to history'}`;
 
         if (Platform.OS === 'web') {
           alert(successMsg);
