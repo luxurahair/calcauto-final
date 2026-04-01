@@ -481,7 +481,6 @@ export default function ImportScreen() {
       const file = result.assets[0];
       setCurrentStep('residual-processing');
 
-      const now = new Date();
       const formDataUpload = new FormData();
       
       if (Platform.OS === 'web') {
@@ -497,8 +496,7 @@ export default function ImportScreen() {
       }
       
       formDataUpload.append('password', password);
-      formDataUpload.append('effective_month', String(now.getMonth() + 1));
-      formDataUpload.append('effective_year', String(now.getFullYear()));
+      // Mois/année auto-détectés depuis le contenu du PDF
 
       const res = await axios.post(`${API_URL}/api/upload-residual-guide`, formDataUpload, {
         headers: { 'Content-Type': 'multipart/form-data' },
@@ -571,9 +569,48 @@ export default function ImportScreen() {
 
       {residualResult && (
         <View style={styles.residualSummary}>
+          {/* Detected period */}
+          {residualResult.detected_period && (
+            <Text style={[styles.residualSummaryTitle, { color: '#FFB347', marginBottom: 8 }]}>
+              {residualResult.detected_period}
+            </Text>
+          )}
+          
           <Text style={styles.residualSummaryTitle}>
             {residualResult.total_vehicles} véhicules extraits
           </Text>
+          
+          {/* Changes summary */}
+          {residualResult.changes && (
+            <View style={{ marginTop: 10, marginBottom: 10, padding: 10, borderRadius: 8, backgroundColor: 'rgba(255,255,255,0.05)' }}>
+              <Text style={{ color: '#ccc', fontSize: 13, fontWeight: '600', marginBottom: 6 }}>Comparaison :</Text>
+              {residualResult.changes.modified_vehicles > 0 && (
+                <Text style={{ color: '#FFB347', fontSize: 13, marginBottom: 2 }}>
+                  {residualResult.changes.modified_vehicles} véhicules modifiés
+                </Text>
+              )}
+              {residualResult.changes.new_vehicles > 0 && (
+                <Text style={{ color: '#4ECDC4', fontSize: 13, marginBottom: 2 }}>
+                  {residualResult.changes.new_vehicles} nouveaux véhicules
+                </Text>
+              )}
+              {residualResult.changes.unchanged_vehicles > 0 && (
+                <Text style={{ color: '#888', fontSize: 13, marginBottom: 2 }}>
+                  {residualResult.changes.unchanged_vehicles} inchangés
+                </Text>
+              )}
+            </View>
+          )}
+          
+          {/* KM adjustments info */}
+          {residualResult.km_adjustments && (
+            <View style={{ marginBottom: 10, padding: 8, borderRadius: 8, backgroundColor: 'rgba(78,205,196,0.1)' }}>
+              <Text style={{ color: '#4ECDC4', fontSize: 12, fontWeight: '600' }}>
+                Ajustements km : 12k/60m = +{residualResult.km_adjustments['12k_60mo']}% | 18k/60m = +{residualResult.km_adjustments['18k_60mo']}%
+              </Text>
+            </View>
+          )}
+
           {residualResult.brands && Object.entries(residualResult.brands).map(([brand, count]: [string, any]) => (
             <View key={brand} style={styles.residualBrandRow}>
               <Text style={styles.residualBrandName}>{brand}</Text>

@@ -1,0 +1,5219 @@
+{
+  "effective_from": "2026-03-01",
+  "source": "SCI Lease Corp Stellantis Residual Guide - Mars 2026",
+  "km_adjustments": {
+    "standard_km": 24000,
+    "max_km_per_year": 36000,
+    "adjustments": {
+      "18000": {
+        "24": 1,
+        "27": 1,
+        "36": 2,
+        "39": 2,
+        "42": 2,
+        "48": 3,
+        "51": 3,
+        "54": 3,
+        "60": 4
+      },
+      "12000": {
+        "24": 2,
+        "27": 2,
+        "36": 3,
+        "39": 3,
+        "42": 3,
+        "48": 4,
+        "51": 4,
+        "54": 4,
+        "60": 5
+      }
+    },
+    "source": "residual_guide"
+  },
+  "vehicles": [
+    {
+      "brand": "Fiat",
+      "model_year": 2026,
+      "model_name": "500e",
+      "trim": "Icona",
+      "body_style": "3D Hatchback",
+      "residual_percentages": {
+        "24": 48,
+        "27": 46,
+        "36": 43,
+        "39": 41,
+        "42": 39,
+        "48": 36,
+        "51": 34,
+        "54": 32,
+        "60": 29
+      }
+    },
+    {
+      "brand": "Fiat",
+      "model_year": 2026,
+      "model_name": "500e",
+      "trim": "Pop",
+      "body_style": "3D Hatchback",
+      "residual_percentages": {
+        "24": 46,
+        "27": 44,
+        "36": 42,
+        "39": 40,
+        "42": 38,
+        "48": 35,
+        "51": 33,
+        "54": 31,
+        "60": 29
+      }
+    },
+    {
+      "brand": "Chrysler",
+      "model_year": 2026,
+      "model_name": "Grand Caravan",
+      "trim": "SXT",
+      "body_style": "4D Wagon",
+      "residual_percentages": {
+        "24": 54,
+        "27": 52,
+        "36": 47,
+        "39": 45,
+        "42": 42,
+        "48": 38,
+        "51": 37,
+        "54": 35,
+        "60": 33
+      }
+    },
+    {
+      "brand": "Chrysler",
+      "model_year": 2026,
+      "model_name": "Pacifica",
+      "trim": "Limited",
+      "body_style": "4D Wagon",
+      "residual_percentages": {
+        "24": 55,
+        "27": 53,
+        "36": 49,
+        "39": 47,
+        "42": 44,
+        "48": 40,
+        "51": 38,
+        "54": 36,
+        "60": 33
+      }
+    },
+    {
+      "brand": "Chrysler",
+      "model_year": 2026,
+      "model_name": "Pacifica",
+      "trim": "Limited",
+      "body_style": "4D Wagon AWD",
+      "residual_percentages": {
+        "24": 56,
+        "27": 54,
+        "36": 50,
+        "39": 47,
+        "42": 45,
+        "48": 40,
+        "51": 38,
+        "54": 37,
+        "60": 34
+      }
+    },
+    {
+      "brand": "Chrysler",
+      "model_year": 2026,
+      "model_name": "Pacifica",
+      "trim": "Limited S PHEV",
+      "body_style": "4D Wagon",
+      "residual_percentages": {
+        "24": 56,
+        "27": 54,
+        "36": 51,
+        "39": 49,
+        "42": 46,
+        "48": 42,
+        "51": 40,
+        "54": 39,
+        "60": 36
+      }
+    },
+    {
+      "brand": "Chrysler",
+      "model_year": 2026,
+      "model_name": "Pacifica",
+      "trim": "Pinnacle",
+      "body_style": "4D Wagon AWD",
+      "residual_percentages": {
+        "24": 57,
+        "27": 55,
+        "36": 51,
+        "39": 48,
+        "42": 45,
+        "48": 40,
+        "51": 38,
+        "54": 37,
+        "60": 34
+      }
+    },
+    {
+      "brand": "Chrysler",
+      "model_year": 2026,
+      "model_name": "Pacifica",
+      "trim": "Pinnacle PHEV",
+      "body_style": "4D Wagon",
+      "residual_percentages": {
+        "24": 56,
+        "27": 54,
+        "36": 51,
+        "39": 49,
+        "42": 47,
+        "48": 43,
+        "51": 41,
+        "54": 39,
+        "60": 36
+      }
+    },
+    {
+      "brand": "Chrysler",
+      "model_year": 2026,
+      "model_name": "Pacifica",
+      "trim": "Select",
+      "body_style": "4D Wagon",
+      "residual_percentages": {
+        "24": 56,
+        "27": 54,
+        "36": 49,
+        "39": 46,
+        "42": 44,
+        "48": 39,
+        "51": 37,
+        "54": 36,
+        "60": 33
+      }
+    },
+    {
+      "brand": "Chrysler",
+      "model_year": 2026,
+      "model_name": "Pacifica",
+      "trim": "Select",
+      "body_style": "4D Wagon AWD",
+      "residual_percentages": {
+        "24": 55,
+        "27": 53,
+        "36": 49,
+        "39": 46,
+        "42": 44,
+        "48": 39,
+        "51": 38,
+        "54": 36,
+        "60": 34
+      }
+    },
+    {
+      "brand": "Chrysler",
+      "model_year": 2026,
+      "model_name": "Pacifica",
+      "trim": "Select PHEV",
+      "body_style": "4D Wagon",
+      "residual_percentages": {
+        "24": 56,
+        "27": 54,
+        "36": 50,
+        "39": 48,
+        "42": 45,
+        "48": 41,
+        "51": 40,
+        "54": 38,
+        "60": 36
+      }
+    },
+    {
+      "brand": "Dodge",
+      "model_year": 2026,
+      "model_name": "Charger",
+      "trim": "R/T",
+      "body_style": "2D Coupe AWD",
+      "residual_percentages": {
+        "24": 60,
+        "27": 58,
+        "36": 51,
+        "39": 49,
+        "42": 47,
+        "48": 43,
+        "51": 41,
+        "54": 39,
+        "60": 35
+      }
+    },
+    {
+      "brand": "Dodge",
+      "model_year": 2026,
+      "model_name": "Charger",
+      "trim": "R/T",
+      "body_style": "4D Sedan AWD",
+      "residual_percentages": {
+        "24": 59,
+        "27": 57,
+        "36": 50,
+        "39": 48,
+        "42": 46,
+        "48": 42,
+        "51": 40,
+        "54": 38,
+        "60": 34
+      }
+    },
+    {
+      "brand": "Dodge",
+      "model_year": 2026,
+      "model_name": "Charger",
+      "trim": "R/T Plus",
+      "body_style": "2D Coupe AWD",
+      "residual_percentages": {
+        "24": 59,
+        "27": 57,
+        "36": 50,
+        "39": 48,
+        "42": 46,
+        "48": 42,
+        "51": 40,
+        "54": 38,
+        "60": 34
+      }
+    },
+    {
+      "brand": "Dodge",
+      "model_year": 2026,
+      "model_name": "Charger",
+      "trim": "R/T Plus",
+      "body_style": "4D Sedan AWD",
+      "residual_percentages": {
+        "24": 59,
+        "27": 57,
+        "36": 50,
+        "39": 48,
+        "42": 46,
+        "48": 41,
+        "51": 39,
+        "54": 37,
+        "60": 33
+      }
+    },
+    {
+      "brand": "Dodge",
+      "model_year": 2026,
+      "model_name": "Charger",
+      "trim": "Scat Pack",
+      "body_style": "2D Coupe AWD",
+      "residual_percentages": {
+        "24": 61,
+        "27": 59,
+        "36": 52,
+        "39": 50,
+        "42": 48,
+        "48": 44,
+        "51": 42,
+        "54": 40,
+        "60": 36
+      }
+    },
+    {
+      "brand": "Dodge",
+      "model_year": 2026,
+      "model_name": "Charger",
+      "trim": "Scat Pack",
+      "body_style": "4D Sedan AWD",
+      "residual_percentages": {
+        "24": 60,
+        "27": 58,
+        "36": 51,
+        "39": 48,
+        "42": 47,
+        "48": 42,
+        "51": 40,
+        "54": 38,
+        "60": 34
+      }
+    },
+    {
+      "brand": "Dodge",
+      "model_year": 2026,
+      "model_name": "Charger",
+      "trim": "Scat Pack Plus",
+      "body_style": "2D Coupe AWD",
+      "residual_percentages": {
+        "24": 60,
+        "27": 58,
+        "36": 51,
+        "39": 49,
+        "42": 47,
+        "48": 43,
+        "51": 41,
+        "54": 39,
+        "60": 35
+      }
+    },
+    {
+      "brand": "Dodge",
+      "model_year": 2026,
+      "model_name": "Charger",
+      "trim": "Scat Pack Plus",
+      "body_style": "4D Sedan AWD",
+      "residual_percentages": {
+        "24": 59,
+        "27": 57,
+        "36": 50,
+        "39": 48,
+        "42": 46,
+        "48": 41,
+        "51": 39,
+        "54": 37,
+        "60": 33
+      }
+    },
+    {
+      "brand": "Dodge",
+      "model_year": 2026,
+      "model_name": "Durango",
+      "trim": "GT",
+      "body_style": "4D Utility AWD",
+      "residual_percentages": {
+        "24": 61,
+        "27": 58,
+        "36": 53,
+        "39": 51,
+        "42": 48,
+        "48": 44,
+        "51": 42,
+        "54": 40,
+        "60": 36
+      }
+    },
+    {
+      "brand": "Dodge",
+      "model_year": 2026,
+      "model_name": "Durango",
+      "trim": "GT Hemi Plus",
+      "body_style": "4D Utility AWD",
+      "residual_percentages": {
+        "24": 58,
+        "27": 55,
+        "36": 50,
+        "39": 48,
+        "42": 45,
+        "48": 41,
+        "51": 39,
+        "54": 37,
+        "60": 33
+      }
+    },
+    {
+      "brand": "Dodge",
+      "model_year": 2026,
+      "model_name": "Durango",
+      "trim": "GT Hemi Premium",
+      "body_style": "4D Utility AWD",
+      "residual_percentages": {
+        "24": 58,
+        "27": 55,
+        "36": 50,
+        "39": 48,
+        "42": 46,
+        "48": 42,
+        "51": 40,
+        "54": 37,
+        "60": 33
+      }
+    },
+    {
+      "brand": "Dodge",
+      "model_year": 2026,
+      "model_name": "Durango",
+      "trim": "GT Plus",
+      "body_style": "4D Utility AWD",
+      "residual_percentages": {
+        "24": 61,
+        "27": 58,
+        "36": 53,
+        "39": 51,
+        "42": 48,
+        "48": 44,
+        "51": 42,
+        "54": 40,
+        "60": 36
+      }
+    },
+    {
+      "brand": "Dodge",
+      "model_year": 2026,
+      "model_name": "Durango",
+      "trim": "SRT Hellcat",
+      "body_style": "4D Utility AWD",
+      "residual_percentages": {
+        "24": 61,
+        "27": 58,
+        "36": 53,
+        "39": 51,
+        "42": 48,
+        "48": 44,
+        "51": 42,
+        "54": 40,
+        "60": 36
+      }
+    },
+    {
+      "brand": "Dodge",
+      "model_year": 2026,
+      "model_name": "Durango",
+      "trim": "SXT",
+      "body_style": "4D Utility AWD",
+      "residual_percentages": {
+        "24": 61,
+        "27": 58,
+        "36": 53,
+        "39": 51,
+        "42": 48,
+        "48": 44,
+        "51": 42,
+        "54": 40,
+        "60": 36
+      }
+    },
+    {
+      "brand": "Jeep",
+      "model_year": 2026,
+      "model_name": "Cherokee",
+      "trim": "Base",
+      "body_style": "4D Utility 4WD",
+      "residual_percentages": {
+        "24": 64,
+        "27": 62,
+        "36": 58,
+        "39": 56,
+        "42": 54,
+        "48": 51,
+        "51": 49,
+        "54": 48,
+        "60": 45
+      }
+    },
+    {
+      "brand": "Jeep",
+      "model_year": 2026,
+      "model_name": "Cherokee",
+      "trim": "Laredo",
+      "body_style": "4D Utility 4WD",
+      "residual_percentages": {
+        "24": 63,
+        "27": 61,
+        "36": 57,
+        "39": 55,
+        "42": 53,
+        "48": 50,
+        "51": 49,
+        "54": 47,
+        "60": 44
+      }
+    },
+    {
+      "brand": "Jeep",
+      "model_year": 2026,
+      "model_name": "Cherokee",
+      "trim": "Limited",
+      "body_style": "4D Utility 4WD",
+      "residual_percentages": {
+        "24": 62,
+        "27": 60,
+        "36": 56,
+        "39": 54,
+        "42": 52,
+        "48": 49,
+        "51": 48,
+        "54": 46,
+        "60": 43
+      }
+    },
+    {
+      "brand": "Jeep",
+      "model_year": 2026,
+      "model_name": "Cherokee",
+      "trim": "Overland",
+      "body_style": "4D Utility 4WD",
+      "residual_percentages": {
+        "24": 61,
+        "27": 59,
+        "36": 55,
+        "39": 53,
+        "42": 51,
+        "48": 49,
+        "51": 47,
+        "54": 45,
+        "60": 42
+      }
+    },
+    {
+      "brand": "Jeep",
+      "model_year": 2026,
+      "model_name": "Compass",
+      "trim": "Altitude",
+      "body_style": "4D Utility 4WD",
+      "residual_percentages": {
+        "24": 52,
+        "27": 50,
+        "36": 46,
+        "39": 44,
+        "42": 42,
+        "48": 39,
+        "51": 38,
+        "54": 37,
+        "60": 35
+      }
+    },
+    {
+      "brand": "Jeep",
+      "model_year": 2026,
+      "model_name": "Compass",
+      "trim": "Limited",
+      "body_style": "4D Utility 4WD",
+      "residual_percentages": {
+        "24": 51,
+        "27": 49,
+        "36": 44,
+        "39": 42,
+        "42": 40,
+        "48": 36,
+        "51": 35,
+        "54": 34,
+        "60": 32
+      }
+    },
+    {
+      "brand": "Jeep",
+      "model_year": 2026,
+      "model_name": "Compass",
+      "trim": "North",
+      "body_style": "4D Utility 4WD",
+      "residual_percentages": {
+        "24": 52,
+        "27": 50,
+        "36": 46,
+        "39": 44,
+        "42": 43,
+        "48": 40,
+        "51": 39,
+        "54": 38,
+        "60": 36
+      }
+    },
+    {
+      "brand": "Jeep",
+      "model_year": 2026,
+      "model_name": "Compass",
+      "trim": "Sport",
+      "body_style": "4D Utility 4WD",
+      "residual_percentages": {
+        "24": 54,
+        "27": 52,
+        "36": 49,
+        "39": 47,
+        "42": 45,
+        "48": 42,
+        "51": 41,
+        "54": 40,
+        "60": 38
+      }
+    },
+    {
+      "brand": "Jeep",
+      "model_year": 2026,
+      "model_name": "Compass",
+      "trim": "Trailhawk",
+      "body_style": "4D Utility 4WD",
+      "residual_percentages": {
+        "24": 50,
+        "27": 48,
+        "36": 44,
+        "39": 42,
+        "42": 40,
+        "48": 36,
+        "51": 35,
+        "54": 34,
+        "60": 32
+      }
+    },
+    {
+      "brand": "Jeep",
+      "model_year": 2026,
+      "model_name": "Grand Cherokee",
+      "trim": "Altitude",
+      "body_style": "4D Utility",
+      "residual_percentages": {
+        "24": 57,
+        "27": 55,
+        "36": 48,
+        "39": 47,
+        "42": 44,
+        "48": 40,
+        "51": 38,
+        "54": 36,
+        "60": 32
+      }
+    },
+    {
+      "brand": "Jeep",
+      "model_year": 2026,
+      "model_name": "Grand Cherokee",
+      "trim": "Laredo",
+      "body_style": "4D Utility",
+      "residual_percentages": {
+        "24": 54,
+        "27": 52,
+        "36": 46,
+        "39": 44,
+        "42": 41,
+        "48": 37,
+        "51": 35,
+        "54": 33,
+        "60": 29
+      }
+    },
+    {
+      "brand": "Jeep",
+      "model_year": 2026,
+      "model_name": "Grand Cherokee",
+      "trim": "Laredo X",
+      "body_style": "4D Utility",
+      "residual_percentages": {
+        "24": 54,
+        "27": 52,
+        "36": 46,
+        "39": 44,
+        "42": 41,
+        "48": 37,
+        "51": 35,
+        "54": 33,
+        "60": 29
+      }
+    },
+    {
+      "brand": "Jeep",
+      "model_year": 2026,
+      "model_name": "Grand Cherokee",
+      "trim": "Limited",
+      "body_style": "4D Utility",
+      "residual_percentages": {
+        "24": 57,
+        "27": 55,
+        "36": 48,
+        "39": 47,
+        "42": 44,
+        "48": 40,
+        "51": 38,
+        "54": 36,
+        "60": 32
+      }
+    },
+    {
+      "brand": "Jeep",
+      "model_year": 2026,
+      "model_name": "Grand Cherokee",
+      "trim": "Limited Reserve",
+      "body_style": "4D Utility",
+      "residual_percentages": {
+        "24": 56,
+        "27": 54,
+        "36": 48,
+        "39": 46,
+        "42": 43,
+        "48": 39,
+        "51": 37,
+        "54": 35,
+        "60": 31
+      }
+    },
+    {
+      "brand": "Jeep",
+      "model_year": 2026,
+      "model_name": "Grand Cherokee",
+      "trim": "Summit",
+      "body_style": "4D Utility",
+      "residual_percentages": {
+        "24": 56,
+        "27": 54,
+        "36": 48,
+        "39": 46,
+        "42": 43,
+        "48": 39,
+        "51": 37,
+        "54": 35,
+        "60": 31
+      }
+    },
+    {
+      "brand": "Jeep",
+      "model_year": 2026,
+      "model_name": "Grand Wagoneer",
+      "trim": "Base",
+      "body_style": "4D Utility",
+      "residual_percentages": {
+        "24": 60,
+        "27": 58,
+        "36": 51,
+        "39": 49,
+        "42": 48,
+        "48": 45,
+        "51": 44,
+        "54": 42,
+        "60": 40
+      }
+    },
+    {
+      "brand": "Jeep",
+      "model_year": 2026,
+      "model_name": "Grand Wagoneer",
+      "trim": "Limited Altitude",
+      "body_style": "4D Utility",
+      "residual_percentages": {
+        "24": 59,
+        "27": 57,
+        "36": 51,
+        "39": 49,
+        "42": 48,
+        "48": 45,
+        "51": 44,
+        "54": 42,
+        "60": 40
+      }
+    },
+    {
+      "brand": "Jeep",
+      "model_year": 2026,
+      "model_name": "Grand Wagoneer",
+      "trim": "Limited Reserve",
+      "body_style": "4D Utility",
+      "residual_percentages": {
+        "24": 59,
+        "27": 57,
+        "36": 51,
+        "39": 49,
+        "42": 48,
+        "48": 45,
+        "51": 44,
+        "54": 42,
+        "60": 40
+      }
+    },
+    {
+      "brand": "Jeep",
+      "model_year": 2026,
+      "model_name": "Grand Wagoneer",
+      "trim": "Summit Obsidian",
+      "body_style": "4D Utility",
+      "residual_percentages": {
+        "24": 59,
+        "27": 57,
+        "36": 50,
+        "39": 48,
+        "42": 47,
+        "48": 44,
+        "51": 43,
+        "54": 41,
+        "60": 39
+      }
+    },
+    {
+      "brand": "Jeep",
+      "model_year": 2026,
+      "model_name": "Grand Wagoneer",
+      "trim": "Upland",
+      "body_style": "4D Utility",
+      "residual_percentages": {
+        "24": 60,
+        "27": 58,
+        "36": 51,
+        "39": 49,
+        "42": 48,
+        "48": 45,
+        "51": 44,
+        "54": 42,
+        "60": 40
+      }
+    },
+    {
+      "brand": "Jeep",
+      "model_year": 2026,
+      "model_name": "Grand Cherokee L- 3 Row",
+      "trim": "Altitude",
+      "body_style": "4D Utility",
+      "residual_percentages": {
+        "24": 59,
+        "27": 57,
+        "36": 50,
+        "39": 48,
+        "42": 46,
+        "48": 42,
+        "51": 40,
+        "54": 38,
+        "60": 34
+      }
+    },
+    {
+      "brand": "Jeep",
+      "model_year": 2026,
+      "model_name": "Grand Cherokee L- 3 Row",
+      "trim": "Laredo",
+      "body_style": "4D Utility",
+      "residual_percentages": {
+        "24": 56,
+        "27": 54,
+        "36": 48,
+        "39": 46,
+        "42": 43,
+        "48": 39,
+        "51": 37,
+        "54": 35,
+        "60": 31
+      }
+    },
+    {
+      "brand": "Jeep",
+      "model_year": 2026,
+      "model_name": "Grand Cherokee L- 3 Row",
+      "trim": "Laredo X",
+      "body_style": "4D Utility",
+      "residual_percentages": {
+        "24": 56,
+        "27": 54,
+        "36": 48,
+        "39": 46,
+        "42": 43,
+        "48": 39,
+        "51": 37,
+        "54": 35,
+        "60": 31
+      }
+    },
+    {
+      "brand": "Jeep",
+      "model_year": 2026,
+      "model_name": "Grand Cherokee L- 3 Row",
+      "trim": "Limited",
+      "body_style": "4D Utility",
+      "residual_percentages": {
+        "24": 59,
+        "27": 57,
+        "36": 50,
+        "39": 48,
+        "42": 46,
+        "48": 42,
+        "51": 40,
+        "54": 38,
+        "60": 34
+      }
+    },
+    {
+      "brand": "Jeep",
+      "model_year": 2026,
+      "model_name": "Grand Cherokee L- 3 Row",
+      "trim": "Limited Reserve",
+      "body_style": "4D Utility",
+      "residual_percentages": {
+        "24": 58,
+        "27": 56,
+        "36": 49,
+        "39": 48,
+        "42": 45,
+        "48": 41,
+        "51": 39,
+        "54": 37,
+        "60": 33
+      }
+    },
+    {
+      "brand": "Jeep",
+      "model_year": 2026,
+      "model_name": "Grand Cherokee L- 3 Row",
+      "trim": "Summit",
+      "body_style": "4D Utility",
+      "residual_percentages": {
+        "24": 58,
+        "27": 56,
+        "36": 49,
+        "39": 48,
+        "42": 45,
+        "48": 41,
+        "51": 39,
+        "54": 37,
+        "60": 33
+      }
+    },
+    {
+      "brand": "Jeep",
+      "model_year": 2026,
+      "model_name": "Grand Wagoneer L",
+      "trim": "Base",
+      "body_style": "4D Utility",
+      "residual_percentages": {
+        "24": 60,
+        "27": 58,
+        "36": 51,
+        "39": 49,
+        "42": 48,
+        "48": 45,
+        "51": 44,
+        "54": 42,
+        "60": 40
+      }
+    },
+    {
+      "brand": "Jeep",
+      "model_year": 2026,
+      "model_name": "Grand Wagoneer L",
+      "trim": "Limited Altitude",
+      "body_style": "4D Utility",
+      "residual_percentages": {
+        "24": 59,
+        "27": 57,
+        "36": 50,
+        "39": 48,
+        "42": 47,
+        "48": 44,
+        "51": 42,
+        "54": 41,
+        "60": 38
+      }
+    },
+    {
+      "brand": "Jeep",
+      "model_year": 2026,
+      "model_name": "Grand Wagoneer L",
+      "trim": "Limited Reserve",
+      "body_style": "4D Utility",
+      "residual_percentages": {
+        "24": 59,
+        "27": 57,
+        "36": 50,
+        "39": 48,
+        "42": 47,
+        "48": 44,
+        "51": 42,
+        "54": 41,
+        "60": 38
+      }
+    },
+    {
+      "brand": "Jeep",
+      "model_year": 2026,
+      "model_name": "Grand Wagoneer L",
+      "trim": "Summit Obsidian",
+      "body_style": "4D Utility",
+      "residual_percentages": {
+        "24": 59,
+        "27": 57,
+        "36": 50,
+        "39": 48,
+        "42": 47,
+        "48": 43,
+        "51": 42,
+        "54": 40,
+        "60": 38
+      }
+    },
+    {
+      "brand": "Jeep",
+      "model_year": 2026,
+      "model_name": "Gladiator",
+      "trim": "Mojave",
+      "body_style": "Crew Cab 4WD",
+      "residual_percentages": {
+        "24": 58,
+        "27": 56,
+        "36": 51,
+        "39": 50,
+        "42": 48,
+        "48": 47,
+        "51": 46,
+        "54": 44,
+        "60": 42
+      }
+    },
+    {
+      "brand": "Jeep",
+      "model_year": 2026,
+      "model_name": "Gladiator",
+      "trim": "Mojave X",
+      "body_style": "Crew Cab 4WD",
+      "residual_percentages": {
+        "24": 58,
+        "27": 56,
+        "36": 51,
+        "39": 50,
+        "42": 48,
+        "48": 47,
+        "51": 46,
+        "54": 44,
+        "60": 42
+      }
+    },
+    {
+      "brand": "Jeep",
+      "model_year": 2026,
+      "model_name": "Gladiator",
+      "trim": "Rubicon",
+      "body_style": "Crew Cab 4WD",
+      "residual_percentages": {
+        "24": 58,
+        "27": 56,
+        "36": 51,
+        "39": 50,
+        "42": 48,
+        "48": 47,
+        "51": 46,
+        "54": 44,
+        "60": 42
+      }
+    },
+    {
+      "brand": "Jeep",
+      "model_year": 2026,
+      "model_name": "Gladiator",
+      "trim": "Rubicon X",
+      "body_style": "Crew Cab 4WD",
+      "residual_percentages": {
+        "24": 58,
+        "27": 56,
+        "36": 51,
+        "39": 50,
+        "42": 48,
+        "48": 47,
+        "51": 46,
+        "54": 44,
+        "60": 42
+      }
+    },
+    {
+      "brand": "Jeep",
+      "model_year": 2026,
+      "model_name": "Gladiator",
+      "trim": "Sahara",
+      "body_style": "Crew Cab 4WD",
+      "residual_percentages": {
+        "24": 54,
+        "27": 53,
+        "36": 49,
+        "39": 48,
+        "42": 47,
+        "48": 45,
+        "51": 44,
+        "54": 42,
+        "60": 40
+      }
+    },
+    {
+      "brand": "Jeep",
+      "model_year": 2026,
+      "model_name": "Gladiator",
+      "trim": "Sport S",
+      "body_style": "Crew Cab 4WD",
+      "residual_percentages": {
+        "24": 55,
+        "27": 54,
+        "36": 50,
+        "39": 49,
+        "42": 48,
+        "48": 46,
+        "51": 45,
+        "54": 43,
+        "60": 41
+      }
+    },
+    {
+      "brand": "Jeep",
+      "model_year": 2026,
+      "model_name": "Gladiator",
+      "trim": "Willys",
+      "body_style": "Crew Cab 4WD",
+      "residual_percentages": {
+        "24": 54,
+        "27": 53,
+        "36": 49,
+        "39": 48,
+        "42": 47,
+        "48": 45,
+        "51": 44,
+        "54": 42,
+        "60": 40
+      }
+    },
+    {
+      "brand": "Jeep",
+      "model_year": 2026,
+      "model_name": "Wrangler",
+      "trim": "Moab 392",
+      "body_style": "4D Utility 4WD",
+      "residual_percentages": {
+        "24": 62,
+        "27": 60,
+        "36": 56,
+        "39": 54,
+        "42": 53,
+        "48": 50,
+        "51": 48,
+        "54": 48,
+        "60": 45
+      }
+    },
+    {
+      "brand": "Jeep",
+      "model_year": 2026,
+      "model_name": "Wrangler",
+      "trim": "Rubicon",
+      "body_style": "2D Utility 4WD",
+      "residual_percentages": {
+        "24": 61,
+        "27": 60,
+        "36": 57,
+        "39": 56,
+        "42": 54,
+        "48": 52,
+        "51": 50,
+        "54": 49,
+        "60": 47
+      }
+    },
+    {
+      "brand": "Jeep",
+      "model_year": 2026,
+      "model_name": "Wrangler",
+      "trim": "Rubicon",
+      "body_style": "4D Utility 4WD",
+      "residual_percentages": {
+        "24": 62,
+        "27": 60,
+        "36": 56,
+        "39": 54,
+        "42": 53,
+        "48": 50,
+        "51": 48,
+        "54": 48,
+        "60": 45
+      }
+    },
+    {
+      "brand": "Jeep",
+      "model_year": 2026,
+      "model_name": "Wrangler",
+      "trim": "Rubicon X",
+      "body_style": "2D Utility 4WD",
+      "residual_percentages": {
+        "24": 60,
+        "27": 59,
+        "36": 56,
+        "39": 54,
+        "42": 53,
+        "48": 50,
+        "51": 49,
+        "54": 48,
+        "60": 46
+      }
+    },
+    {
+      "brand": "Jeep",
+      "model_year": 2026,
+      "model_name": "Wrangler",
+      "trim": "Rubicon X",
+      "body_style": "4D Utility 4WD",
+      "residual_percentages": {
+        "24": 61,
+        "27": 59,
+        "36": 55,
+        "39": 53,
+        "42": 52,
+        "48": 49,
+        "51": 48,
+        "54": 47,
+        "60": 45
+      }
+    },
+    {
+      "brand": "Jeep",
+      "model_year": 2026,
+      "model_name": "Wrangler",
+      "trim": "Sahara",
+      "body_style": "4D Utility 4WD",
+      "residual_percentages": {
+        "24": 62,
+        "27": 60,
+        "36": 56,
+        "39": 54,
+        "42": 53,
+        "48": 50,
+        "51": 48,
+        "54": 48,
+        "60": 45
+      }
+    },
+    {
+      "brand": "Jeep",
+      "model_year": 2026,
+      "model_name": "Wrangler",
+      "trim": "Sport",
+      "body_style": "2D Utility 4WD",
+      "residual_percentages": {
+        "24": 62,
+        "27": 61,
+        "36": 57,
+        "39": 56,
+        "42": 54,
+        "48": 52,
+        "51": 51,
+        "54": 49,
+        "60": 48
+      }
+    },
+    {
+      "brand": "Jeep",
+      "model_year": 2026,
+      "model_name": "Wrangler",
+      "trim": "Sport",
+      "body_style": "4D Utility 4WD",
+      "residual_percentages": {
+        "24": 61,
+        "27": 59,
+        "36": 55,
+        "39": 54,
+        "42": 52,
+        "48": 50,
+        "51": 49,
+        "54": 48,
+        "60": 46
+      }
+    },
+    {
+      "brand": "Jeep",
+      "model_year": 2026,
+      "model_name": "Wrangler",
+      "trim": "Sport S",
+      "body_style": "2D Utility 4WD",
+      "residual_percentages": {
+        "24": 62,
+        "27": 60,
+        "36": 56,
+        "39": 55,
+        "42": 53,
+        "48": 51,
+        "51": 50,
+        "54": 48,
+        "60": 47
+      }
+    },
+    {
+      "brand": "Jeep",
+      "model_year": 2026,
+      "model_name": "Wrangler",
+      "trim": "Sport S",
+      "body_style": "4D Utility 4WD",
+      "residual_percentages": {
+        "24": 61,
+        "27": 59,
+        "36": 55,
+        "39": 54,
+        "42": 52,
+        "48": 50,
+        "51": 48,
+        "54": 47,
+        "60": 44
+      }
+    },
+    {
+      "brand": "Jeep",
+      "model_year": 2026,
+      "model_name": "Wrangler",
+      "trim": "Willys",
+      "body_style": "2D Utility 4WD",
+      "residual_percentages": {
+        "24": 62,
+        "27": 60,
+        "36": 56,
+        "39": 54,
+        "42": 53,
+        "48": 50,
+        "51": 49,
+        "54": 48,
+        "60": 46
+      }
+    },
+    {
+      "brand": "Jeep",
+      "model_year": 2026,
+      "model_name": "Wrangler",
+      "trim": "Willys",
+      "body_style": "4D Utility 4WD",
+      "residual_percentages": {
+        "24": 61,
+        "27": 59,
+        "36": 55,
+        "39": 53,
+        "42": 52,
+        "48": 49,
+        "51": 48,
+        "54": 46,
+        "60": 43
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2026,
+      "model_name": "1500",
+      "trim": "Big Horn",
+      "body_style": "Crew Cab LWB 4WD",
+      "residual_percentages": {
+        "24": 61,
+        "27": 59,
+        "36": 54,
+        "39": 52,
+        "42": 51,
+        "48": 48,
+        "51": 48,
+        "54": 47,
+        "60": 45
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2026,
+      "model_name": "1500",
+      "trim": "Big Horn",
+      "body_style": "Crew Cab SWB 4WD",
+      "residual_percentages": {
+        "24": 60,
+        "27": 58,
+        "36": 53,
+        "39": 52,
+        "42": 50,
+        "48": 48,
+        "51": 48,
+        "54": 46,
+        "60": 44
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2026,
+      "model_name": "1500",
+      "trim": "Big Horn",
+      "body_style": "Quad Cab SWB 4WD",
+      "residual_percentages": {
+        "24": 61,
+        "27": 59,
+        "36": 54,
+        "39": 52,
+        "42": 51,
+        "48": 48,
+        "51": 48,
+        "54": 46,
+        "60": 44
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2026,
+      "model_name": "1500",
+      "trim": "Express",
+      "body_style": "Crew Cab LWB 4WD",
+      "residual_percentages": {
+        "24": 64,
+        "27": 62,
+        "36": 56,
+        "39": 54,
+        "42": 53,
+        "48": 50,
+        "51": 49,
+        "54": 48,
+        "60": 46
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2026,
+      "model_name": "1500",
+      "trim": "Express",
+      "body_style": "Crew Cab SWB 4WD",
+      "residual_percentages": {
+        "24": 64,
+        "27": 62,
+        "36": 56,
+        "39": 54,
+        "42": 53,
+        "48": 50,
+        "51": 49,
+        "54": 48,
+        "60": 46
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2026,
+      "model_name": "1500",
+      "trim": "Express",
+      "body_style": "Quad Cab SWB 4WD",
+      "residual_percentages": {
+        "24": 62,
+        "27": 60,
+        "36": 54,
+        "39": 52,
+        "42": 51,
+        "48": 48,
+        "51": 48,
+        "54": 46,
+        "60": 44
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2026,
+      "model_name": "1500",
+      "trim": "Laramie",
+      "body_style": "Crew Cab LWB 4WD",
+      "residual_percentages": {
+        "24": 62,
+        "27": 60,
+        "36": 55,
+        "39": 53,
+        "42": 52,
+        "48": 49,
+        "51": 48,
+        "54": 48,
+        "60": 46
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2026,
+      "model_name": "1500",
+      "trim": "Laramie",
+      "body_style": "Crew Cab SWB 4WD",
+      "residual_percentages": {
+        "24": 62,
+        "27": 60,
+        "36": 55,
+        "39": 53,
+        "42": 52,
+        "48": 49,
+        "51": 48,
+        "54": 48,
+        "60": 46
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2026,
+      "model_name": "1500",
+      "trim": "Limited",
+      "body_style": "Crew Cab LWB 4WD",
+      "residual_percentages": {
+        "24": 63,
+        "27": 61,
+        "36": 55,
+        "39": 53,
+        "42": 52,
+        "48": 49,
+        "51": 48,
+        "54": 48,
+        "60": 46
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2026,
+      "model_name": "1500",
+      "trim": "Limited",
+      "body_style": "Crew Cab SWB 4WD",
+      "residual_percentages": {
+        "24": 63,
+        "27": 61,
+        "36": 55,
+        "39": 53,
+        "42": 52,
+        "48": 49,
+        "51": 48,
+        "54": 48,
+        "60": 46
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2026,
+      "model_name": "1500",
+      "trim": "Longhorn",
+      "body_style": "Crew Cab LWB 4WD",
+      "residual_percentages": {
+        "24": 65,
+        "27": 63,
+        "36": 57,
+        "39": 55,
+        "42": 54,
+        "48": 51,
+        "51": 50,
+        "54": 49,
+        "60": 48
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2026,
+      "model_name": "1500",
+      "trim": "Longhorn",
+      "body_style": "Crew Cab SWB 4WD",
+      "residual_percentages": {
+        "24": 65,
+        "27": 63,
+        "36": 57,
+        "39": 56,
+        "42": 54,
+        "48": 52,
+        "51": 51,
+        "54": 49,
+        "60": 48
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2026,
+      "model_name": "1500",
+      "trim": "Rebel",
+      "body_style": "Crew Cab SWB 4WD",
+      "residual_percentages": {
+        "24": 63,
+        "27": 61,
+        "36": 55,
+        "39": 53,
+        "42": 52,
+        "48": 49,
+        "51": 48,
+        "54": 48,
+        "60": 47
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2026,
+      "model_name": "1500",
+      "trim": "RHO",
+      "body_style": "Crew Cab SWB 4WD",
+      "residual_percentages": {
+        "24": 67,
+        "27": 66,
+        "36": 62,
+        "39": 60,
+        "42": 59,
+        "48": 56,
+        "51": 55,
+        "54": 54,
+        "60": 52
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2026,
+      "model_name": "1500",
+      "trim": "Sport",
+      "body_style": "Crew Cab LWB 4WD",
+      "residual_percentages": {
+        "24": 62,
+        "27": 60,
+        "36": 55,
+        "39": 53,
+        "42": 52,
+        "48": 49,
+        "51": 48,
+        "54": 48,
+        "60": 46
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2026,
+      "model_name": "1500",
+      "trim": "Sport",
+      "body_style": "Crew Cab SWB 4WD",
+      "residual_percentages": {
+        "24": 62,
+        "27": 60,
+        "36": 55,
+        "39": 53,
+        "42": 52,
+        "48": 49,
+        "51": 48,
+        "54": 48,
+        "60": 46
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2026,
+      "model_name": "1500",
+      "trim": "Tradesman",
+      "body_style": "Crew Cab LWB 4WD",
+      "residual_percentages": {
+        "24": 63,
+        "27": 61,
+        "36": 55,
+        "39": 53,
+        "42": 52,
+        "48": 49,
+        "51": 48,
+        "54": 47,
+        "60": 45
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2026,
+      "model_name": "1500",
+      "trim": "Tradesman",
+      "body_style": "Crew Cab SWB 4WD",
+      "residual_percentages": {
+        "24": 63,
+        "27": 61,
+        "36": 55,
+        "39": 53,
+        "42": 52,
+        "48": 49,
+        "51": 48,
+        "54": 47,
+        "60": 45
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2026,
+      "model_name": "1500",
+      "trim": "Tradesman",
+      "body_style": "Quad Cab SWB 4WD",
+      "residual_percentages": {
+        "24": 62,
+        "27": 60,
+        "36": 54,
+        "39": 52,
+        "42": 51,
+        "48": 48,
+        "51": 48,
+        "54": 46,
+        "60": 44
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2026,
+      "model_name": "1500",
+      "trim": "Tungsten",
+      "body_style": "Crew Cab SWB 4WD",
+      "residual_percentages": {
+        "24": 65,
+        "27": 63,
+        "36": 57,
+        "39": 56,
+        "42": 54,
+        "48": 52,
+        "51": 51,
+        "54": 49,
+        "60": 48
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2026,
+      "model_name": "1500",
+      "trim": "Warlock",
+      "body_style": "Crew Cab SWB 4WD",
+      "residual_percentages": {
+        "24": 63,
+        "27": 61,
+        "36": 55,
+        "39": 53,
+        "42": 52,
+        "48": 49,
+        "51": 48,
+        "54": 47,
+        "60": 45
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2026,
+      "model_name": "2500",
+      "trim": "Big Horn",
+      "body_style": "Crew Cab LWB 2WD",
+      "residual_percentages": {
+        "24": 58,
+        "27": 57,
+        "36": 54,
+        "39": 53,
+        "42": 52,
+        "48": 51,
+        "51": 50,
+        "54": 49,
+        "60": 48
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2026,
+      "model_name": "2500",
+      "trim": "Big Horn",
+      "body_style": "Crew Cab LWB 4WD",
+      "residual_percentages": {
+        "24": 61,
+        "27": 60,
+        "36": 57,
+        "39": 56,
+        "42": 55,
+        "48": 54,
+        "51": 53,
+        "54": 52,
+        "60": 50
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2026,
+      "model_name": "2500",
+      "trim": "Big Horn",
+      "body_style": "Crew Cab SWB 2WD",
+      "residual_percentages": {
+        "24": 58,
+        "27": 57,
+        "36": 55,
+        "39": 54,
+        "42": 53,
+        "48": 52,
+        "51": 51,
+        "54": 49,
+        "60": 48
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2026,
+      "model_name": "2500",
+      "trim": "Big Horn",
+      "body_style": "Crew Cab SWB 4WD",
+      "residual_percentages": {
+        "24": 61,
+        "27": 60,
+        "36": 57,
+        "39": 56,
+        "42": 55,
+        "48": 54,
+        "51": 53,
+        "54": 52,
+        "60": 50
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2026,
+      "model_name": "2500",
+      "trim": "Big Horn",
+      "body_style": "Reg Cab 2WD",
+      "residual_percentages": {
+        "24": 58,
+        "27": 57,
+        "36": 54,
+        "39": 53,
+        "42": 52,
+        "48": 51,
+        "51": 50,
+        "54": 48,
+        "60": 47
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2026,
+      "model_name": "2500",
+      "trim": "Big Horn",
+      "body_style": "Reg Cab 4WD",
+      "residual_percentages": {
+        "24": 58,
+        "27": 57,
+        "36": 55,
+        "39": 54,
+        "42": 53,
+        "48": 52,
+        "51": 50,
+        "54": 49,
+        "60": 47
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2026,
+      "model_name": "2500",
+      "trim": "Black Express",
+      "body_style": "Crew Cab LWB 4WD",
+      "residual_percentages": {
+        "24": 61,
+        "27": 60,
+        "36": 57,
+        "39": 56,
+        "42": 55,
+        "48": 54,
+        "51": 53,
+        "54": 51,
+        "60": 49
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2026,
+      "model_name": "2500",
+      "trim": "Black Express",
+      "body_style": "Crew Cab SWB 4WD",
+      "residual_percentages": {
+        "24": 61,
+        "27": 60,
+        "36": 57,
+        "39": 56,
+        "42": 55,
+        "48": 54,
+        "51": 53,
+        "54": 51,
+        "60": 49
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2026,
+      "model_name": "2500",
+      "trim": "Laramie",
+      "body_style": "Crew Cab LWB 4WD",
+      "residual_percentages": {
+        "24": 63,
+        "27": 62,
+        "36": 59,
+        "39": 58,
+        "42": 57,
+        "48": 55,
+        "51": 54,
+        "54": 52,
+        "60": 50
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2026,
+      "model_name": "2500",
+      "trim": "Laramie",
+      "body_style": "Crew Cab SWB 4WD",
+      "residual_percentages": {
+        "24": 63,
+        "27": 62,
+        "36": 60,
+        "39": 59,
+        "42": 58,
+        "48": 56,
+        "51": 55,
+        "54": 53,
+        "60": 51
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2026,
+      "model_name": "2500",
+      "trim": "Laramie",
+      "body_style": "Mega Cab 4WD",
+      "residual_percentages": {
+        "24": 64,
+        "27": 63,
+        "36": 59,
+        "39": 58,
+        "42": 57,
+        "48": 56,
+        "51": 55,
+        "54": 53,
+        "60": 51
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2026,
+      "model_name": "2500",
+      "trim": "Limited",
+      "body_style": "Crew Cab LWB 4WD",
+      "residual_percentages": {
+        "24": 62,
+        "27": 61,
+        "36": 58,
+        "39": 57,
+        "42": 56,
+        "48": 54,
+        "51": 53,
+        "54": 51,
+        "60": 49
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2026,
+      "model_name": "2500",
+      "trim": "Limited",
+      "body_style": "Crew Cab SWB 4WD",
+      "residual_percentages": {
+        "24": 62,
+        "27": 61,
+        "36": 58,
+        "39": 57,
+        "42": 56,
+        "48": 54,
+        "51": 53,
+        "54": 51,
+        "60": 49
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2026,
+      "model_name": "2500",
+      "trim": "Limited",
+      "body_style": "Mega Cab 4WD",
+      "residual_percentages": {
+        "24": 62,
+        "27": 61,
+        "36": 58,
+        "39": 57,
+        "42": 56,
+        "48": 54,
+        "51": 53,
+        "54": 51,
+        "60": 49
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2026,
+      "model_name": "2500",
+      "trim": "Limited Longhorn",
+      "body_style": "Crew Cab LWB 4WD",
+      "residual_percentages": {
+        "24": 60,
+        "27": 59,
+        "36": 57,
+        "39": 56,
+        "42": 55,
+        "48": 53,
+        "51": 52,
+        "54": 50,
+        "60": 48
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2026,
+      "model_name": "2500",
+      "trim": "Limited Longhorn",
+      "body_style": "Crew Cab SWB 4WD",
+      "residual_percentages": {
+        "24": 61,
+        "27": 60,
+        "36": 57,
+        "39": 56,
+        "42": 55,
+        "48": 53,
+        "51": 52,
+        "54": 50,
+        "60": 48
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2026,
+      "model_name": "2500",
+      "trim": "Limited Longhorn",
+      "body_style": "Mega Cab 4WD",
+      "residual_percentages": {
+        "24": 61,
+        "27": 60,
+        "36": 57,
+        "39": 56,
+        "42": 55,
+        "48": 53,
+        "51": 52,
+        "54": 50,
+        "60": 48
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2026,
+      "model_name": "2500",
+      "trim": "Powerwagon",
+      "body_style": "Crew Cab SWB 4WD",
+      "residual_percentages": {
+        "24": 60,
+        "27": 59,
+        "36": 57,
+        "39": 56,
+        "42": 55,
+        "48": 54,
+        "51": 53,
+        "54": 51,
+        "60": 49
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2026,
+      "model_name": "2500",
+      "trim": "Rebel",
+      "body_style": "Crew Cab SWB 4WD",
+      "residual_percentages": {
+        "24": 61,
+        "27": 60,
+        "36": 58,
+        "39": 57,
+        "42": 56,
+        "48": 55,
+        "51": 54,
+        "54": 52,
+        "60": 50
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2026,
+      "model_name": "2500",
+      "trim": "Tradesman",
+      "body_style": "Crew Cab LWB 2WD",
+      "residual_percentages": {
+        "24": 56,
+        "27": 55,
+        "36": 53,
+        "39": 52,
+        "42": 51,
+        "48": 50,
+        "51": 49,
+        "54": 48,
+        "60": 46
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2026,
+      "model_name": "2500",
+      "trim": "Tradesman",
+      "body_style": "Crew Cab LWB 4WD",
+      "residual_percentages": {
+        "24": 57,
+        "27": 56,
+        "36": 53,
+        "39": 52,
+        "42": 51,
+        "48": 50,
+        "51": 49,
+        "54": 48,
+        "60": 46
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2026,
+      "model_name": "2500",
+      "trim": "Tradesman",
+      "body_style": "Crew Cab SWB 2WD",
+      "residual_percentages": {
+        "24": 56,
+        "27": 55,
+        "36": 53,
+        "39": 52,
+        "42": 51,
+        "48": 50,
+        "51": 49,
+        "54": 48,
+        "60": 46
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2026,
+      "model_name": "2500",
+      "trim": "Tradesman",
+      "body_style": "Crew Cab SWB 4WD",
+      "residual_percentages": {
+        "24": 57,
+        "27": 56,
+        "36": 53,
+        "39": 52,
+        "42": 51,
+        "48": 50,
+        "51": 49,
+        "54": 48,
+        "60": 46
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2026,
+      "model_name": "2500",
+      "trim": "Tradesman",
+      "body_style": "Reg Cab 2WD",
+      "residual_percentages": {
+        "24": 57,
+        "27": 56,
+        "36": 54,
+        "39": 53,
+        "42": 52,
+        "48": 51,
+        "51": 50,
+        "54": 48,
+        "60": 47
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2026,
+      "model_name": "2500",
+      "trim": "Tradesman",
+      "body_style": "Reg Cab 4WD",
+      "residual_percentages": {
+        "24": 57,
+        "27": 56,
+        "36": 54,
+        "39": 53,
+        "42": 52,
+        "48": 51,
+        "51": 50,
+        "54": 48,
+        "60": 47
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2026,
+      "model_name": "2500",
+      "trim": "Warlock",
+      "body_style": "Crew Cab SWB 4WD",
+      "residual_percentages": {
+        "24": 61,
+        "27": 60,
+        "36": 57,
+        "39": 56,
+        "42": 55,
+        "48": 54,
+        "51": 53,
+        "54": 51,
+        "60": 49
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2026,
+      "model_name": "3500",
+      "trim": "Big Horn",
+      "body_style": "Crew Cab LWB 2WD",
+      "residual_percentages": {
+        "24": 58,
+        "27": 57,
+        "36": 54,
+        "39": 53,
+        "42": 52,
+        "48": 50,
+        "51": 49,
+        "54": 48,
+        "60": 47
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2026,
+      "model_name": "3500",
+      "trim": "Big Horn",
+      "body_style": "Crew Cab LWB 4WD",
+      "residual_percentages": {
+        "24": 57,
+        "27": 56,
+        "36": 53,
+        "39": 52,
+        "42": 51,
+        "48": 49,
+        "51": 48,
+        "54": 48,
+        "60": 46
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2026,
+      "model_name": "3500",
+      "trim": "Big Horn",
+      "body_style": "Crew Cab SWB 2WD",
+      "residual_percentages": {
+        "24": 57,
+        "27": 56,
+        "36": 53,
+        "39": 52,
+        "42": 51,
+        "48": 49,
+        "51": 48,
+        "54": 48,
+        "60": 46
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2026,
+      "model_name": "3500",
+      "trim": "Big Horn",
+      "body_style": "Crew Cab SWB 4WD",
+      "residual_percentages": {
+        "24": 56,
+        "27": 55,
+        "36": 52,
+        "39": 51,
+        "42": 50,
+        "48": 48,
+        "51": 48,
+        "54": 47,
+        "60": 45
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2026,
+      "model_name": "3500",
+      "trim": "Big Horn",
+      "body_style": "Reg Cab 2WD",
+      "residual_percentages": {
+        "24": 58,
+        "27": 56,
+        "36": 52,
+        "39": 51,
+        "42": 50,
+        "48": 48,
+        "51": 48,
+        "54": 47,
+        "60": 45
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2026,
+      "model_name": "3500",
+      "trim": "Big Horn",
+      "body_style": "Reg Cab 4WD",
+      "residual_percentages": {
+        "24": 57,
+        "27": 56,
+        "36": 52,
+        "39": 51,
+        "42": 50,
+        "48": 48,
+        "51": 48,
+        "54": 47,
+        "60": 46
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2026,
+      "model_name": "3500",
+      "trim": "Laramie",
+      "body_style": "Crew Cab LWB 4WD",
+      "residual_percentages": {
+        "24": 55,
+        "27": 54,
+        "36": 52,
+        "39": 51,
+        "42": 50,
+        "48": 49,
+        "51": 48,
+        "54": 48,
+        "60": 46
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2026,
+      "model_name": "3500",
+      "trim": "Laramie",
+      "body_style": "Crew Cab SWB 4WD",
+      "residual_percentages": {
+        "24": 55,
+        "27": 54,
+        "36": 51,
+        "39": 50,
+        "42": 49,
+        "48": 48,
+        "51": 48,
+        "54": 47,
+        "60": 45
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2026,
+      "model_name": "3500",
+      "trim": "Laramie",
+      "body_style": "Mega Cab 4WD",
+      "residual_percentages": {
+        "24": 58,
+        "27": 57,
+        "36": 54,
+        "39": 53,
+        "42": 53,
+        "48": 52,
+        "51": 51,
+        "54": 49,
+        "60": 48
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2026,
+      "model_name": "3500",
+      "trim": "Limited",
+      "body_style": "Crew Cab LWB 4WD",
+      "residual_percentages": {
+        "24": 58,
+        "27": 57,
+        "36": 54,
+        "39": 53,
+        "42": 51,
+        "48": 49,
+        "51": 48,
+        "54": 48,
+        "60": 46
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2026,
+      "model_name": "3500",
+      "trim": "Limited",
+      "body_style": "Crew Cab SWB 4WD",
+      "residual_percentages": {
+        "24": 57,
+        "27": 56,
+        "36": 53,
+        "39": 52,
+        "42": 50,
+        "48": 48,
+        "51": 48,
+        "54": 47,
+        "60": 45
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2026,
+      "model_name": "3500",
+      "trim": "Limited",
+      "body_style": "Mega Cab 4WD",
+      "residual_percentages": {
+        "24": 58,
+        "27": 57,
+        "36": 53,
+        "39": 52,
+        "42": 50,
+        "48": 48,
+        "51": 48,
+        "54": 47,
+        "60": 46
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2026,
+      "model_name": "3500",
+      "trim": "Limited Longhorn",
+      "body_style": "Crew Cab LWB 4WD",
+      "residual_percentages": {
+        "24": 58,
+        "27": 57,
+        "36": 54,
+        "39": 53,
+        "42": 51,
+        "48": 49,
+        "51": 48,
+        "54": 48,
+        "60": 46
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2026,
+      "model_name": "3500",
+      "trim": "Limited Longhorn",
+      "body_style": "Crew Cab SWB 4WD",
+      "residual_percentages": {
+        "24": 57,
+        "27": 56,
+        "36": 53,
+        "39": 52,
+        "42": 50,
+        "48": 48,
+        "51": 48,
+        "54": 47,
+        "60": 45
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2026,
+      "model_name": "3500",
+      "trim": "Limited Longhorn",
+      "body_style": "Mega Cab 4WD",
+      "residual_percentages": {
+        "24": 60,
+        "27": 59,
+        "36": 56,
+        "39": 55,
+        "42": 54,
+        "48": 52,
+        "51": 51,
+        "54": 49,
+        "60": 48
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2026,
+      "model_name": "3500",
+      "trim": "Tradesman",
+      "body_style": "Crew Cab LWB 2WD",
+      "residual_percentages": {
+        "24": 59,
+        "27": 57,
+        "36": 53,
+        "39": 52,
+        "42": 51,
+        "48": 49,
+        "51": 48,
+        "54": 48,
+        "60": 46
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2026,
+      "model_name": "3500",
+      "trim": "Tradesman",
+      "body_style": "Crew Cab LWB 4WD",
+      "residual_percentages": {
+        "24": 61,
+        "27": 59,
+        "36": 55,
+        "39": 54,
+        "42": 52,
+        "48": 50,
+        "51": 49,
+        "54": 48,
+        "60": 47
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2026,
+      "model_name": "3500",
+      "trim": "Tradesman",
+      "body_style": "Crew Cab SWB 2WD",
+      "residual_percentages": {
+        "24": 59,
+        "27": 57,
+        "36": 53,
+        "39": 52,
+        "42": 51,
+        "48": 49,
+        "51": 48,
+        "54": 48,
+        "60": 46
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2026,
+      "model_name": "3500",
+      "trim": "Tradesman",
+      "body_style": "Crew Cab SWB 4WD",
+      "residual_percentages": {
+        "24": 61,
+        "27": 59,
+        "36": 55,
+        "39": 54,
+        "42": 52,
+        "48": 50,
+        "51": 49,
+        "54": 48,
+        "60": 47
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2026,
+      "model_name": "3500",
+      "trim": "Tradesman",
+      "body_style": "Reg Cab 2WD",
+      "residual_percentages": {
+        "24": 58,
+        "27": 57,
+        "36": 53,
+        "39": 52,
+        "42": 51,
+        "48": 49,
+        "51": 48,
+        "54": 48,
+        "60": 46
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2026,
+      "model_name": "3500",
+      "trim": "Tradesman",
+      "body_style": "Reg Cab 4WD",
+      "residual_percentages": {
+        "24": 58,
+        "27": 56,
+        "36": 52,
+        "39": 51,
+        "42": 50,
+        "48": 48,
+        "51": 48,
+        "54": 47,
+        "60": 45
+      }
+    },
+    {
+      "brand": "Fiat",
+      "model_year": 2025,
+      "model_name": "500e",
+      "trim": "Giorgio Armani",
+      "body_style": "3D Hatchback",
+      "residual_percentages": {
+        "24": 47,
+        "27": 44,
+        "36": 41,
+        "39": 39,
+        "42": 36,
+        "48": 32,
+        "51": 32,
+        "54": 30,
+        "60": 28
+      }
+    },
+    {
+      "brand": "Fiat",
+      "model_year": 2025,
+      "model_name": "500e",
+      "trim": "La Prima",
+      "body_style": "3D Hatchback",
+      "residual_percentages": {
+        "24": 48,
+        "27": 45,
+        "36": 41,
+        "39": 40,
+        "42": 37,
+        "48": 33,
+        "51": 32,
+        "54": 31,
+        "60": 29
+      }
+    },
+    {
+      "brand": "Fiat",
+      "model_year": 2025,
+      "model_name": "500e",
+      "trim": "Red",
+      "body_style": "3D Hatchback",
+      "residual_percentages": {
+        "24": 46,
+        "27": 43,
+        "36": 40,
+        "39": 38,
+        "42": 36,
+        "48": 32,
+        "51": 31,
+        "54": 30,
+        "60": 27
+      }
+    },
+    {
+      "brand": "Chrysler",
+      "model_year": 2025,
+      "model_name": "Grand Caravan",
+      "trim": "SXT",
+      "body_style": "4D Wagon",
+      "residual_percentages": {
+        "24": 48,
+        "27": 46,
+        "36": 41,
+        "39": 39,
+        "42": 36,
+        "48": 32,
+        "51": 31,
+        "54": 29,
+        "60": 28
+      }
+    },
+    {
+      "brand": "Chrysler",
+      "model_year": 2025,
+      "model_name": "Pacifica",
+      "trim": "Limited",
+      "body_style": "4D Wagon",
+      "residual_percentages": {
+        "24": 47,
+        "27": 45,
+        "36": 39,
+        "39": 37,
+        "42": 36,
+        "48": 33,
+        "51": 31,
+        "54": 30,
+        "60": 28
+      }
+    },
+    {
+      "brand": "Chrysler",
+      "model_year": 2025,
+      "model_name": "Pacifica",
+      "trim": "Limited",
+      "body_style": "4D Wagon AWD",
+      "residual_percentages": {
+        "24": 48,
+        "27": 46,
+        "36": 40,
+        "39": 38,
+        "42": 36,
+        "48": 32,
+        "51": 31,
+        "54": 29,
+        "60": 28
+      }
+    },
+    {
+      "brand": "Chrysler",
+      "model_year": 2025,
+      "model_name": "Pacifica",
+      "trim": "Limited S PHEV",
+      "body_style": "4D Wagon",
+      "residual_percentages": {
+        "24": 50,
+        "27": 49,
+        "36": 46,
+        "39": 43,
+        "42": 41,
+        "48": 36,
+        "51": 34,
+        "54": 33,
+        "60": 30
+      }
+    },
+    {
+      "brand": "Chrysler",
+      "model_year": 2025,
+      "model_name": "Pacifica",
+      "trim": "Pinnacle",
+      "body_style": "4D Wagon AWD",
+      "residual_percentages": {
+        "24": 49,
+        "27": 48,
+        "36": 42,
+        "39": 40,
+        "42": 37,
+        "48": 33,
+        "51": 31,
+        "54": 30,
+        "60": 28
+      }
+    },
+    {
+      "brand": "Chrysler",
+      "model_year": 2025,
+      "model_name": "Pacifica",
+      "trim": "Pinnacle PHEV",
+      "body_style": "4D Wagon",
+      "residual_percentages": {
+        "24": 51,
+        "27": 49,
+        "36": 46,
+        "39": 43,
+        "42": 41,
+        "48": 36,
+        "51": 35,
+        "54": 33,
+        "60": 31
+      }
+    },
+    {
+      "brand": "Chrysler",
+      "model_year": 2025,
+      "model_name": "Pacifica",
+      "trim": "Select",
+      "body_style": "4D Wagon",
+      "residual_percentages": {
+        "24": 48,
+        "27": 47,
+        "36": 40,
+        "39": 38,
+        "42": 36,
+        "48": 32,
+        "51": 31,
+        "54": 29,
+        "60": 28
+      }
+    },
+    {
+      "brand": "Chrysler",
+      "model_year": 2025,
+      "model_name": "Pacifica",
+      "trim": "Select",
+      "body_style": "4D Wagon AWD",
+      "residual_percentages": {
+        "24": 47,
+        "27": 45,
+        "36": 40,
+        "39": 38,
+        "42": 36,
+        "48": 33,
+        "51": 31,
+        "54": 30,
+        "60": 28
+      }
+    },
+    {
+      "brand": "Chrysler",
+      "model_year": 2025,
+      "model_name": "Pacifica",
+      "trim": "Select PHEV",
+      "body_style": "4D Wagon",
+      "residual_percentages": {
+        "24": 50,
+        "27": 48,
+        "36": 45,
+        "39": 43,
+        "42": 40,
+        "48": 36,
+        "51": 34,
+        "54": 33,
+        "60": 30
+      }
+    },
+    {
+      "brand": "Dodge",
+      "model_year": 2025,
+      "model_name": "Charger Daytona",
+      "trim": "R/T",
+      "body_style": "2D Coupe AWD",
+      "residual_percentages": {
+        "24": 45,
+        "27": 43,
+        "36": 38,
+        "39": 36,
+        "42": 35,
+        "48": 32,
+        "51": 31,
+        "54": 29,
+        "60": 28
+      }
+    },
+    {
+      "brand": "Dodge",
+      "model_year": 2025,
+      "model_name": "Charger Daytona",
+      "trim": "Scat Pack",
+      "body_style": "2D Coupe AWD",
+      "residual_percentages": {
+        "24": 45,
+        "27": 43,
+        "36": 38,
+        "39": 36,
+        "42": 34,
+        "48": 31,
+        "51": 30,
+        "54": 29,
+        "60": 27
+      }
+    },
+    {
+      "brand": "Dodge",
+      "model_year": 2025,
+      "model_name": "Durango",
+      "trim": "GT",
+      "body_style": "4D Utility AWD",
+      "residual_percentages": {
+        "24": 50,
+        "27": 48,
+        "36": 43,
+        "39": 41,
+        "42": 38,
+        "48": 34,
+        "51": 32,
+        "54": 29,
+        "60": 26
+      }
+    },
+    {
+      "brand": "Dodge",
+      "model_year": 2025,
+      "model_name": "Durango",
+      "trim": "GT Plus",
+      "body_style": "4D Utility AWD",
+      "residual_percentages": {
+        "24": 51,
+        "27": 49,
+        "36": 44,
+        "39": 41,
+        "42": 39,
+        "48": 34,
+        "51": 32,
+        "54": 29,
+        "60": 26
+      }
+    },
+    {
+      "brand": "Dodge",
+      "model_year": 2025,
+      "model_name": "Durango",
+      "trim": "R/T",
+      "body_style": "4D Utility AWD",
+      "residual_percentages": {
+        "24": 48,
+        "27": 46,
+        "36": 40,
+        "39": 37,
+        "42": 35,
+        "48": 30,
+        "51": 29,
+        "54": 28,
+        "60": 25
+      }
+    },
+    {
+      "brand": "Dodge",
+      "model_year": 2025,
+      "model_name": "Durango",
+      "trim": "R/T 20th Anniv",
+      "body_style": "4D Utility AWD",
+      "residual_percentages": {
+        "24": 49,
+        "27": 48,
+        "36": 41,
+        "39": 39,
+        "42": 36,
+        "48": 32,
+        "51": 30,
+        "54": 29,
+        "60": 26
+      }
+    },
+    {
+      "brand": "Dodge",
+      "model_year": 2025,
+      "model_name": "Durango",
+      "trim": "R/T Plus",
+      "body_style": "4D Utility AWD",
+      "residual_percentages": {
+        "24": 48,
+        "27": 47,
+        "36": 41,
+        "39": 39,
+        "42": 36,
+        "48": 32,
+        "51": 30,
+        "54": 29,
+        "60": 26
+      }
+    },
+    {
+      "brand": "Dodge",
+      "model_year": 2025,
+      "model_name": "Durango",
+      "trim": "R/T Plus 20th Anniv",
+      "body_style": "4D Utility AWD",
+      "residual_percentages": {
+        "24": 48,
+        "27": 47,
+        "36": 41,
+        "39": 39,
+        "42": 37,
+        "48": 33,
+        "51": 31,
+        "54": 29,
+        "60": 26
+      }
+    },
+    {
+      "brand": "Dodge",
+      "model_year": 2025,
+      "model_name": "Durango",
+      "trim": "SRT Hellcat Hammerhead",
+      "body_style": "4D Utility AWD",
+      "residual_percentages": {
+        "24": 49,
+        "27": 48,
+        "36": 42,
+        "39": 40,
+        "42": 37,
+        "48": 33,
+        "51": 31,
+        "54": 29,
+        "60": 27
+      }
+    },
+    {
+      "brand": "Dodge",
+      "model_year": 2025,
+      "model_name": "Durango",
+      "trim": "SRT Hellcat Silver Bullet",
+      "body_style": "4D Utility AWD",
+      "residual_percentages": {
+        "24": 49,
+        "27": 48,
+        "36": 42,
+        "39": 40,
+        "42": 37,
+        "48": 33,
+        "51": 31,
+        "54": 29,
+        "60": 27
+      }
+    },
+    {
+      "brand": "Dodge",
+      "model_year": 2025,
+      "model_name": "Hornet",
+      "trim": "GT",
+      "body_style": "4D Utility AWD",
+      "residual_percentages": {
+        "24": 50,
+        "27": 48,
+        "36": 42,
+        "39": 41,
+        "42": 39,
+        "48": 37,
+        "51": 35,
+        "54": 34,
+        "60": 31
+      }
+    },
+    {
+      "brand": "Dodge",
+      "model_year": 2025,
+      "model_name": "Hornet",
+      "trim": "GT Plus",
+      "body_style": "4D Utility AWD",
+      "residual_percentages": {
+        "24": 48,
+        "27": 47,
+        "36": 42,
+        "39": 41,
+        "42": 39,
+        "48": 37,
+        "51": 36,
+        "54": 34,
+        "60": 32
+      }
+    },
+    {
+      "brand": "Dodge",
+      "model_year": 2025,
+      "model_name": "Hornet",
+      "trim": "R/T PHEV",
+      "body_style": "4D Utility AWD",
+      "residual_percentages": {
+        "24": 48,
+        "27": 47,
+        "36": 43,
+        "39": 41,
+        "42": 39,
+        "48": 36,
+        "51": 34,
+        "54": 33,
+        "60": 30
+      }
+    },
+    {
+      "brand": "Dodge",
+      "model_year": 2025,
+      "model_name": "Hornet",
+      "trim": "R/T Plus PHEV",
+      "body_style": "4D Utility AWD",
+      "residual_percentages": {
+        "24": 47,
+        "27": 46,
+        "36": 42,
+        "39": 40,
+        "42": 38,
+        "48": 35,
+        "51": 33,
+        "54": 32,
+        "60": 29
+      }
+    },
+    {
+      "brand": "Jeep",
+      "model_year": 2025,
+      "model_name": "Compass",
+      "trim": "Altitude",
+      "body_style": "4D Utility 4WD",
+      "residual_percentages": {
+        "24": 45,
+        "27": 43,
+        "36": 36,
+        "39": 34,
+        "42": 32,
+        "48": 29,
+        "51": 28,
+        "54": 27,
+        "60": 24
+      }
+    },
+    {
+      "brand": "Jeep",
+      "model_year": 2025,
+      "model_name": "Compass",
+      "trim": "Limited",
+      "body_style": "4D Utility 4WD",
+      "residual_percentages": {
+        "24": 42,
+        "27": 40,
+        "36": 34,
+        "39": 33,
+        "42": 31,
+        "48": 29,
+        "51": 29,
+        "54": 27,
+        "60": 25
+      }
+    },
+    {
+      "brand": "Jeep",
+      "model_year": 2025,
+      "model_name": "Compass",
+      "trim": "North",
+      "body_style": "4D Utility 4WD",
+      "residual_percentages": {
+        "24": 48,
+        "27": 45,
+        "36": 38,
+        "39": 36,
+        "42": 35,
+        "48": 32,
+        "51": 30,
+        "54": 29,
+        "60": 27
+      }
+    },
+    {
+      "brand": "Jeep",
+      "model_year": 2025,
+      "model_name": "Compass",
+      "trim": "Sport",
+      "body_style": "4D Utility 4WD",
+      "residual_percentages": {
+        "24": 50,
+        "27": 48,
+        "36": 42,
+        "39": 40,
+        "42": 38,
+        "48": 35,
+        "51": 33,
+        "54": 31,
+        "60": 29
+      }
+    },
+    {
+      "brand": "Jeep",
+      "model_year": 2025,
+      "model_name": "Compass",
+      "trim": "Trailhawk",
+      "body_style": "4D Utility 4WD",
+      "residual_percentages": {
+        "24": 44,
+        "27": 42,
+        "36": 35,
+        "39": 33,
+        "42": 31,
+        "48": 29,
+        "51": 28,
+        "54": 26,
+        "60": 24
+      }
+    },
+    {
+      "brand": "Jeep",
+      "model_year": 2025,
+      "model_name": "Compass",
+      "trim": "Trailhawk Elite",
+      "body_style": "4D Utility 4WD",
+      "residual_percentages": {
+        "24": 45,
+        "27": 42,
+        "36": 35,
+        "39": 33,
+        "42": 31,
+        "48": 29,
+        "51": 28,
+        "54": 26,
+        "60": 24
+      }
+    },
+    {
+      "brand": "Jeep",
+      "model_year": 2025,
+      "model_name": "Grand Cherokee",
+      "trim": "Laredo",
+      "body_style": "4D Utility",
+      "residual_percentages": {
+        "24": 47,
+        "27": 45,
+        "36": 39,
+        "39": 37,
+        "42": 35,
+        "48": 31,
+        "51": 29,
+        "54": 29,
+        "60": 26
+      }
+    },
+    {
+      "brand": "Jeep",
+      "model_year": 2025,
+      "model_name": "Grand Cherokee",
+      "trim": "Laredo Altitude",
+      "body_style": "4D Utility",
+      "residual_percentages": {
+        "24": 45,
+        "27": 43,
+        "36": 37,
+        "39": 35,
+        "42": 33,
+        "48": 29,
+        "51": 29,
+        "54": 28,
+        "60": 26
+      }
+    },
+    {
+      "brand": "Jeep",
+      "model_year": 2025,
+      "model_name": "Grand Cherokee",
+      "trim": "Limited",
+      "body_style": "4D Utility",
+      "residual_percentages": {
+        "24": 47,
+        "27": 45,
+        "36": 40,
+        "39": 38,
+        "42": 36,
+        "48": 33,
+        "51": 31,
+        "54": 29,
+        "60": 27
+      }
+    },
+    {
+      "brand": "Jeep",
+      "model_year": 2025,
+      "model_name": "Grand Cherokee",
+      "trim": "Overland",
+      "body_style": "4D Utility",
+      "residual_percentages": {
+        "24": 45,
+        "27": 43,
+        "36": 37,
+        "39": 35,
+        "42": 33,
+        "48": 29,
+        "51": 29,
+        "54": 27,
+        "60": 25
+      }
+    },
+    {
+      "brand": "Jeep",
+      "model_year": 2025,
+      "model_name": "Grand Cherokee",
+      "trim": "Summit",
+      "body_style": "4D Utility",
+      "residual_percentages": {
+        "24": 46,
+        "27": 44,
+        "36": 38,
+        "39": 36,
+        "42": 34,
+        "48": 30,
+        "51": 29,
+        "54": 28,
+        "60": 25
+      }
+    },
+    {
+      "brand": "Jeep",
+      "model_year": 2025,
+      "model_name": "Grand Cherokee",
+      "trim": "Summit Reserve",
+      "body_style": "4D Utility",
+      "residual_percentages": {
+        "24": 43,
+        "27": 41,
+        "36": 36,
+        "39": 34,
+        "42": 33,
+        "48": 30,
+        "51": 29,
+        "54": 28,
+        "60": 25
+      }
+    },
+    {
+      "brand": "Jeep",
+      "model_year": 2025,
+      "model_name": "Grand Cherokee 4XE",
+      "trim": "Altitude",
+      "body_style": "4D Utility",
+      "residual_percentages": {
+        "24": 48,
+        "27": 46,
+        "36": 41,
+        "39": 40,
+        "42": 38,
+        "48": 36,
+        "51": 34,
+        "54": 33,
+        "60": 30
+      }
+    },
+    {
+      "brand": "Jeep",
+      "model_year": 2025,
+      "model_name": "Grand Cherokee 4XE",
+      "trim": "Anniv Ed.",
+      "body_style": "4D Utility",
+      "residual_percentages": {
+        "24": 48,
+        "27": 46,
+        "36": 41,
+        "39": 40,
+        "42": 38,
+        "48": 36,
+        "51": 34,
+        "54": 33,
+        "60": 30
+      }
+    },
+    {
+      "brand": "Jeep",
+      "model_year": 2025,
+      "model_name": "Grand Cherokee 4XE",
+      "trim": "Base",
+      "body_style": "4D Utility",
+      "residual_percentages": {
+        "24": 49,
+        "27": 48,
+        "36": 45,
+        "39": 43,
+        "42": 41,
+        "48": 38,
+        "51": 37,
+        "54": 36,
+        "60": 34
+      }
+    },
+    {
+      "brand": "Jeep",
+      "model_year": 2025,
+      "model_name": "Grand Wagoneer",
+      "trim": "Base",
+      "body_style": "4D Utility",
+      "residual_percentages": {
+        "24": 50,
+        "27": 48,
+        "36": 43,
+        "39": 41,
+        "42": 39,
+        "48": 36,
+        "51": 34,
+        "54": 32,
+        "60": 29
+      }
+    },
+    {
+      "brand": "Jeep",
+      "model_year": 2025,
+      "model_name": "Grand Wagoneer",
+      "trim": "Series II Obsidian",
+      "body_style": "4D Utility",
+      "residual_percentages": {
+        "24": 50,
+        "27": 48,
+        "36": 43,
+        "39": 41,
+        "42": 39,
+        "48": 36,
+        "51": 34,
+        "54": 32,
+        "60": 29
+      }
+    },
+    {
+      "brand": "Jeep",
+      "model_year": 2025,
+      "model_name": "Grand Wagoneer",
+      "trim": "Series III",
+      "body_style": "4D Utility",
+      "residual_percentages": {
+        "24": 50,
+        "27": 48,
+        "36": 43,
+        "39": 41,
+        "42": 39,
+        "48": 36,
+        "51": 34,
+        "54": 33,
+        "60": 30
+      }
+    },
+    {
+      "brand": "Jeep",
+      "model_year": 2025,
+      "model_name": "Wagoneer",
+      "trim": "Series I",
+      "body_style": "4D Utility",
+      "residual_percentages": {
+        "24": 48,
+        "27": 47,
+        "36": 43,
+        "39": 41,
+        "42": 39,
+        "48": 36,
+        "51": 34,
+        "54": 32,
+        "60": 29
+      }
+    },
+    {
+      "brand": "Jeep",
+      "model_year": 2025,
+      "model_name": "Wagoneer",
+      "trim": "Series II Carbide",
+      "body_style": "4D Utility",
+      "residual_percentages": {
+        "24": 47,
+        "27": 45,
+        "36": 41,
+        "39": 39,
+        "42": 37,
+        "48": 34,
+        "51": 32,
+        "54": 31,
+        "60": 29
+      }
+    },
+    {
+      "brand": "Jeep",
+      "model_year": 2025,
+      "model_name": "Wagoneer",
+      "trim": "Series III",
+      "body_style": "4D Utility",
+      "residual_percentages": {
+        "24": 47,
+        "27": 46,
+        "36": 42,
+        "39": 40,
+        "42": 38,
+        "48": 35,
+        "51": 33,
+        "54": 32,
+        "60": 29
+      }
+    },
+    {
+      "brand": "Jeep",
+      "model_year": 2025,
+      "model_name": "Wagoneer L",
+      "trim": "Series I",
+      "body_style": "4D Utility",
+      "residual_percentages": {
+        "24": 49,
+        "27": 48,
+        "36": 45,
+        "39": 43,
+        "42": 41,
+        "48": 37,
+        "51": 35,
+        "54": 33,
+        "60": 30
+      }
+    },
+    {
+      "brand": "Jeep",
+      "model_year": 2025,
+      "model_name": "Wagoneer L",
+      "trim": "Series II",
+      "body_style": "4D Utility",
+      "residual_percentages": {
+        "24": 48,
+        "27": 47,
+        "36": 43,
+        "39": 41,
+        "42": 39,
+        "48": 35,
+        "51": 33,
+        "54": 32,
+        "60": 29
+      }
+    },
+    {
+      "brand": "Jeep",
+      "model_year": 2025,
+      "model_name": "Wagoneer L",
+      "trim": "Series III",
+      "body_style": "4D Utility",
+      "residual_percentages": {
+        "24": 49,
+        "27": 48,
+        "36": 44,
+        "39": 42,
+        "42": 40,
+        "48": 37,
+        "51": 35,
+        "54": 33,
+        "60": 30
+      }
+    },
+    {
+      "brand": "Jeep",
+      "model_year": 2025,
+      "model_name": "Wagoneer S",
+      "trim": "Limited",
+      "body_style": "4D Utility",
+      "residual_percentages": {
+        "24": 46,
+        "27": 44,
+        "36": 37,
+        "39": 35,
+        "42": 33,
+        "48": 29,
+        "51": 29,
+        "54": 27,
+        "60": 25
+      }
+    },
+    {
+      "brand": "Jeep",
+      "model_year": 2025,
+      "model_name": "Wagoneer S",
+      "trim": "Premium",
+      "body_style": "4D Utility",
+      "residual_percentages": {
+        "24": 46,
+        "27": 44,
+        "36": 37,
+        "39": 35,
+        "42": 33,
+        "48": 29,
+        "51": 28,
+        "54": 27,
+        "60": 24
+      }
+    },
+    {
+      "brand": "Jeep",
+      "model_year": 2025,
+      "model_name": "Grand Cherokee L- 3 Row",
+      "trim": "Laredo",
+      "body_style": "4D Utility",
+      "residual_percentages": {
+        "24": 48,
+        "27": 46,
+        "36": 39,
+        "39": 37,
+        "42": 35,
+        "48": 32,
+        "51": 31,
+        "54": 29,
+        "60": 28
+      }
+    },
+    {
+      "brand": "Jeep",
+      "model_year": 2025,
+      "model_name": "Grand Cherokee L- 3 Row",
+      "trim": "Laredo Altitude",
+      "body_style": "4D Utility",
+      "residual_percentages": {
+        "24": 47,
+        "27": 45,
+        "36": 38,
+        "39": 37,
+        "42": 35,
+        "48": 33,
+        "51": 31,
+        "54": 30,
+        "60": 28
+      }
+    },
+    {
+      "brand": "Jeep",
+      "model_year": 2025,
+      "model_name": "Grand Cherokee L- 3 Row",
+      "trim": "Limited",
+      "body_style": "4D Utility",
+      "residual_percentages": {
+        "24": 48,
+        "27": 47,
+        "36": 40,
+        "39": 38,
+        "42": 37,
+        "48": 34,
+        "51": 32,
+        "54": 31,
+        "60": 29
+      }
+    },
+    {
+      "brand": "Jeep",
+      "model_year": 2025,
+      "model_name": "Grand Cherokee L- 3 Row",
+      "trim": "Overland",
+      "body_style": "4D Utility",
+      "residual_percentages": {
+        "24": 49,
+        "27": 48,
+        "36": 42,
+        "39": 40,
+        "42": 38,
+        "48": 35,
+        "51": 33,
+        "54": 32,
+        "60": 29
+      }
+    },
+    {
+      "brand": "Jeep",
+      "model_year": 2025,
+      "model_name": "Grand Cherokee L- 3 Row",
+      "trim": "Summit",
+      "body_style": "4D Utility",
+      "residual_percentages": {
+        "24": 48,
+        "27": 46,
+        "36": 39,
+        "39": 37,
+        "42": 35,
+        "48": 32,
+        "51": 31,
+        "54": 30,
+        "60": 29
+      }
+    },
+    {
+      "brand": "Jeep",
+      "model_year": 2025,
+      "model_name": "Grand Cherokee L- 3 Row",
+      "trim": "Summit Reserve",
+      "body_style": "4D Utility",
+      "residual_percentages": {
+        "24": 48,
+        "27": 46,
+        "36": 39,
+        "39": 37,
+        "42": 36,
+        "48": 33,
+        "51": 32,
+        "54": 31,
+        "60": 29
+      }
+    },
+    {
+      "brand": "Jeep",
+      "model_year": 2025,
+      "model_name": "Grand Wagoneer L",
+      "trim": "Series II Obsidian",
+      "body_style": "4D Utility",
+      "residual_percentages": {
+        "24": 50,
+        "27": 48,
+        "36": 43,
+        "39": 41,
+        "42": 40,
+        "48": 37,
+        "51": 35,
+        "54": 34,
+        "60": 31
+      }
+    },
+    {
+      "brand": "Jeep",
+      "model_year": 2025,
+      "model_name": "Grand Wagoneer L",
+      "trim": "Series III",
+      "body_style": "4D Utility",
+      "residual_percentages": {
+        "24": 49,
+        "27": 48,
+        "36": 43,
+        "39": 41,
+        "42": 39,
+        "48": 35,
+        "51": 34,
+        "54": 32,
+        "60": 30
+      }
+    },
+    {
+      "brand": "Jeep",
+      "model_year": 2025,
+      "model_name": "Gladiator",
+      "trim": "Mojave",
+      "body_style": "Crew Cab 4WD",
+      "residual_percentages": {
+        "24": 47,
+        "27": 45,
+        "36": 40,
+        "39": 39,
+        "42": 38,
+        "48": 36,
+        "51": 35,
+        "54": 33,
+        "60": 31
+      }
+    },
+    {
+      "brand": "Jeep",
+      "model_year": 2025,
+      "model_name": "Gladiator",
+      "trim": "Mojave X",
+      "body_style": "Crew Cab 4WD",
+      "residual_percentages": {
+        "24": 48,
+        "27": 46,
+        "36": 42,
+        "39": 41,
+        "42": 40,
+        "48": 38,
+        "51": 36,
+        "54": 35,
+        "60": 32
+      }
+    },
+    {
+      "brand": "Jeep",
+      "model_year": 2025,
+      "model_name": "Gladiator",
+      "trim": "Nighthawk",
+      "body_style": "Crew Cab 4WD",
+      "residual_percentages": {
+        "24": 44,
+        "27": 42,
+        "36": 37,
+        "39": 36,
+        "42": 35,
+        "48": 33,
+        "51": 32,
+        "54": 30,
+        "60": 29
+      }
+    },
+    {
+      "brand": "Jeep",
+      "model_year": 2025,
+      "model_name": "Gladiator",
+      "trim": "Rubicon",
+      "body_style": "Crew Cab 4WD",
+      "residual_percentages": {
+        "24": 48,
+        "27": 46,
+        "36": 42,
+        "39": 40,
+        "42": 39,
+        "48": 36,
+        "51": 35,
+        "54": 34,
+        "60": 32
+      }
+    },
+    {
+      "brand": "Jeep",
+      "model_year": 2025,
+      "model_name": "Gladiator",
+      "trim": "Rubicon X",
+      "body_style": "Crew Cab 4WD",
+      "residual_percentages": {
+        "24": 48,
+        "27": 46,
+        "36": 42,
+        "39": 41,
+        "42": 39,
+        "48": 37,
+        "51": 36,
+        "54": 35,
+        "60": 33
+      }
+    },
+    {
+      "brand": "Jeep",
+      "model_year": 2025,
+      "model_name": "Gladiator",
+      "trim": "Sport S",
+      "body_style": "Crew Cab 4WD",
+      "residual_percentages": {
+        "24": 43,
+        "27": 41,
+        "36": 37,
+        "39": 36,
+        "42": 35,
+        "48": 33,
+        "51": 32,
+        "54": 30,
+        "60": 29
+      }
+    },
+    {
+      "brand": "Jeep",
+      "model_year": 2025,
+      "model_name": "Gladiator",
+      "trim": "Willys",
+      "body_style": "Crew Cab 4WD",
+      "residual_percentages": {
+        "24": 42,
+        "27": 40,
+        "36": 36,
+        "39": 35,
+        "42": 34,
+        "48": 33,
+        "51": 32,
+        "54": 30,
+        "60": 29
+      }
+    },
+    {
+      "brand": "Jeep",
+      "model_year": 2025,
+      "model_name": "Wrangler",
+      "trim": "Rubicon",
+      "body_style": "2D Utility 4WD",
+      "residual_percentages": {
+        "24": 51,
+        "27": 49,
+        "36": 46,
+        "39": 44,
+        "42": 43,
+        "48": 40,
+        "51": 39,
+        "54": 37,
+        "60": 35
+      }
+    },
+    {
+      "brand": "Jeep",
+      "model_year": 2025,
+      "model_name": "Wrangler",
+      "trim": "Rubicon",
+      "body_style": "4D Utility 4WD",
+      "residual_percentages": {
+        "24": 50,
+        "27": 49,
+        "36": 47,
+        "39": 45,
+        "42": 44,
+        "48": 41,
+        "51": 40,
+        "54": 38,
+        "60": 36
+      }
+    },
+    {
+      "brand": "Jeep",
+      "model_year": 2025,
+      "model_name": "Wrangler",
+      "trim": "Rubicon X",
+      "body_style": "2D Utility 4WD",
+      "residual_percentages": {
+        "24": 51,
+        "27": 50,
+        "36": 47,
+        "39": 45,
+        "42": 44,
+        "48": 41,
+        "51": 40,
+        "54": 38,
+        "60": 36
+      }
+    },
+    {
+      "brand": "Jeep",
+      "model_year": 2025,
+      "model_name": "Wrangler",
+      "trim": "Rubicon X",
+      "body_style": "4D Utility 4WD",
+      "residual_percentages": {
+        "24": 49,
+        "27": 48,
+        "36": 44,
+        "39": 43,
+        "42": 42,
+        "48": 40,
+        "51": 39,
+        "54": 37,
+        "60": 35
+      }
+    },
+    {
+      "brand": "Jeep",
+      "model_year": 2025,
+      "model_name": "Wrangler",
+      "trim": "Sahara",
+      "body_style": "4D Utility 4WD",
+      "residual_percentages": {
+        "24": 52,
+        "27": 50,
+        "36": 46,
+        "39": 45,
+        "42": 43,
+        "48": 41,
+        "51": 39,
+        "54": 38,
+        "60": 35
+      }
+    },
+    {
+      "brand": "Jeep",
+      "model_year": 2025,
+      "model_name": "Wrangler",
+      "trim": "Sport",
+      "body_style": "2D Utility 4WD",
+      "residual_percentages": {
+        "24": 54,
+        "27": 52,
+        "36": 48,
+        "39": 48,
+        "42": 46,
+        "48": 44,
+        "51": 43,
+        "54": 41,
+        "60": 39
+      }
+    },
+    {
+      "brand": "Jeep",
+      "model_year": 2025,
+      "model_name": "Wrangler",
+      "trim": "Sport",
+      "body_style": "4D Utility 4WD",
+      "residual_percentages": {
+        "24": 52,
+        "27": 50,
+        "36": 47,
+        "39": 46,
+        "42": 44,
+        "48": 42,
+        "51": 40,
+        "54": 39,
+        "60": 36
+      }
+    },
+    {
+      "brand": "Jeep",
+      "model_year": 2025,
+      "model_name": "Wrangler",
+      "trim": "Sport S",
+      "body_style": "2D Utility 4WD",
+      "residual_percentages": {
+        "24": 53,
+        "27": 51,
+        "36": 48,
+        "39": 47,
+        "42": 45,
+        "48": 43,
+        "51": 42,
+        "54": 40,
+        "60": 38
+      }
+    },
+    {
+      "brand": "Jeep",
+      "model_year": 2025,
+      "model_name": "Wrangler",
+      "trim": "Sport S",
+      "body_style": "4D Utility 4WD",
+      "residual_percentages": {
+        "24": 53,
+        "27": 51,
+        "36": 47,
+        "39": 45,
+        "42": 44,
+        "48": 41,
+        "51": 39,
+        "54": 37,
+        "60": 34
+      }
+    },
+    {
+      "brand": "Jeep",
+      "model_year": 2025,
+      "model_name": "Wrangler",
+      "trim": "Willys",
+      "body_style": "2D Utility 4WD",
+      "residual_percentages": {
+        "24": 53,
+        "27": 51,
+        "36": 47,
+        "39": 45,
+        "42": 44,
+        "48": 41,
+        "51": 40,
+        "54": 38,
+        "60": 36
+      }
+    },
+    {
+      "brand": "Jeep",
+      "model_year": 2025,
+      "model_name": "Wrangler",
+      "trim": "Willys",
+      "body_style": "4D Utility 4WD",
+      "residual_percentages": {
+        "24": 52,
+        "27": 50,
+        "36": 46,
+        "39": 44,
+        "42": 43,
+        "48": 40,
+        "51": 38,
+        "54": 36,
+        "60": 33
+      }
+    },
+    {
+      "brand": "Jeep",
+      "model_year": 2025,
+      "model_name": "Wrangler 4XE",
+      "trim": "Rubicon",
+      "body_style": "4D Utility 4WD",
+      "residual_percentages": {
+        "24": 49,
+        "27": 48,
+        "36": 44,
+        "39": 43,
+        "42": 41,
+        "48": 39,
+        "51": 37,
+        "54": 35,
+        "60": 31
+      }
+    },
+    {
+      "brand": "Jeep",
+      "model_year": 2025,
+      "model_name": "Wrangler 4XE",
+      "trim": "Rubicon X",
+      "body_style": "4D Utility 4WD",
+      "residual_percentages": {
+        "24": 50,
+        "27": 48,
+        "36": 44,
+        "39": 43,
+        "42": 41,
+        "48": 39,
+        "51": 37,
+        "54": 35,
+        "60": 31
+      }
+    },
+    {
+      "brand": "Jeep",
+      "model_year": 2025,
+      "model_name": "Wrangler 4XE",
+      "trim": "Sahara",
+      "body_style": "4D Utility 4WD",
+      "residual_percentages": {
+        "24": 51,
+        "27": 49,
+        "36": 45,
+        "39": 43,
+        "42": 42,
+        "48": 39,
+        "51": 37,
+        "54": 35,
+        "60": 31
+      }
+    },
+    {
+      "brand": "Jeep",
+      "model_year": 2025,
+      "model_name": "Wrangler 4XE",
+      "trim": "Sport S",
+      "body_style": "4D Utility 4WD",
+      "residual_percentages": {
+        "24": 52,
+        "27": 50,
+        "36": 46,
+        "39": 44,
+        "42": 43,
+        "48": 40,
+        "51": 38,
+        "54": 36,
+        "60": 32
+      }
+    },
+    {
+      "brand": "Jeep",
+      "model_year": 2025,
+      "model_name": "Wrangler 4XE",
+      "trim": "Willys",
+      "body_style": "4D Utility 4WD",
+      "residual_percentages": {
+        "24": 51,
+        "27": 49,
+        "36": 45,
+        "39": 43,
+        "42": 42,
+        "48": 39,
+        "51": 37,
+        "54": 35,
+        "60": 31
+      }
+    },
+    {
+      "brand": "Jeep",
+      "model_year": 2025,
+      "model_name": "Wrangler 4XE",
+      "trim": "Willys 41",
+      "body_style": "4D Utility 4WD",
+      "residual_percentages": {
+        "24": 51,
+        "27": 49,
+        "36": 45,
+        "39": 43,
+        "42": 42,
+        "48": 39,
+        "51": 37,
+        "54": 35,
+        "60": 31
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2025,
+      "model_name": "1500",
+      "trim": "Big Horn",
+      "body_style": "Crew Cab LWB 4WD",
+      "residual_percentages": {
+        "24": 49,
+        "27": 48,
+        "36": 43,
+        "39": 42,
+        "42": 40,
+        "48": 38,
+        "51": 37,
+        "54": 36,
+        "60": 35
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2025,
+      "model_name": "1500",
+      "trim": "Big Horn",
+      "body_style": "Crew Cab SWB 4WD",
+      "residual_percentages": {
+        "24": 49,
+        "27": 48,
+        "36": 45,
+        "39": 43,
+        "42": 42,
+        "48": 39,
+        "51": 38,
+        "54": 36,
+        "60": 34
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2025,
+      "model_name": "1500",
+      "trim": "Big Horn",
+      "body_style": "Quad Cab SWB 4WD",
+      "residual_percentages": {
+        "24": 48,
+        "27": 47,
+        "36": 43,
+        "39": 41,
+        "42": 40,
+        "48": 37,
+        "51": 36,
+        "54": 35,
+        "60": 33
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2025,
+      "model_name": "1500",
+      "trim": "Laramie",
+      "body_style": "Crew Cab LWB 4WD",
+      "residual_percentages": {
+        "24": 50,
+        "27": 49,
+        "36": 46,
+        "39": 44,
+        "42": 43,
+        "48": 40,
+        "51": 39,
+        "54": 37,
+        "60": 35
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2025,
+      "model_name": "1500",
+      "trim": "Laramie",
+      "body_style": "Crew Cab SWB 4WD",
+      "residual_percentages": {
+        "24": 50,
+        "27": 49,
+        "36": 47,
+        "39": 45,
+        "42": 44,
+        "48": 41,
+        "51": 39,
+        "54": 38,
+        "60": 35
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2025,
+      "model_name": "1500",
+      "trim": "Limited",
+      "body_style": "Crew Cab LWB 4WD",
+      "residual_percentages": {
+        "24": 48,
+        "27": 47,
+        "36": 43,
+        "39": 42,
+        "42": 40,
+        "48": 38,
+        "51": 37,
+        "54": 36,
+        "60": 34
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2025,
+      "model_name": "1500",
+      "trim": "Limited",
+      "body_style": "Crew Cab SWB 4WD",
+      "residual_percentages": {
+        "24": 49,
+        "27": 48,
+        "36": 45,
+        "39": 43,
+        "42": 42,
+        "48": 39,
+        "51": 38,
+        "54": 37,
+        "60": 35
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2025,
+      "model_name": "1500",
+      "trim": "Longhorn",
+      "body_style": "Crew Cab LWB 4WD",
+      "residual_percentages": {
+        "24": 47,
+        "27": 46,
+        "36": 42,
+        "39": 41,
+        "42": 39,
+        "48": 37,
+        "51": 36,
+        "54": 35,
+        "60": 33
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2025,
+      "model_name": "1500",
+      "trim": "Longhorn",
+      "body_style": "Crew Cab SWB 4WD",
+      "residual_percentages": {
+        "24": 47,
+        "27": 46,
+        "36": 42,
+        "39": 41,
+        "42": 39,
+        "48": 37,
+        "51": 36,
+        "54": 35,
+        "60": 33
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2025,
+      "model_name": "1500",
+      "trim": "Rebel",
+      "body_style": "Crew Cab SWB 4WD",
+      "residual_percentages": {
+        "24": 52,
+        "27": 50,
+        "36": 47,
+        "39": 45,
+        "42": 42,
+        "48": 38,
+        "51": 37,
+        "54": 36,
+        "60": 35
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2025,
+      "model_name": "1500",
+      "trim": "RHO",
+      "body_style": "Crew Cab SWB 4WD",
+      "residual_percentages": {
+        "24": 58,
+        "27": 56,
+        "36": 51,
+        "39": 49,
+        "42": 48,
+        "48": 46,
+        "51": 45,
+        "54": 44,
+        "60": 42
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2025,
+      "model_name": "1500",
+      "trim": "Sport",
+      "body_style": "Crew Cab LWB 4WD",
+      "residual_percentages": {
+        "24": 50,
+        "27": 48,
+        "36": 45,
+        "39": 44,
+        "42": 42,
+        "48": 40,
+        "51": 38,
+        "54": 37,
+        "60": 34
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2025,
+      "model_name": "1500",
+      "trim": "Sport",
+      "body_style": "Crew Cab SWB 4WD",
+      "residual_percentages": {
+        "24": 51,
+        "27": 50,
+        "36": 47,
+        "39": 45,
+        "42": 44,
+        "48": 41,
+        "51": 40,
+        "54": 38,
+        "60": 36
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2025,
+      "model_name": "1500",
+      "trim": "Tradesman",
+      "body_style": "Crew Cab LWB 4WD",
+      "residual_percentages": {
+        "24": 48,
+        "27": 47,
+        "36": 43,
+        "39": 42,
+        "42": 40,
+        "48": 38,
+        "51": 37,
+        "54": 36,
+        "60": 34
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2025,
+      "model_name": "1500",
+      "trim": "Tradesman",
+      "body_style": "Crew Cab SWB 4WD",
+      "residual_percentages": {
+        "24": 48,
+        "27": 47,
+        "36": 43,
+        "39": 42,
+        "42": 40,
+        "48": 38,
+        "51": 37,
+        "54": 36,
+        "60": 34
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2025,
+      "model_name": "1500",
+      "trim": "Tradesman",
+      "body_style": "Quad Cab SWB 4WD",
+      "residual_percentages": {
+        "24": 47,
+        "27": 46,
+        "36": 42,
+        "39": 41,
+        "42": 39,
+        "48": 37,
+        "51": 36,
+        "54": 34,
+        "60": 32
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2025,
+      "model_name": "1500",
+      "trim": "Tungsten",
+      "body_style": "Crew Cab SWB 4WD",
+      "residual_percentages": {
+        "24": 51,
+        "27": 50,
+        "36": 47,
+        "39": 45,
+        "42": 44,
+        "48": 41,
+        "51": 39,
+        "54": 38,
+        "60": 35
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2025,
+      "model_name": "1500",
+      "trim": "Warlock",
+      "body_style": "Crew Cab SWB 4WD",
+      "residual_percentages": {
+        "24": 47,
+        "27": 46,
+        "36": 43,
+        "39": 42,
+        "42": 40,
+        "48": 38,
+        "51": 37,
+        "54": 36,
+        "60": 34
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2025,
+      "model_name": "2500",
+      "trim": "Big Horn",
+      "body_style": "Crew Cab LWB 2WD",
+      "residual_percentages": {
+        "24": 49,
+        "27": 48,
+        "36": 46,
+        "39": 45,
+        "42": 44,
+        "48": 43,
+        "51": 42,
+        "54": 40,
+        "60": 38
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2025,
+      "model_name": "2500",
+      "trim": "Big Horn",
+      "body_style": "Crew Cab LWB 4WD",
+      "residual_percentages": {
+        "24": 49,
+        "27": 48,
+        "36": 46,
+        "39": 45,
+        "42": 44,
+        "48": 43,
+        "51": 42,
+        "54": 41,
+        "60": 39
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2025,
+      "model_name": "2500",
+      "trim": "Big Horn",
+      "body_style": "Crew Cab SWB 2WD",
+      "residual_percentages": {
+        "24": 48,
+        "27": 48,
+        "36": 45,
+        "39": 44,
+        "42": 43,
+        "48": 42,
+        "51": 41,
+        "54": 40,
+        "60": 38
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2025,
+      "model_name": "2500",
+      "trim": "Big Horn",
+      "body_style": "Crew Cab SWB 4WD",
+      "residual_percentages": {
+        "24": 49,
+        "27": 48,
+        "36": 46,
+        "39": 45,
+        "42": 44,
+        "48": 43,
+        "51": 42,
+        "54": 41,
+        "60": 40
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2025,
+      "model_name": "2500",
+      "trim": "Big Horn",
+      "body_style": "Reg Cab 2WD",
+      "residual_percentages": {
+        "24": 51,
+        "27": 50,
+        "36": 47,
+        "39": 46,
+        "42": 45,
+        "48": 44,
+        "51": 43,
+        "54": 41,
+        "60": 39
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2025,
+      "model_name": "2500",
+      "trim": "Big Horn",
+      "body_style": "Reg Cab 4WD",
+      "residual_percentages": {
+        "24": 49,
+        "27": 48,
+        "36": 46,
+        "39": 45,
+        "42": 44,
+        "48": 42,
+        "51": 41,
+        "54": 40,
+        "60": 38
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2025,
+      "model_name": "2500",
+      "trim": "Laramie",
+      "body_style": "Crew Cab LWB 4WD",
+      "residual_percentages": {
+        "24": 51,
+        "27": 50,
+        "36": 48,
+        "39": 48,
+        "42": 47,
+        "48": 45,
+        "51": 44,
+        "54": 43,
+        "60": 42
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2025,
+      "model_name": "2500",
+      "trim": "Laramie",
+      "body_style": "Crew Cab SWB 4WD",
+      "residual_percentages": {
+        "24": 51,
+        "27": 50,
+        "36": 48,
+        "39": 47,
+        "42": 46,
+        "48": 45,
+        "51": 44,
+        "54": 43,
+        "60": 41
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2025,
+      "model_name": "2500",
+      "trim": "Laramie",
+      "body_style": "Mega Cab 4WD",
+      "residual_percentages": {
+        "24": 52,
+        "27": 51,
+        "36": 48,
+        "39": 48,
+        "42": 47,
+        "48": 45,
+        "51": 44,
+        "54": 43,
+        "60": 41
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2025,
+      "model_name": "2500",
+      "trim": "Limited",
+      "body_style": "Crew Cab LWB 4WD",
+      "residual_percentages": {
+        "24": 48,
+        "27": 47,
+        "36": 45,
+        "39": 44,
+        "42": 43,
+        "48": 42,
+        "51": 41,
+        "54": 40,
+        "60": 39
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2025,
+      "model_name": "2500",
+      "trim": "Limited",
+      "body_style": "Crew Cab SWB 4WD",
+      "residual_percentages": {
+        "24": 48,
+        "27": 47,
+        "36": 45,
+        "39": 44,
+        "42": 43,
+        "48": 42,
+        "51": 41,
+        "54": 41,
+        "60": 40
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2025,
+      "model_name": "2500",
+      "trim": "Limited",
+      "body_style": "Mega Cab 4WD",
+      "residual_percentages": {
+        "24": 48,
+        "27": 48,
+        "36": 46,
+        "39": 45,
+        "42": 44,
+        "48": 42,
+        "51": 41,
+        "54": 40,
+        "60": 39
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2025,
+      "model_name": "2500",
+      "trim": "Limited Longhorn",
+      "body_style": "Crew Cab LWB 4WD",
+      "residual_percentages": {
+        "24": 48,
+        "27": 47,
+        "36": 44,
+        "39": 43,
+        "42": 42,
+        "48": 41,
+        "51": 40,
+        "54": 39,
+        "60": 37
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2025,
+      "model_name": "2500",
+      "trim": "Limited Longhorn",
+      "body_style": "Crew Cab SWB 4WD",
+      "residual_percentages": {
+        "24": 48,
+        "27": 48,
+        "36": 45,
+        "39": 44,
+        "42": 43,
+        "48": 41,
+        "51": 40,
+        "54": 39,
+        "60": 38
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2025,
+      "model_name": "2500",
+      "trim": "Limited Longhorn",
+      "body_style": "Mega Cab 4WD",
+      "residual_percentages": {
+        "24": 48,
+        "27": 47,
+        "36": 45,
+        "39": 44,
+        "42": 43,
+        "48": 42,
+        "51": 41,
+        "54": 40,
+        "60": 38
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2025,
+      "model_name": "2500",
+      "trim": "Powerwagon",
+      "body_style": "Crew Cab SWB 4WD",
+      "residual_percentages": {
+        "24": 49,
+        "27": 48,
+        "36": 47,
+        "39": 46,
+        "42": 45,
+        "48": 43,
+        "51": 42,
+        "54": 41,
+        "60": 40
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2025,
+      "model_name": "2500",
+      "trim": "Rebel",
+      "body_style": "Crew Cab SWB 4WD",
+      "residual_percentages": {
+        "24": 48,
+        "27": 47,
+        "36": 44,
+        "39": 43,
+        "42": 42,
+        "48": 41,
+        "51": 40,
+        "54": 39,
+        "60": 38
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2025,
+      "model_name": "2500",
+      "trim": "Tradesman",
+      "body_style": "Crew Cab LWB 2WD",
+      "residual_percentages": {
+        "24": 46,
+        "27": 45,
+        "36": 42,
+        "39": 41,
+        "42": 40,
+        "48": 39,
+        "51": 38,
+        "54": 37,
+        "60": 36
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2025,
+      "model_name": "2500",
+      "trim": "Tradesman",
+      "body_style": "Crew Cab LWB 4WD",
+      "residual_percentages": {
+        "24": 47,
+        "27": 46,
+        "36": 43,
+        "39": 42,
+        "42": 41,
+        "48": 40,
+        "51": 39,
+        "54": 38,
+        "60": 37
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2025,
+      "model_name": "2500",
+      "trim": "Tradesman",
+      "body_style": "Crew Cab SWB 2WD",
+      "residual_percentages": {
+        "24": 46,
+        "27": 45,
+        "36": 43,
+        "39": 42,
+        "42": 41,
+        "48": 40,
+        "51": 39,
+        "54": 38,
+        "60": 37
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2025,
+      "model_name": "2500",
+      "trim": "Tradesman",
+      "body_style": "Crew Cab SWB 4WD",
+      "residual_percentages": {
+        "24": 47,
+        "27": 46,
+        "36": 44,
+        "39": 43,
+        "42": 42,
+        "48": 40,
+        "51": 39,
+        "54": 38,
+        "60": 36
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2025,
+      "model_name": "2500",
+      "trim": "Tradesman",
+      "body_style": "Reg Cab 2WD",
+      "residual_percentages": {
+        "24": 48,
+        "27": 47,
+        "36": 44,
+        "39": 43,
+        "42": 42,
+        "48": 41,
+        "51": 40,
+        "54": 39,
+        "60": 37
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2025,
+      "model_name": "2500",
+      "trim": "Tradesman",
+      "body_style": "Reg Cab 4WD",
+      "residual_percentages": {
+        "24": 46,
+        "27": 45,
+        "36": 43,
+        "39": 42,
+        "42": 41,
+        "48": 40,
+        "51": 39,
+        "54": 38,
+        "60": 36
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2025,
+      "model_name": "3500",
+      "trim": "Big Horn",
+      "body_style": "Crew Cab LWB 2WD",
+      "residual_percentages": {
+        "24": 50,
+        "27": 49,
+        "36": 46,
+        "39": 45,
+        "42": 44,
+        "48": 43,
+        "51": 42,
+        "54": 40,
+        "60": 38
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2025,
+      "model_name": "3500",
+      "trim": "Big Horn",
+      "body_style": "Crew Cab LWB 4WD",
+      "residual_percentages": {
+        "24": 50,
+        "27": 49,
+        "36": 47,
+        "39": 46,
+        "42": 44,
+        "48": 42,
+        "51": 41,
+        "54": 40,
+        "60": 39
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2025,
+      "model_name": "3500",
+      "trim": "Big Horn",
+      "body_style": "Crew Cab SWB 2WD",
+      "residual_percentages": {
+        "24": 49,
+        "27": 48,
+        "36": 46,
+        "39": 45,
+        "42": 43,
+        "48": 41,
+        "51": 40,
+        "54": 39,
+        "60": 38
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2025,
+      "model_name": "3500",
+      "trim": "Big Horn",
+      "body_style": "Crew Cab SWB 4WD",
+      "residual_percentages": {
+        "24": 49,
+        "27": 48,
+        "36": 47,
+        "39": 46,
+        "42": 44,
+        "48": 42,
+        "51": 41,
+        "54": 40,
+        "60": 38
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2025,
+      "model_name": "3500",
+      "trim": "Big Horn",
+      "body_style": "Reg Cab LWB 2WD",
+      "residual_percentages": {
+        "24": 50,
+        "27": 49,
+        "36": 47,
+        "39": 46,
+        "42": 44,
+        "48": 42,
+        "51": 41,
+        "54": 40,
+        "60": 38
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2025,
+      "model_name": "3500",
+      "trim": "Big Horn",
+      "body_style": "Reg Cab LWB 4WD",
+      "residual_percentages": {
+        "24": 50,
+        "27": 49,
+        "36": 47,
+        "39": 46,
+        "42": 44,
+        "48": 42,
+        "51": 41,
+        "54": 40,
+        "60": 38
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2025,
+      "model_name": "3500",
+      "trim": "Laramie",
+      "body_style": "Crew Cab LWB 4WD",
+      "residual_percentages": {
+        "24": 48,
+        "27": 47,
+        "36": 45,
+        "39": 44,
+        "42": 43,
+        "48": 42,
+        "51": 41,
+        "54": 40,
+        "60": 38
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2025,
+      "model_name": "3500",
+      "trim": "Laramie",
+      "body_style": "Crew Cab SWB 4WD",
+      "residual_percentages": {
+        "24": 48,
+        "27": 48,
+        "36": 47,
+        "39": 46,
+        "42": 45,
+        "48": 43,
+        "51": 42,
+        "54": 41,
+        "60": 39
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2025,
+      "model_name": "3500",
+      "trim": "Laramie",
+      "body_style": "Mega Cab 4WD",
+      "residual_percentages": {
+        "24": 51,
+        "27": 50,
+        "36": 48,
+        "39": 48,
+        "42": 47,
+        "48": 45,
+        "51": 44,
+        "54": 43,
+        "60": 41
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2025,
+      "model_name": "3500",
+      "trim": "Limited",
+      "body_style": "Crew Cab LWB 4WD",
+      "residual_percentages": {
+        "24": 49,
+        "27": 48,
+        "36": 46,
+        "39": 45,
+        "42": 44,
+        "48": 42,
+        "51": 41,
+        "54": 39,
+        "60": 37
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2025,
+      "model_name": "3500",
+      "trim": "Limited",
+      "body_style": "Crew Cab SWB 4WD",
+      "residual_percentages": {
+        "24": 50,
+        "27": 49,
+        "36": 47,
+        "39": 46,
+        "42": 45,
+        "48": 43,
+        "51": 41,
+        "54": 40,
+        "60": 37
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2025,
+      "model_name": "3500",
+      "trim": "Limited",
+      "body_style": "Mega Cab 4WD",
+      "residual_percentages": {
+        "24": 50,
+        "27": 49,
+        "36": 47,
+        "39": 46,
+        "42": 45,
+        "48": 43,
+        "51": 41,
+        "54": 40,
+        "60": 37
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2025,
+      "model_name": "3500",
+      "trim": "Limited Longhorn",
+      "body_style": "Crew Cab LWB 4WD",
+      "residual_percentages": {
+        "24": 52,
+        "27": 51,
+        "36": 48,
+        "39": 48,
+        "42": 47,
+        "48": 45,
+        "51": 44,
+        "54": 42,
+        "60": 40
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2025,
+      "model_name": "3500",
+      "trim": "Limited Longhorn",
+      "body_style": "Crew Cab SWB 4WD",
+      "residual_percentages": {
+        "24": 49,
+        "27": 48,
+        "36": 46,
+        "39": 45,
+        "42": 44,
+        "48": 43,
+        "51": 42,
+        "54": 40,
+        "60": 38
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2025,
+      "model_name": "3500",
+      "trim": "Limited Longhorn",
+      "body_style": "Mega Cab 4WD",
+      "residual_percentages": {
+        "24": 52,
+        "27": 51,
+        "36": 48,
+        "39": 48,
+        "42": 47,
+        "48": 45,
+        "51": 44,
+        "54": 42,
+        "60": 40
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2025,
+      "model_name": "3500",
+      "trim": "Tradesman",
+      "body_style": "Crew Cab LWB 2WD",
+      "residual_percentages": {
+        "24": 51,
+        "27": 49,
+        "36": 46,
+        "39": 45,
+        "42": 43,
+        "48": 41,
+        "51": 40,
+        "54": 38,
+        "60": 36
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2025,
+      "model_name": "3500",
+      "trim": "Tradesman",
+      "body_style": "Crew Cab LWB 4WD",
+      "residual_percentages": {
+        "24": 52,
+        "27": 50,
+        "36": 47,
+        "39": 46,
+        "42": 44,
+        "48": 42,
+        "51": 41,
+        "54": 39,
+        "60": 37
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2025,
+      "model_name": "3500",
+      "trim": "Tradesman",
+      "body_style": "Crew Cab SWB 2WD",
+      "residual_percentages": {
+        "24": 51,
+        "27": 49,
+        "36": 46,
+        "39": 45,
+        "42": 43,
+        "48": 41,
+        "51": 40,
+        "54": 38,
+        "60": 36
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2025,
+      "model_name": "3500",
+      "trim": "Tradesman",
+      "body_style": "Crew Cab SWB 4WD",
+      "residual_percentages": {
+        "24": 52,
+        "27": 50,
+        "36": 47,
+        "39": 46,
+        "42": 44,
+        "48": 42,
+        "51": 41,
+        "54": 39,
+        "60": 37
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2025,
+      "model_name": "3500",
+      "trim": "Tradesman",
+      "body_style": "Reg Cab LWB 2WD",
+      "residual_percentages": {
+        "24": 50,
+        "27": 49,
+        "36": 48,
+        "39": 47,
+        "42": 45,
+        "48": 43,
+        "51": 42,
+        "54": 41,
+        "60": 39
+      }
+    },
+    {
+      "brand": "Ram",
+      "model_year": 2025,
+      "model_name": "3500",
+      "trim": "Tradesman",
+      "body_style": "Reg Cab LWB 4WD",
+      "residual_percentages": {
+        "24": 50,
+        "27": 49,
+        "36": 47,
+        "39": 46,
+        "42": 45,
+        "48": 43,
+        "51": 42,
+        "54": 41,
+        "60": 39
+      }
+    }
+  ]
+}

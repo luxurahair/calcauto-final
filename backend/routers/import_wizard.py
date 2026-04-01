@@ -1175,28 +1175,28 @@ async def get_extract_task(task_id: str):
 async def upload_residual_guide(
     file: UploadFile = File(...),
     password: str = Form(...),
-    effective_month: int = Form(...),
-    effective_year: int = Form(...)
+    effective_month: int = Form(None),
+    effective_year: int = Form(None)
 ):
     """
     Upload et parse automatiquement un PDF du guide des valeurs résiduelles SCI.
-    Génère un Excel de vérification et l'envoie par email.
+    Auto-détecte le mois/année depuis le contenu du PDF.
+    Compare avec les données existantes et génère un rapport de changements.
     """
     if password != ADMIN_PASSWORD:
         raise HTTPException(status_code=401, detail="Mot de passe incorrect")
     
     import tempfile
     import os as os_module
+    import re as re_local
     
     tmp_path = None
     try:
-        # Save uploaded file temporarily
         content = await file.read()
         with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as tmp:
             tmp.write(content)
             tmp_path = tmp.name
         
-        # Parse PDF using our existing parser logic
         import fitz
         TERMS = ["24", "27", "36", "39", "42", "48", "51", "54", "60"]
         BODY_STYLES = [
@@ -1213,6 +1213,47 @@ async def upload_residual_guide(
             "Reg Cab 2WD", "Reg Cab 4WD",
         ]
         
+        # ── Auto-detect month/year from PDF content ──
+        MONTH_MAP_EN = {"january": 1, "february": 2, "march": 3, "april": 4, "may": 5, "june": 6,
+                        "july": 7, "august": 8, "september": 9, "october": 10, "november": 11, "december": 12}
+        MONTH_NAMES_UPPER = {m.upper(): n for m, n in MONTH_MAP_EN.items()}
+        
+        if not effective_month or not effective_year:
+            doc_detect = fitz.open(tmp_path)
+            for pg_idx in range(min(3, doc_detect.page_count)):
+                pg_text = doc_detect[pg_idx].get_text()
+                for month_name, month_num in MONTH_NAMES_UPPER.items():
+                    pattern = rf'{month_name}\s+(20\d{{2}})'
+                    m = re_local.search(pattern, pg_text)
+                    if m:
+                        effective_month = effective_month or month_num
+                        effective_year = effective_year or int(m.group(1))
+                        logger.info(f"[ResidualGuide] Auto-detected: {month_name} {m.group(1)}")
+                        break
+                if effective_month and effective_year:
+                    break
+            doc_detect.close()
+        
+        if not effective_month or not effective_year:
+            raise HTTPException(status_code=400, detail="Impossible de détecter le mois/année du PDF. Vérifiez le document.")
+        
+        logger.info(f"[ResidualGuide] Processing for month={effective_month}, year={effective_year}")
+        
+        # ── Load previous data for comparison ──
+        from routers.sci import _get_latest_data_file
+        prev_data = {}
+        prev_path = _get_latest_data_file("sci_residuals")
+        if prev_path:
+            try:
+                with open(prev_path, 'r') as f:
+                    prev_json = json.load(f)
+                for v in prev_json.get("vehicles", []):
+                    key = f"{v.get('brand')}|{v.get('model_name')}|{v.get('trim')}|{v.get('body_style')}"
+                    prev_data[key] = v.get("residual_percentages", {})
+                logger.info(f"[ResidualGuide] Loaded {len(prev_data)} previous vehicles for comparison from {prev_path}")
+            except Exception:
+                pass
+        
         def is_number(s):
             try:
                 int(s)
@@ -1223,8 +1264,64 @@ async def upload_residual_guide(
         def is_body_style(s):
             return s in BODY_STYLES
         
+        # ── Build month header filter (any month/year line) ──
+        month_header_pattern = re_local.compile(r'^(?:JANUARY|FEBRUARY|MARCH|APRIL|MAY|JUNE|JULY|AUGUST|SEPTEMBER|OCTOBER|NOVEMBER|DECEMBER)\s+20\d{2}$')
+        
         doc = fitz.open(tmp_path)
         all_vehicles = []
+        
+        # ── Also extract km adjustments from the last page ──
+        km_adjustments_extracted = None
+        last_page_text = doc[-1].get_text() if doc.page_count > 0 else ""
+        if "kilomet" in last_page_text.lower() or "18,000" in last_page_text:
+            km_lines = [l.strip() for l in last_page_text.split('\n') if l.strip()]
+            km_adj_18k = {}
+            km_adj_12k = {}
+            term_groups = [["24","27"], ["36","39","42"], ["48","51","54"], ["60"]]
+            
+            # Parse line-by-line: "18,000 Kilometers per year" followed by values
+            i = 0
+            while i < len(km_lines):
+                line = km_lines[i]
+                if '18,000' in line and 'kilom' in line.lower():
+                    # Collect next 4 values
+                    vals = []
+                    for j in range(1, 5):
+                        if i + j < len(km_lines):
+                            m = re_local.search(r'\+?(\d+)%?', km_lines[i + j])
+                            if m:
+                                vals.append(int(m.group(1)))
+                    if len(vals) == 4:
+                        for terms, val in zip(term_groups, vals):
+                            for t in terms:
+                                km_adj_18k[t] = val
+                        logger.info(f"[ResidualGuide] KM 18k extracted: {vals}")
+                    i += 5
+                    continue
+                elif '12,000' in line and 'kilom' in line.lower():
+                    vals = []
+                    for j in range(1, 5):
+                        if i + j < len(km_lines):
+                            m = re_local.search(r'\+?(\d+)%?', km_lines[i + j])
+                            if m:
+                                vals.append(int(m.group(1)))
+                    if len(vals) == 4:
+                        for terms, val in zip(term_groups, vals):
+                            for t in terms:
+                                km_adj_12k[t] = val
+                        logger.info(f"[ResidualGuide] KM 12k extracted: {vals}")
+                    i += 5
+                    continue
+                i += 1
+            
+            if km_adj_18k and km_adj_12k:
+                km_adjustments_extracted = {
+                    "standard_km": 24000,
+                    "max_km_per_year": 36000,
+                    "adjustments": {"18000": km_adj_18k, "12000": km_adj_12k},
+                    "source": "residual_guide"
+                }
+                logger.info(f"[ResidualGuide] KM adjustments: 18k={km_adj_18k}, 12k={km_adj_12k}")
         
         for page_num in range(doc.page_count):
             page = doc[page_num]
@@ -1235,7 +1332,9 @@ async def upload_residual_guide(
             for l in lines_raw:
                 if '675 Cochrane' in l or 'scileasecorp' in l or 'T: 1-888' in l or 'F: 1-866' in l:
                     continue
-                if l in ('LEASE RESIDUAL VALUES', 'STANDARD', 'FEBRUARY 2026', 'RESIDUAL VALUE GUIDE') or l.startswith('Effective:'):
+                if l in ('LEASE RESIDUAL VALUES', 'STANDARD', 'RESIDUAL VALUE GUIDE') or l.startswith('Effective:'):
+                    continue
+                if month_header_pattern.match(l):
                     continue
                 clean.append(l)
             
@@ -1264,8 +1363,7 @@ async def upload_residual_guide(
                     i += 1
                     continue
                 
-                import re
-                year_match = re.match(r'^(20\d{2})\s+(.+)$', line)
+                year_match = re_local.match(r'^(20\d{2})\s+(.+)$', line)
                 if year_match:
                     current_year = int(year_match.group(1))
                     model_raw = year_match.group(2).strip()
@@ -1273,7 +1371,7 @@ async def upload_residual_guide(
                     if i + 1 < len(clean):
                         next_line = clean[i + 1]
                         if (not is_body_style(next_line) and not is_number(next_line) and
-                            not re.match(r'^(20\d{2})\s+', next_line) and
+                            not re_local.match(r'^(20\d{2})\s+', next_line) and
                             next_line not in ('CHRYSLER', 'DODGE', 'JEEP', 'RAM', 'FIAT') and
                             next_line not in TERMS and not next_line.startswith('24 27')):
                             if i + 2 < len(clean) and (is_body_style(clean[i + 2]) or is_number(clean[i + 2])):
@@ -1350,26 +1448,64 @@ async def upload_residual_guide(
         if len(all_vehicles) == 0:
             raise HTTPException(status_code=400, detail="Aucun véhicule trouvé dans le PDF. Vérifiez le format du document.")
         
+        # ── Comparison: detect changes from previous data ──
+        changes_summary = {"new": 0, "modified": 0, "unchanged": 0, "details": []}
+        for v in all_vehicles:
+            key = f"{v.get('brand')}|{v.get('model_name')}|{v.get('trim')}|{v.get('body_style')}"
+            new_res = v.get("residual_percentages", {})
+            if key in prev_data:
+                old_res = prev_data[key]
+                diffs = {}
+                for term in TERMS:
+                    old_val = old_res.get(term, 0)
+                    new_val = new_res.get(term, 0)
+                    if isinstance(old_val, str): old_val = int(old_val)
+                    if isinstance(new_val, str): new_val = int(new_val)
+                    if old_val != new_val:
+                        diffs[term] = {"old": old_val, "new": new_val, "diff": new_val - old_val}
+                if diffs:
+                    changes_summary["modified"] += 1
+                    if len(changes_summary["details"]) < 50:
+                        changes_summary["details"].append({
+                            "vehicle": f"{v['brand']} {v.get('model_name','')} {v['trim']} {v.get('body_style','')}",
+                            "changes": diffs
+                        })
+                else:
+                    changes_summary["unchanged"] += 1
+            else:
+                changes_summary["new"] += 1
+        
+        logger.info(f"[ResidualGuide] Comparison: {changes_summary['new']} new, {changes_summary['modified']} modified, {changes_summary['unchanged']} unchanged")
+        
         # Build JSON result
         month_names = ["", "Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
                        "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"]
         
-        # Load dynamic km adjustments if available, else use defaults
-        en_month_abbrev_res = ["", "jan", "feb", "mar", "apr", "may", "jun",
-                               "jul", "aug", "sep", "oct", "nov", "dec"]
-        km_adj_file = ROOT_DIR / "data" / f"km_adjustments_{en_month_abbrev_res[effective_month]}{effective_year}.json"
-        if km_adj_file.exists():
-            with open(km_adj_file, 'r', encoding='utf-8') as f:
-                km_adjustments = json.load(f)
-            logger.info(f"[ResidualGuide] Using dynamic km adjustments from {km_adj_file}")
-        else:
+        # Use km adjustments from residual guide if extracted, else try existing files, else defaults
+        km_adjustments = km_adjustments_extracted
+        if not km_adjustments:
+            en_month_abbrev_res = ["", "jan", "feb", "mar", "apr", "may", "jun",
+                                   "jul", "aug", "sep", "oct", "nov", "dec"]
+            km_adj_file = ROOT_DIR / "data" / f"km_adjustments_{en_month_abbrev_res[effective_month]}{effective_year}.json"
+            if km_adj_file.exists():
+                with open(km_adj_file, 'r', encoding='utf-8') as f:
+                    km_adjustments = json.load(f)
+                logger.info(f"[ResidualGuide] Using dynamic km adjustments from {km_adj_file}")
+        if not km_adjustments:
             from services.pdfplumber_parser import DEFAULT_KM_ADJUSTMENTS
             km_adjustments = {
                 "standard_km": 24000,
                 "adjustments": DEFAULT_KM_ADJUSTMENTS,
                 "max_km_per_year": 36000,
             }
-            logger.info("[ResidualGuide] No dynamic km adjustments found, using defaults")
+            logger.info("[ResidualGuide] Using default km adjustments")
+        
+        # Save km_adjustments to standalone file for reuse
+        en_month_abbrev_res2 = ["", "jan", "feb", "mar", "apr", "may", "jun",
+                                "jul", "aug", "sep", "oct", "nov", "dec"]
+        km_file_path = ROOT_DIR / "data" / f"km_adjustments_{en_month_abbrev_res2[effective_month]}{effective_year}.json"
+        with open(km_file_path, 'w', encoding='utf-8') as f:
+            json.dump(km_adjustments, f, indent=2, ensure_ascii=False)
 
         result = {
             "effective_from": f"{effective_year}-{effective_month:02d}-01",
@@ -1504,7 +1640,21 @@ CalcAuto AiPro"""
             "brands": brands_count,
             "json_file": json_filename,
             "email_sent": email_sent,
-            "message": f"{len(all_vehicles)} véhicules extraits et sauvegardés"
+            "detected_month": effective_month,
+            "detected_year": effective_year,
+            "detected_period": f"{month_names[effective_month]} {effective_year}",
+            "km_adjustments": {
+                "source": km_adjustments.get("source", "default"),
+                "12k_60mo": km_adjustments.get("adjustments", {}).get("12000", {}).get("60", "?"),
+                "18k_60mo": km_adjustments.get("adjustments", {}).get("18000", {}).get("60", "?"),
+            },
+            "changes": {
+                "new_vehicles": changes_summary["new"],
+                "modified_vehicles": changes_summary["modified"],
+                "unchanged_vehicles": changes_summary["unchanged"],
+                "sample_changes": changes_summary["details"][:10],
+            },
+            "message": f"{len(all_vehicles)} véhicules extraits pour {month_names[effective_month]} {effective_year} — {changes_summary['modified']} modifiés, {changes_summary['new']} nouveaux"
         }
     
     except HTTPException:

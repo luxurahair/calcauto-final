@@ -1,0 +1,96 @@
+{
+  "summary": "Complete backend testing of residual guide auto-import feature. All 58 tests pass (32 unit tests + 20 km_adjustments tests + 6 new residual guide upload tests). The upload-residual-guide endpoint correctly auto-detects month/year from PDF content, extracts km adjustments from last page, compares with existing data, and saves files with French month names.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_ci_unit.py",
+    "/app/backend/tests/test_km_adjustments.py",
+    "/app/backend/tests/test_residual_guide_upload.py",
+    "/app/test_reports/pytest/pytest_results_iteration29.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "POST /api/upload-residual-guide correctly auto-detects month/year from PDF content (searches for 'MARCH 2026' etc on first 3 pages)",
+    "KM adjustments are correctly extracted from the last page of the residual guide (line-by-line parsing of '18,000 Kilometers per year' followed by values)",
+    "Response includes detected_period, detected_month, detected_year fields",
+    "Response includes changes object with new_vehicles, modified_vehicles, unchanged_vehicles counts",
+    "Response includes km_adjustments with source='residual_guide' and correct values (12k_60mo=5, 18k_60mo=4)",
+    "File is saved as sci_residuals_mars2026.json (with French month name)",
+    "GET /api/sci/residuals?month=3&year=2026 returns the new residual data with correct km_adjustments",
+    "Ram 1500 Laramie Crew Cab LWB 4WD shows 60mo base residual of 46% (verified)"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_residual_guide_upload.py"
+  ],
+  "success_rate": {
+    "backend": "100% (58/58 tests passed - 32 unit + 20 km_adjustments + 6 residual guide upload)"
+  },
+  "test_credentials": {
+    "admin_password": "Liana2018",
+    "backend_url": "https://toc-extraction-fix.preview.emergentagent.com",
+    "test_pdf": "/app/april_2026_residual.pdf"
+  },
+  "seed_data_creation": "Using existing test PDF (april_2026_residual.pdf which contains MARCH 2026 data)",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Residual guide auto-import feature fully tested. Backend correctly auto-detects month/year, extracts km adjustments, compares with existing data, and saves with French month names. All 58 backend tests pass.",
+  "verified_features": {
+    "feature_1_auto_detect_month_year": {
+      "status": "PASSED",
+      "description": "POST /api/upload-residual-guide with ONLY file and password auto-detects 'Mars 2026' from PDF content",
+      "result": "detected_month=3, detected_year=2026, detected_period='Mars 2026'"
+    },
+    "feature_2_detected_period_field": {
+      "status": "PASSED",
+      "description": "Response includes 'detected_period' field showing the detected month",
+      "result": "detected_period='Mars 2026'"
+    },
+    "feature_3_changes_object": {
+      "status": "PASSED",
+      "description": "Response includes 'changes' object with new_vehicles, modified_vehicles, unchanged_vehicles counts",
+      "result": "changes={new_vehicles: 0, modified_vehicles: 98, unchanged_vehicles: 190}"
+    },
+    "feature_4_km_adjustments_source": {
+      "status": "PASSED",
+      "description": "KM adjustments extracted from last page with source='residual_guide'",
+      "result": "source='residual_guide'"
+    },
+    "feature_5_km_adjustments_values": {
+      "status": "PASSED",
+      "description": "Response km_adjustments shows 12k_60mo=5, 18k_60mo=4",
+      "result": "12k_60mo=5, 18k_60mo=4"
+    },
+    "feature_6_french_filename": {
+      "status": "PASSED",
+      "description": "File saved as sci_residuals_mars2026.json (with French month name)",
+      "result": "json_file='sci_residuals_mars2026.json'"
+    },
+    "feature_7_get_residuals_api": {
+      "status": "PASSED",
+      "description": "GET /api/sci/residuals?month=3&year=2026 returns new residual data with correct km_adjustments",
+      "result": "288 vehicles returned with km_adjustments"
+    },
+    "feature_8_ram_1500_residual": {
+      "status": "PASSED",
+      "description": "Ram 1500 Laramie Crew Cab LWB 4WD shows 60mo base residual of 46%",
+      "result": "residual_percentages.60=46"
+    },
+    "feature_9_test_ci_unit": {
+      "status": "PASSED",
+      "description": "test_ci_unit.py passes all 32 tests",
+      "result": "32/32 passed"
+    },
+    "feature_10_test_km_adjustments": {
+      "status": "PASSED",
+      "description": "test_km_adjustments.py passes all 20 tests",
+      "result": "20/20 passed"
+    }
+  }
+}
