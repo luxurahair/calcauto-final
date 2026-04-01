@@ -4,7 +4,7 @@
 CRM complet pour concessionnaires automobiles qui analyse les PDFs mensuels d'incitatifs financiers FCA Canada/Stellantis. Extraction déterministe via pdfplumber, calcul de location/financement avec UI dynamique.
 
 ## Architecture
-- **Backend:** FastAPI + pdfplumber, stockage fichiers dans `backend/data/`
+- **Backend:** FastAPI + pdfplumber + PyMuPDF(fitz), stockage fichiers dans `backend/data/`
 - **Frontend:** Expo/React Native for Web (TypeScript)
 - **DB:** MongoDB Atlas (users, submissions, corrections, inventory)
 - **Stockage:** Supabase Storage (persistance fichiers JSON)
@@ -24,19 +24,20 @@ CRM complet pour concessionnaires automobiles qui analyse les PDFs mensuels d'in
 11. **Corrections Management UI** - Admin panel tab for corrections
 12. **Improved Residual Vehicle Matching** - 10-priority matching
 13. **Supabase Storage Integration** - persistence for ephemeral deployments
-14. **Dynamic KM Adjustments Extraction** - parses "General Rules" section for Low/Super Low Kilometre residual enhancements (DONE - April 2026)
+14. **Dynamic KM Adjustments Extraction** - parses "General Rules" section for Low/Super Low Kilometre residual enhancements from both retail PDF and residual guide PDF
+15. **Auto-Import Résiduel Guide** - Auto-détection mois/année, extraction km adjustments depuis dernière page, comparaison ancien/nouveau avec rapport de changements (DONE - April 2026)
 
 ## Key APIs
 - `POST /api/scan-pdf` - auto-detect section pages via TOC
 - `POST /api/extract-pdf-async` - full PDF extraction pipeline (includes General Rules parsing)
-- `GET /api/sci/residuals` - residuals + dynamic km_adjustments
+- `GET /api/sci/residuals` - residuals + dynamic km_adjustments (merges standalone km_adjustments file)
+- `POST /api/upload-residual-guide` - upload SCI residual PDF (auto-detect month, compare, extract km adj)
 - `GET /api/sci/lease-rates` - lease rates data
 - `GET /api/corrections` - list corrections
-- `POST /api/upload-residual-guide` - upload SCI residual PDF
 
 ## Key Data Files
 - `km_adjustments_{month}{year}.json` - dynamic km adjustments per month
-- `sci_residuals_{month}{year}.json` - vehicle residual percentages
+- `sci_residuals_{month}{year}.json` - vehicle residual percentages (French month names)
 - `sci_lease_rates_{month}{year}.json` - lease rates
 - `program_meta_{month}{year}.json` - event/cover page metadata
 
