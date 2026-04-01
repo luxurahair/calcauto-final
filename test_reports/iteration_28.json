@@ -1,0 +1,91 @@
+{
+  "summary": "Complete testing of km_adjustments dynamic extraction feature. All 52 backend tests pass (20 original + 32 new comprehensive tests). API endpoint GET /api/sci/residuals returns correct km_adjustments structure with all 9 terms for both 18k and 12k km categories. Frontend correctly uses getKmAdjustment function.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_km_adjustments.py",
+    "/app/backend/tests/test_km_adjustments_full.py",
+    "/app/test_reports/pytest/pytest_km_adjustments.xml",
+    "/app/test_reports/pytest/pytest_km_adjustments_full.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "parse_general_rules() in pdfplumber_parser.py correctly extracts km adjustments from General Rules section using TOC-based page detection",
+    "_expand_term_range() correctly handles all term range formats: '24-27', '36-42', '48-54', '60'",
+    "_parse_enhancement_value() correctly parses '+1', '+5', '3' formats",
+    "DEFAULT_KM_ADJUSTMENTS provides valid fallback if extraction fails",
+    "GET /api/sci/residuals merges dynamic km_adjustments from file if available (lines 76-83 in sci.py)",
+    "Frontend getKmAdjustment() in leaseCalculator.ts correctly returns 0 for 24k km (standard) and adjustment values for 18k/12k"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_km_adjustments_full.py"
+  ],
+  "success_rate": {
+    "backend": "100% (52/52 tests passed - 20 original + 32 new)",
+    "frontend": "100% (App loads correctly, km_adjustments integration verified)"
+  },
+  "test_credentials": {
+    "admin_password": "Liana2018",
+    "demo_user": "demo@calcauto.ca",
+    "backend_url": "https://toc-extraction-fix.preview.emergentagent.com",
+    "february_pdf": "/app/pdf_source.pdf",
+    "march_pdf": "/app/march_2026.pdf"
+  },
+  "seed_data_creation": "Using existing test PDFs (pdf_source.pdf for February, march_2026.pdf for March)",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "km_adjustments dynamic extraction fully tested. Backend parser extracts from General Rules section. API returns correct structure. Frontend uses getKmAdjustment() function correctly.",
+  "verified_features": {
+    "parse_general_rules_february_pdf": {
+      "status": "PASSED",
+      "result": "Extracts correct km adjustments from pdf_source.pdf with source='extracted'"
+    },
+    "parse_general_rules_march_pdf": {
+      "status": "PASSED",
+      "result": "Extracts correct km adjustments from march_2026.pdf with source='extracted'"
+    },
+    "_expand_term_range_utility": {
+      "status": "PASSED",
+      "result": "Correctly expands '24-27'→['24','27'], '36-42'→['36','39','42'], '48-54'→['48','51','54'], '60'→['60']"
+    },
+    "_parse_enhancement_value_utility": {
+      "status": "PASSED",
+      "result": "Correctly parses '+1'→1, '+5'→5, '3'→3, ''→None, None→None"
+    },
+    "GET_api_sci_residuals_km_adjustments": {
+      "status": "PASSED",
+      "result": "Returns km_adjustments with adjustments.18000 and adjustments.12000, each with 9 terms"
+    },
+    "km_adjustments_18k_values": {
+      "status": "PASSED",
+      "result": "18k: {24:1, 27:1, 36:2, 39:2, 42:2, 48:3, 51:3, 54:3, 60:4}"
+    },
+    "km_adjustments_12k_values": {
+      "status": "PASSED",
+      "result": "12k: {24:2, 27:2, 36:3, 39:3, 42:3, 48:4, 51:4, 54:4, 60:5}"
+    },
+    "frontend_getKmAdjustment_function": {
+      "status": "PASSED",
+      "result": "Returns 4 for 18k@60mo, 0 for 24k (standard), 5 for 12k@60mo"
+    },
+    "frontend_uses_km_adjustments": {
+      "status": "PASSED",
+      "result": "index.tsx lines 478-480 correctly use leaseResiduals.km_adjustments?.adjustments"
+    },
+    "DEFAULT_KM_ADJUSTMENTS_fallback": {
+      "status": "PASSED",
+      "result": "Valid fallback structure with all 9 terms for both 18k and 12k"
+    },
+    "existing_test_suite": {
+      "status": "PASSED",
+      "result": "All 20 tests in test_km_adjustments.py pass"
+    }
+  }
+}

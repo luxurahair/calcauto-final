@@ -64,12 +64,24 @@ def _get_latest_data_file(prefix: str, target_month: int = None, target_year: in
 
 @router.get("/sci/residuals")
 async def get_sci_residuals(month: int = None, year: int = None):
-    """Retourne les valeurs résiduelles SCI. month/year optionnels pour historique."""
+    """Retourne les valeurs résiduelles SCI. month/year optionnels pour historique.
+    Fusionne les km_adjustments dynamiques si disponibles."""
     residuals_path = _get_latest_data_file("sci_residuals", month, year)
     if not residuals_path:
         raise HTTPException(status_code=404, detail="Residual data not found" + (f" for {month}/{year}" if month else ""))
     with open(residuals_path, 'r') as f:
         data = json.load(f)
+
+    # Override km_adjustments with the latest dynamic file if available
+    km_path = _get_latest_data_file("km_adjustments", month, year)
+    if km_path:
+        try:
+            with open(km_path, 'r') as f:
+                km_data = json.load(f)
+            data['km_adjustments'] = km_data
+        except Exception:
+            pass  # Keep existing km_adjustments from residuals file
+
     return data
 
 @router.get("/sci/lease-rates")

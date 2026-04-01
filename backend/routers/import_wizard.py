@@ -1033,6 +1033,45 @@ async def _run_extraction_task(task_id: str, pdf_content: bytes, password: str,
         except Exception as cover_error:
             logger.error(f"[Async] Cover page error: {str(cover_error)}")
 
+        # ── Step 4.7: Parse General Rules (km adjustments) ──
+        km_adjustments_data = None
+        try:
+            from services.pdfplumber_parser import parse_general_rules
+            km_adj_result = parse_general_rules(pdf_content)
+            if km_adj_result and km_adj_result.get("adjustments"):
+                km_adjustments_data = km_adj_result
+                en_month_abbrev_km = ["", "jan", "feb", "mar", "apr", "may", "jun",
+                                      "jul", "aug", "sep", "oct", "nov", "dec"]
+                km_filename = f"km_adjustments_{en_month_abbrev_km[program_month]}{program_year}.json"
+                km_path = ROOT_DIR / "data" / km_filename
+                with open(km_path, 'w', encoding='utf-8') as f:
+                    json.dump(km_adj_result, f, indent=2, ensure_ascii=False)
+                logger.info(f"[Async] KM adjustments saved: {km_path} (source={km_adj_result.get('source', 'unknown')})")
+
+                # Upload to Supabase for persistence
+                try:
+                    from services.storage import upload_monthly_json
+                    upload_monthly_json(str(km_path), "km_adjustments", program_month, program_year)
+                    logger.info(f"[Async] KM adjustments uploaded to Supabase")
+                except Exception as sup_err:
+                    logger.warning(f"[Async] Supabase upload skipped: {sup_err}")
+
+                # Also update the existing sci_residuals file if it exists
+                import glob
+                residuals_pattern = str(ROOT_DIR / "data" / f"sci_residuals_*{program_year}.json")
+                for rpath in glob.glob(residuals_pattern):
+                    try:
+                        with open(rpath, 'r', encoding='utf-8') as f:
+                            rdata = json.load(f)
+                        rdata['km_adjustments'] = km_adj_result
+                        with open(rpath, 'w', encoding='utf-8') as f:
+                            json.dump(rdata, f, indent=2, ensure_ascii=False)
+                        logger.info(f"[Async] Updated km_adjustments in {rpath}")
+                    except Exception as re_err:
+                        logger.error(f"[Async] Failed to update {rpath}: {re_err}")
+        except Exception as km_error:
+            logger.error(f"[Async] General Rules (km adjustments) error: {str(km_error)}")
+
         # ── Step 5: Generate Excel and send email ──
         excel_sent = False
         if EXCEL_AVAILABLE and valid_programs and SMTP_EMAIL:
@@ -1315,17 +1354,27 @@ async def upload_residual_guide(
         month_names = ["", "Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
                        "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"]
         
+        # Load dynamic km adjustments if available, else use defaults
+        en_month_abbrev_res = ["", "jan", "feb", "mar", "apr", "may", "jun",
+                               "jul", "aug", "sep", "oct", "nov", "dec"]
+        km_adj_file = ROOT_DIR / "data" / f"km_adjustments_{en_month_abbrev_res[effective_month]}{effective_year}.json"
+        if km_adj_file.exists():
+            with open(km_adj_file, 'r', encoding='utf-8') as f:
+                km_adjustments = json.load(f)
+            logger.info(f"[ResidualGuide] Using dynamic km adjustments from {km_adj_file}")
+        else:
+            from services.pdfplumber_parser import DEFAULT_KM_ADJUSTMENTS
+            km_adjustments = {
+                "standard_km": 24000,
+                "adjustments": DEFAULT_KM_ADJUSTMENTS,
+                "max_km_per_year": 36000,
+            }
+            logger.info("[ResidualGuide] No dynamic km adjustments found, using defaults")
+
         result = {
             "effective_from": f"{effective_year}-{effective_month:02d}-01",
             "source": f"SCI Lease Corp Stellantis Residual Guide - {month_names[effective_month]} {effective_year}",
-            "km_adjustments": {
-                "standard_km": 24000,
-                "adjustments": {
-                    "18000": {"24": 1, "27": 1, "36": 2, "39": 2, "42": 2, "48": 3, "51": 3, "54": 3, "60": 4},
-                    "12000": {"24": 2, "27": 2, "36": 3, "39": 3, "42": 3, "48": 4, "51": 4, "54": 4, "60": 5}
-                },
-                "max_km_per_year": 36000
-            },
+            "km_adjustments": km_adjustments,
             "vehicles": all_vehicles
         }
         

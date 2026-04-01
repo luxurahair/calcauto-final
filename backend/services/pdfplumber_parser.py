@@ -889,6 +889,188 @@ def _detect_loyalty(text: str) -> float:
 
 
 # ═══════════════════════════════════════════════════════════════
+# GENERAL RULES PARSER (km adjustments)
+# ═══════════════════════════════════════════════════════════════
+
+# Default km adjustments (fallback if extraction fails)
+DEFAULT_KM_ADJUSTMENTS = {
+    "18000": {"24": 1, "27": 1, "36": 2, "39": 2, "42": 2, "48": 3, "51": 3, "54": 3, "60": 4},
+    "12000": {"24": 2, "27": 2, "36": 3, "39": 3, "42": 3, "48": 4, "51": 4, "54": 4, "60": 5},
+}
+
+# Term range expansion: "24 – 27" → [24, 27], "36 – 42" → [36, 39, 42], "60" → [60]
+_TERM_RANGE_MAP = {
+    (24, 27): ["24", "27"],
+    (36, 42): ["36", "39", "42"],
+    (48, 54): ["48", "51", "54"],
+    (60, 60): ["60"],
+}
+
+
+def _expand_term_range(term_text: str) -> List[str]:
+    """Convert a term range string like '24 – 27 months' into a list of term keys."""
+    term_text = term_text.replace('months', '').replace('month', '').strip()
+    m = re.match(r'(\d+)\s*[–\-]\s*(\d+)', term_text)
+    if m:
+        low, high = int(m.group(1)), int(m.group(2))
+        for (rng_low, rng_high), keys in _TERM_RANGE_MAP.items():
+            if rng_low == low and rng_high == high:
+                return keys
+        # Fallback: generate intermediate terms (multiples of 3 within range)
+        return [str(t) for t in range(low, high + 1, 3)]
+    m_single = re.match(r'(\d+)', term_text)
+    if m_single:
+        val = int(m_single.group(1))
+        return [str(val)]
+    return []
+
+
+def parse_general_rules(pdf_content: bytes) -> Dict:
+    """
+    Parse the 'General Rules' section to extract the Low/Super Low Kilometre
+    residual enhancements table.
+
+    Returns:
+    {
+        "standard_km": 24000,
+        "max_km_per_year": 36000,
+        "adjustments": {
+            "18000": {"24": 1, "27": 1, "36": 2, ...},
+            "12000": {"24": 2, "27": 2, "36": 3, ...}
+        },
+        "source": "extracted"
+    }
+    """
+    toc = _parse_toc(pdf_content)
+
+    # Find General Rules pages from TOC
+    gr_start = None
+    gr_end = None
+    for idx, (name, page_num) in enumerate(toc):
+        if 'general rules' in name.lower():
+            gr_start = page_num
+            if idx + 1 < len(toc):
+                gr_end = toc[idx + 1][1] - 1
+            else:
+                gr_end = page_num + 2
+            break
+
+    if not gr_start:
+        logger.warning("[GeneralRules] Section not found in TOC, using defaults")
+        return {"standard_km": 24000, "max_km_per_year": 36000,
+                "adjustments": DEFAULT_KM_ADJUSTMENTS, "source": "default"}
+
+    logger.info(f"[GeneralRules] Found in TOC: pages {gr_start}-{gr_end}")
+
+    low_km = {}   # 18,000 km/year
+    super_low = {}  # 12,000 km/year
+
+    with pdfplumber.open(BytesIO(pdf_content)) as pdf:
+        total_pages = len(pdf.pages)
+        start_idx = max(0, gr_start - 1)
+        end_idx = min(total_pages, (gr_end or gr_start + 2))
+
+        for page_idx in range(start_idx, end_idx):
+            page = pdf.pages[page_idx]
+            tables = page.extract_tables()
+
+            for table in tables:
+                if not table or len(table) < 2:
+                    continue
+
+                # Look for the km enhancement table by checking headers
+                has_low_km_header = False
+                header_row_idx = None
+                for ri, row in enumerate(table[:4]):
+                    row_text = ' '.join(str(c or '') for c in row).lower()
+                    if 'low km' in row_text or 'low kilomet' in row_text or '18,000' in row_text or '18000' in row_text:
+                        has_low_km_header = True
+                        header_row_idx = ri
+                        break
+
+                if not has_low_km_header:
+                    continue
+
+                logger.info(f"[GeneralRules] Found km enhancement table on page {page_idx+1}, header at row {header_row_idx}")
+
+                # Parse data rows - find values by scanning for numeric content
+                # Table structure varies (merged cells), so we find data positionally:
+                # Col 0 = Term text, first numeric col = Low KM, last numeric col = Super Low KM
+                for ri in range(header_row_idx + 1, len(table)):
+                    row = table[ri]
+                    if not row:
+                        continue
+
+                    # Find term text (first non-empty cell with month/number info)
+                    term_text = None
+                    for ci, cell in enumerate(row):
+                        cell_str = str(cell or '').strip()
+                        if cell_str and re.search(r'\d', cell_str) and ('month' in cell_str.lower() or re.match(r'^\d+\s*[–\-]?\s*\d*', cell_str)):
+                            term_text = cell_str
+                            break
+
+                    if not term_text:
+                        # Try first column directly
+                        c0 = str(row[0] or '').strip()
+                        if c0 and re.search(r'\d', c0):
+                            term_text = c0
+
+                    if not term_text:
+                        continue
+
+                    # Find all numeric enhancement values in the row
+                    values = []
+                    for ci, cell in enumerate(row):
+                        val = _parse_enhancement_value(str(cell or ''))
+                        if val is not None and ci > 0:  # Skip col 0 (term)
+                            values.append((ci, val))
+
+                    if len(values) < 2:
+                        continue
+
+                    # First value = Low KM (18k), last value = Super Low KM (12k)
+                    low_val = values[0][1]
+                    super_val = values[-1][1]
+
+                    term_keys = _expand_term_range(term_text)
+                    if not term_keys:
+                        continue
+
+                    logger.info(f"[GeneralRules] Term={term_text} → keys={term_keys}, Low={low_val}, Super={super_val}")
+
+                    for tk in term_keys:
+                        low_km[tk] = low_val
+                        super_low[tk] = super_val
+
+    if low_km and super_low:
+        result = {
+            "standard_km": 24000,
+            "max_km_per_year": 36000,
+            "adjustments": {
+                "18000": low_km,
+                "12000": super_low,
+            },
+            "source": "extracted",
+        }
+        logger.info(f"[GeneralRules] Extracted km adjustments: 18k={low_km}, 12k={super_low}")
+        return result
+
+    logger.warning("[GeneralRules] Could not extract km table, using defaults")
+    return {"standard_km": 24000, "max_km_per_year": 36000,
+            "adjustments": DEFAULT_KM_ADJUSTMENTS, "source": "default"}
+
+
+def _parse_enhancement_value(text: str) -> Optional[int]:
+    """Parse enhancement value like '+1', '+2', '1', '2'."""
+    if not text:
+        return None
+    m = re.search(r'[+]?\s*(\d+)', text)
+    if m:
+        return int(m.group(1))
+    return None
+
+
+# ═══════════════════════════════════════════════════════════════
 # AUTO-DETECTION DES PAGES (TOC-first strategy)
 # ═══════════════════════════════════════════════════════════════
 
@@ -957,7 +1139,6 @@ def auto_detect_pages(pdf_content: bytes) -> Dict:
         return result
 
     # Build an ordered list of TOC page numbers for boundary calculation
-    toc_pages_ordered = [page for _, page in toc]
 
     def _find_section_range(keyword: str, exclude_keywords: List[str] = None) -> Optional[Tuple[int, int]]:
         """Find a section by keyword in TOC and compute data page range."""
