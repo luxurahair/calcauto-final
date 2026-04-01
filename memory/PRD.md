@@ -1,44 +1,49 @@
 # CalcAuto AiPro - PRD
 
 ## Problem Statement
-Car dealership CRM that parses FCA Canada monthly incentive PDFs to extract retail programs, SCI lease rates, and display them via a dynamic calculator UI. Originally used AI/OCR; now uses deterministic pdfplumber parsing.
+CRM complet pour concessionnaires automobiles qui analyse les PDFs mensuels d'incitatifs financiers FCA Canada/Stellantis. Extraction déterministe via pdfplumber, calcul de location/financement avec UI dynamique.
 
 ## Architecture
-- **Backend:** FastAPI + pdfplumber + pandas, file-based storage in `backend/data/`
-- **Frontend:** React/Expo (static export), served from `dist/`
-- **DB:** MongoDB (users, submissions, corrections)
+- **Backend:** FastAPI + pdfplumber, stockage fichiers dans `backend/data/`
+- **Frontend:** Expo/React Native for Web (TypeScript)
+- **DB:** MongoDB Atlas (users, submissions, corrections, inventory)
+- **Stockage:** Supabase Storage (persistance fichiers JSON)
 - **CI/CD:** GitHub Actions -> Render (backend) + Vercel (frontend)
 
 ## Completed Features
 1. **Deterministic PDF Parser** (pdfplumber) - replaces old AI/OCR
 2. **TOC-based Auto-Detection** - parses Table of Contents on page 2
 3. **Retail Program Parser** - extracts Option 1, Option 2, Consumer Cash, Bonus Cash
-4. **SCI Lease Parser** - FIXED row alignment bug (2-row offset between names/rates tables)
+4. **SCI Lease Parser** - with row alignment fix (2-row offset)
 5. **Bonus Cash Parser** - separate page parsing
 6. **Dynamic Event Banner** - promotional info from PDF cover page
 7. **Loyalty Rate & 90-day Deferred Payment** - calculation modifiers
 8. **Demo Mode** - password-free access via demo@calcauto.ca
 9. **CI/CD Pipeline** - GitHub Actions with pytest + deploy hooks
 10. **Animated Splash Screen** - comet trail loading animation
-11. **Corrections Management UI** - Admin panel tab for viewing/deleting corrections
-12. **Improved Residual Vehicle Matching** - 10-priority matching with effectiveModel, keyword, and fallback levels
+11. **Corrections Management UI** - Admin panel tab for corrections
+12. **Improved Residual Vehicle Matching** - 10-priority matching
+13. **Supabase Storage Integration** - persistence for ephemeral deployments
+14. **Dynamic KM Adjustments Extraction** - parses "General Rules" section for Low/Super Low Kilometre residual enhancements (DONE - April 2026)
 
-## Key Bug Fixes (Current Session)
-- **SCI Lease Row Alignment:** Fixed 2-row offset between names table (row 14) and rates table (row 12). Uses zip of filtered lists.
-- **Residual Vehicle Matching:** Improved `findResidualVehicle` from 2-priority to 10-priority matching. Added effectiveModel extraction from trim (e.g., "Grand Cherokee L" from trim "Grand Cherokee L Altitude..."), keyword matching, and base model fallback.
+## Key APIs
+- `POST /api/scan-pdf` - auto-detect section pages via TOC
+- `POST /api/extract-pdf-async` - full PDF extraction pipeline (includes General Rules parsing)
+- `GET /api/sci/residuals` - residuals + dynamic km_adjustments
+- `GET /api/sci/lease-rates` - lease rates data
+- `GET /api/corrections` - list corrections
+- `POST /api/upload-residual-guide` - upload SCI residual PDF
 
-## API Endpoints
-- `POST /api/scan-pdf` - auto-detect section pages
-- `POST /api/extract-pdf` - full PDF extraction pipeline
-- `GET /api/corrections` - list memorized corrections
-- `DELETE /api/corrections/{brand}/{model}/{year}` - delete correction
-- `DELETE /api/corrections/all` - delete all corrections
-- `GET /api/programs/:month/:year` - get programs
+## Key Data Files
+- `km_adjustments_{month}{year}.json` - dynamic km adjustments per month
+- `sci_residuals_{month}{year}.json` - vehicle residual percentages
+- `sci_lease_rates_{month}{year}.json` - lease rates
+- `program_meta_{month}{year}.json` - event/cover page metadata
 
 ## Credentials
-- Admin: password `Liana2018`
-- Demo: auto-login `demo@calcauto.ca`
+- Admin: danielgiroux007@gmail.com / Liana2018$
+- Demo: auto-login demo@calcauto.ca
 
 ## Upcoming Tasks
-- **(P2)** Refactor large frontend components (index.tsx, inventory.tsx, clients.tsx)
-- **(P3)** Parse Loyalty Rate Landscapes (pages 34-39 in March PDF)
+- **(P2)** Extraction des "Loyalty Rate Landscapes" comme type distinct
+- **(P3)** Refactorisation composants massifs (index.tsx ~3700 lignes, inventory.tsx, clients.tsx)
