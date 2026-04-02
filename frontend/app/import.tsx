@@ -89,6 +89,7 @@ export default function ImportScreen() {
   // Auto-detection state
   const [detectedSections, setDetectedSections] = useState<any>(null);
   const [scanning, setScanning] = useState(false);
+  const [selectedSectionIndices, setSelectedSectionIndices] = useState<Set<number>>(new Set());
   
   // Loading states
   const [loading, setLoading] = useState(false);
@@ -720,131 +721,128 @@ export default function ImportScreen() {
     </View>
   );
 
-  // Render Step: Select Pages
+  // Render Step: Select Pages (Section Selector with checkboxes)
+  const sectionConfig: Record<string, { icon: string; color: string; badge: string }> = {
+    'go to market': { icon: 'megaphone', color: '#FF6B6B', badge: 'Promo' },
+    'general rules': { icon: 'settings', color: '#4ECDC4', badge: 'Regles' },
+    'bonus cash': { icon: 'cash', color: '#45B7D1', badge: 'Bonus' },
+    'msrp discount': { icon: 'pricetag', color: '#96CEB4', badge: 'Rabais' },
+    'addendum': { icon: 'document-text', color: '#DDA0DD', badge: 'Addendum' },
+    'finance prime': { icon: 'trending-up', color: '#4ECDC4', badge: 'Finance' },
+    'finance non': { icon: 'trending-down', color: '#FFB347', badge: 'Non-Prime' },
+    'lease': { icon: 'car-sport', color: '#FF6B6B', badge: 'Location' },
+    'loyalty': { icon: 'heart', color: '#FF69B4', badge: 'Fidelite' },
+  };
+
+  const getSectionStyle = (name: string) => {
+    const nameLower = name.toLowerCase();
+    for (const [key, val] of Object.entries(sectionConfig)) {
+      if (nameLower.includes(key)) return val;
+    }
+    return { icon: 'document', color: '#888', badge: 'Info' };
+  };
+
+  const tocSections = detectedSections?.sections || [];
+  const allSelected = tocSections.length > 0 && selectedSectionIndices.size === tocSections.length;
+
+  const toggleSection = (idx: number) => {
+    setSelectedSectionIndices(prev => {
+      const next = new Set(prev);
+      if (next.has(idx)) next.delete(idx); else next.add(idx);
+      return next;
+    });
+  };
+
+  const toggleAll = () => {
+    if (allSelected) {
+      setSelectedSectionIndices(new Set());
+    } else {
+      setSelectedSectionIndices(new Set(tocSections.map((_: any, i: number) => i)));
+    }
+  };
+
   const renderSelectPagesStep = () => (
     <View style={styles.stepContainer}>
-      <Text style={styles.stepTitle}>Sélectionner les pages</Text>
+      <Text style={styles.stepTitle}>Choix des sections</Text>
       <Text style={styles.stepDescription}>
-        Le PDF "{pdfFileName}" contient {totalPages} pages
+        {pdfFileName} - {totalPages} pages - {tocSections.length} sections trouvees
       </Text>
-      
-      {/* Auto-detection banner */}
-      {detectedSections && (
-        <View style={{ backgroundColor: '#1a3a2a', borderRadius: 12, padding: 16, marginBottom: 16, borderWidth: 1, borderColor: '#4ECDC4' }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
-            <Ionicons name="checkmark-circle" size={20} color="#4ECDC4" />
-            <Text style={{ color: '#4ECDC4', fontWeight: '700', fontSize: 14, marginLeft: 8 }}>
-              Sections auto-detectees
-            </Text>
-          </View>
-          <Text style={{ color: '#ccc', fontSize: 12, lineHeight: 18 }}>
-            {detectedSections.retail_start ? `Finance Prime: pages ${detectedSections.retail_start}-${detectedSections.retail_end}` : 'Finance Prime: non detecte'}
-            {'\n'}
-            {detectedSections.lease_start ? `SCI Lease: pages ${detectedSections.lease_start}-${detectedSections.lease_end}` : 'SCI Lease: non detecte'}
-            {detectedSections.non_prime_start ? `\nNon-Prime: pages ${detectedSections.non_prime_start}-${detectedSections.non_prime_end}` : ''}
-            {detectedSections.key_incentive_pages?.length ? `\nKey Incentives: pages ${detectedSections.key_incentive_pages.join(', ')}` : ''}
-          </Text>
-        </View>
-      )}
-      
-      {/* Page Selection - Retail */}
-      <View style={styles.periodSection}>
-        <Text style={styles.periodLabel}>Programme Retail (Financement)</Text>
-        <Text style={styles.pageHint}>Pages contenant les taux Option 1 & 2 + Consumer Cash</Text>
-        <View style={styles.pageRow}>
-          <View style={styles.pageField}>
-            <Text style={styles.pageLabel}>De la page:</Text>
-            <TextInput
-              style={styles.pageInput}
-              value={pageStart}
-              onChangeText={setPageStart}
-              keyboardType="numeric"
-              placeholder="auto"
-              placeholderTextColor="#666"
-            />
-          </View>
-          <View style={styles.pageField}>
-            <Text style={styles.pageLabel}>A la page:</Text>
-            <TextInput
-              style={styles.pageInput}
-              value={pageEnd}
-              onChangeText={setPageEnd}
-              keyboardType="numeric"
-              placeholder="auto"
-              placeholderTextColor="#666"
-            />
-          </View>
-        </View>
-      </View>
-      
-      {/* Page Selection - SCI Lease */}
-      <View style={[styles.periodSection, { borderColor: '#FFB347' }]}>
-        <Text style={[styles.periodLabel, { color: '#FFB347' }]}>Programme SCI Lease (Location)</Text>
-        <Text style={styles.pageHint}>Pages contenant les taux location + Lease Cash / Bonus Cash</Text>
-        <View style={styles.pageRow}>
-          <View style={styles.pageField}>
-            <Text style={styles.pageLabel}>De la page:</Text>
-            <TextInput
-              style={[styles.pageInput, { borderColor: '#FFB347' }]}
-              value={leasePageStart}
-              onChangeText={setLeasePageStart}
-              keyboardType="numeric"
-              placeholder="auto"
-              placeholderTextColor="#666"
-            />
-          </View>
-          <View style={styles.pageField}>
-            <Text style={styles.pageLabel}>A la page:</Text>
-            <TextInput
-              style={[styles.pageInput, { borderColor: '#FFB347' }]}
-              value={leasePageEnd}
-              onChangeText={setLeasePageEnd}
-              keyboardType="numeric"
-              placeholder="auto"
-              placeholderTextColor="#666"
-            />
-          </View>
-        </View>
-      </View>
-      
-      <Text style={styles.pageValidation}>
-        Retail: pages {pageStart || 'auto'}-{pageEnd || 'auto'}  |  SCI Lease: pages {leasePageStart || 'auto'}-{leasePageEnd || 'auto'}
-      </Text>
-      
+
+      {/* Select All / Deselect All */}
       <TouchableOpacity
-        style={[styles.extractButton, extracting && styles.buttonDisabled]}
+        onPress={toggleAll}
+        style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16, paddingVertical: 8, paddingHorizontal: 12, borderRadius: 8, backgroundColor: allSelected ? 'rgba(78,205,196,0.15)' : 'rgba(255,255,255,0.05)' }}
+      >
+        <Ionicons name={allSelected ? 'checkbox' : 'square-outline'} size={22} color={allSelected ? '#4ECDC4' : '#666'} />
+        <Text style={{ color: allSelected ? '#4ECDC4' : '#aaa', marginLeft: 10, fontWeight: '600', fontSize: 14 }}>
+          {allSelected ? 'Tout desélectionner' : 'Tout sélectionner'}
+        </Text>
+        <View style={{ marginLeft: 'auto', backgroundColor: '#4ECDC4', borderRadius: 12, paddingHorizontal: 10, paddingVertical: 3 }}>
+          <Text style={{ color: '#1a1a2e', fontWeight: '700', fontSize: 12 }}>{selectedSectionIndices.size}/{tocSections.length}</Text>
+        </View>
+      </TouchableOpacity>
+
+      {/* Section List */}
+      <View style={{ gap: 8, marginBottom: 20 }}>
+        {tocSections.map((section: any, idx: number) => {
+          const style = getSectionStyle(section.name);
+          const isSelected = selectedSectionIndices.has(idx);
+          return (
+            <TouchableOpacity
+              key={idx}
+              data-testid={`section-checkbox-${idx}`}
+              onPress={() => toggleSection(idx)}
+              style={{
+                flexDirection: 'row', alignItems: 'center', padding: 14, borderRadius: 10,
+                backgroundColor: isSelected ? 'rgba(78,205,196,0.1)' : 'rgba(255,255,255,0.03)',
+                borderWidth: 1, borderColor: isSelected ? style.color : '#333',
+              }}
+            >
+              <Ionicons name={isSelected ? 'checkbox' : 'square-outline'} size={22} color={isSelected ? style.color : '#555'} />
+              <Ionicons name={style.icon as any} size={20} color={style.color} style={{ marginLeft: 12 }} />
+              <View style={{ flex: 1, marginLeft: 10 }}>
+                <Text style={{ color: isSelected ? '#fff' : '#aaa', fontWeight: '600', fontSize: 13 }}>{section.name}</Text>
+              </View>
+              <View style={{ backgroundColor: `${style.color}22`, borderRadius: 6, paddingHorizontal: 8, paddingVertical: 2, marginRight: 8 }}>
+                <Text style={{ color: style.color, fontSize: 11, fontWeight: '600' }}>{style.badge}</Text>
+              </View>
+              <Text style={{ color: '#888', fontSize: 12, fontWeight: '500' }}>p.{section.pages}</Text>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+
+      {/* Extract Button */}
+      <TouchableOpacity
+        style={[styles.extractButton, (extracting || selectedSectionIndices.size === 0) && styles.buttonDisabled]}
         onPress={handleExtractPages}
-        disabled={extracting}
+        disabled={extracting || selectedSectionIndices.size === 0}
+        data-testid="extract-sections-btn"
       >
         {extracting ? (
           <View style={styles.extractingContainer}>
             <ActivityIndicator size="large" color="#4ECDC4" />
             <Text style={styles.extractingText}>{extractionStatus || 'Extraction en cours...'}</Text>
-            <Text style={styles.extractingSubtext}>Retail: pages {pageStart}-{pageEnd} | SCI Lease: pages {leasePageStart}-{leasePageEnd}</Text>
+            <Text style={styles.extractingSubtext}>{selectedSectionIndices.size} sections en traitement</Text>
             <Text style={styles.extractingWait}>Veuillez patienter (2-4 minutes)</Text>
           </View>
         ) : (
           <>
             <Ionicons name="analytics" size={24} color="#fff" />
             <Text style={styles.extractButtonText}>
-              Extraire les programmes
+              Extraire {selectedSectionIndices.size} section{selectedSectionIndices.size > 1 ? 's' : ''}
             </Text>
           </>
         )}
       </TouchableOpacity>
-      
+
       {/* Change PDF button */}
       <TouchableOpacity
         style={styles.changePdfButton}
-        onPress={() => {
-          setPdfFile(null);
-          setPdfFileName('');
-          setTotalPages(0);
-          setCurrentStep('upload');
-        }}
+        onPress={() => { setPdfFile(null); setPdfFileName(''); setTotalPages(0); setCurrentStep('upload'); }}
         disabled={extracting}
       >
-        <Text style={styles.changePdfButtonText}>← Changer de PDF</Text>
+        <Text style={styles.changePdfButtonText}>Changer de PDF</Text>
       </TouchableOpacity>
     </View>
   );
