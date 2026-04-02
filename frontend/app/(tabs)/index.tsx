@@ -171,6 +171,58 @@ export default function HomeScreen() {
   const [showInventoryPicker, setShowInventoryPicker] = useState(false);
   const [manualVin, setManualVin] = useState<string>('');  // VIN manuel si pas d'inventaire
   
+  // Intelligent inventory-to-program matching
+  const matchesInventoryToProgram = useCallback((vehicle: any, program: any) => {
+    if (!vehicle || !program) return false;
+    // Brand must match
+    if (vehicle.brand?.toLowerCase() !== program.brand?.toLowerCase()) return false;
+    // Year must match
+    if (String(vehicle.year) !== String(program.year)) return false;
+    
+    const invModel = (vehicle.model || '').toLowerCase().replace(/\s+/g, '');
+    const progModel = (program.model || '').toLowerCase().replace(/\s+/g, '');
+    const invTrim = (vehicle.trim || '').toLowerCase();
+    const progTrim = (program.trim || '').toLowerCase();
+    
+    // Model must match (handle "2500/3500" matching "2500" or "3500")
+    const progModels = progModel.split('/');
+    const modelMatch = progModels.some((pm: string) => pm === invModel) || invModel === progModel;
+    if (!modelMatch) return false;
+    
+    // Check if program has exclusions (e.g., "Gas Models (excl Power Wagon, Chassis Cab)")
+    const hasExclusion = progTrim.includes('excl') || progTrim.includes('excludes');
+    
+    // Check if program is specifically for a single named trim (e.g., "Power Wagon Crew Cab")
+    const isSpecificTrim = !hasExclusion && !progTrim.includes('models') && !progTrim.includes(',');
+    
+    if (isSpecificTrim) {
+      // Program is for a specific trim like "Power Wagon" - inventory trim must contain it
+      const progTrimWords = progTrim.split(/[\s(]/)[0]; // first significant word
+      return invTrim.includes(progTrimWords) || progTrim.includes(invTrim.split(' ')[0]);
+    }
+    
+    if (hasExclusion) {
+      // Extract exclusion list
+      const exclMatch = progTrim.match(/(?:excl(?:udes?)?)\s+(.+?)(?:\)|$)/i);
+      if (exclMatch) {
+        const exclusions = exclMatch[1].toLowerCase();
+        // Check if inventory trim matches any exclusion
+        if (exclusions.includes('power wagon') && invTrim.includes('power wagon')) return false;
+        if (exclusions.includes('chassis cab') && invTrim.includes('chassis cab')) return false;
+      }
+      return true;
+    }
+    
+    // Comma-separated trim list (e.g., "Tradesman, Express, Warlock")
+    const progTrims = progTrim.split(',').map((t: string) => t.trim());
+    if (progTrims.length > 1) {
+      const invFirstWord = invTrim.split(' ')[0];
+      return progTrims.some((pt: string) => pt.includes(invFirstWord) || invTrim.includes(pt));
+    }
+    
+    return true;
+  }, []);
+  
   // Auto-detected financing from product code
   const [autoFinancing, setAutoFinancing] = useState<{
     consumer_cash: number;
@@ -1897,7 +1949,7 @@ export default function HomeScreen() {
           {selectedProgram && (
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>
-                {lang === 'fr' ? '📦 Inventaire disponible' : '📦 Available Inventory'} ({inventoryList.filter(v => v.brand?.toLowerCase() === selectedProgram.brand?.toLowerCase() && String(v.year) === String(selectedProgram.year) && v.model?.toLowerCase() === selectedProgram.model?.toLowerCase()).length})
+                {lang === 'fr' ? '📦 Inventaire disponible' : '📦 Available Inventory'} ({inventoryList.filter(v => matchesInventoryToProgram(v, selectedProgram)).length})
               </Text>
               <Text style={styles.inventorySubtitle}>
                 {lang === 'fr' 
@@ -1907,7 +1959,7 @@ export default function HomeScreen() {
               {inventoryList.length > 0 ? (
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.inventoryScroll}>
                   {inventoryList
-                    .filter(v => v.brand?.toLowerCase() === selectedProgram.brand?.toLowerCase() && String(v.year) === String(selectedProgram.year) && v.model?.toLowerCase() === selectedProgram.model?.toLowerCase())
+                    .filter(v => matchesInventoryToProgram(v, selectedProgram))
                     .map((vehicle) => (
                       <TouchableOpacity
                         key={vehicle.id}
@@ -1939,7 +1991,7 @@ export default function HomeScreen() {
                         )}
                       </TouchableOpacity>
                     ))}
-                  {inventoryList.filter(v => v.brand?.toLowerCase() === selectedProgram.brand?.toLowerCase() && String(v.year) === String(selectedProgram.year) && v.model?.toLowerCase() === selectedProgram.model?.toLowerCase()).length === 0 && (
+                  {inventoryList.filter(v => matchesInventoryToProgram(v, selectedProgram)).length === 0 && (
                     <View style={styles.noInventoryContainer}>
                       <Text style={styles.noInventoryText}>
                         {lang === 'fr' 
