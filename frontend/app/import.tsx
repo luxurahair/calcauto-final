@@ -572,8 +572,13 @@ export default function ImportScreen() {
         <View style={styles.residualSummary}>
           {/* Detected period */}
           {residualResult.detected_period && (
-            <Text style={[styles.residualSummaryTitle, { color: '#FFB347', marginBottom: 8 }]}>
+            <Text style={[styles.residualSummaryTitle, { color: '#FFB347', marginBottom: 4 }]}>
               {residualResult.detected_period}
+            </Text>
+          )}
+          {residualResult.covered_months && residualResult.covered_months.length > 1 && (
+            <Text style={{ color: '#4ECDC4', fontSize: 12, marginBottom: 8 }}>
+              Appliqué pour : {residualResult.covered_months.join(', ')}
             </Text>
           )}
           

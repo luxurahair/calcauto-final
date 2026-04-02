@@ -178,7 +178,8 @@ async def get_periods():
         {"$sort": {"_id.year": -1, "_id.month": -1}}
     ]
     periods = await db.programs.aggregate(pipeline).to_list(100)
-    return [ProgramPeriod(month=p["_id"]["month"], year=p["_id"]["year"], count=p["count"]) for p in periods]
+    return [ProgramPeriod(month=p["_id"]["month"], year=p["_id"]["year"], count=p["count"]) 
+            for p in periods if p["_id"].get("month") is not None and p["_id"].get("year") is not None]
 
 
 # ============ EXPORT / IMPORT EXCEL ============

@@ -1300,11 +1300,32 @@ async def upload_residual_guide(
         MONTH_MAP_EN = {"january": 1, "february": 2, "march": 3, "april": 4, "may": 5, "june": 6,
                         "july": 7, "august": 8, "september": 9, "october": 10, "november": 11, "december": 12}
         MONTH_NAMES_UPPER = {m.upper(): n for m, n in MONTH_MAP_EN.items()}
+        MONTH_ABBREV_MAP = {"jan": 1, "feb": 2, "mar": 3, "apr": 4, "may": 5, "jun": 6,
+                            "jul": 7, "aug": 8, "sep": 9, "oct": 10, "nov": 11, "dec": 12}
+        
+        # Detect the effective date range (e.g., "Effective: Mar 01, 2026 - Apr 30, 2026")
+        effective_end_month = None
+        effective_end_year = None
         
         if not effective_month or not effective_year:
             doc_detect = fitz.open(tmp_path)
             for pg_idx in range(min(3, doc_detect.page_count)):
                 pg_text = doc_detect[pg_idx].get_text()
+                
+                # Try to detect full effective range first
+                range_pattern = r'Effective:\s*(\w+)\s+\d+,?\s*(\d{4})\s*[-–]\s*(\w+)\s+\d+,?\s*(\d{4})'
+                range_match = re_local.search(range_pattern, pg_text, re_local.IGNORECASE)
+                if range_match:
+                    start_abbrev = range_match.group(1).lower()[:3]
+                    end_abbrev = range_match.group(3).lower()[:3]
+                    effective_month = MONTH_ABBREV_MAP.get(start_abbrev)
+                    effective_year = int(range_match.group(2))
+                    effective_end_month = MONTH_ABBREV_MAP.get(end_abbrev)
+                    effective_end_year = int(range_match.group(4))
+                    logger.info(f"[ResidualGuide] Detected range: month {effective_month}/{effective_year} → {effective_end_month}/{effective_end_year}")
+                    break
+                
+                # Fallback: detect single month
                 for month_name, month_num in MONTH_NAMES_UPPER.items():
                     pattern = rf'{month_name}\s+(20\d{{2}})'
                     m = re_local.search(pattern, pg_text)
@@ -1626,16 +1647,42 @@ async def upload_residual_guide(
             "vehicles": all_vehicles
         }
         
-        # Save JSON file
+        # Save JSON file for the primary month
         month_lower = month_names[effective_month].lower()
         json_filename = f"sci_residuals_{month_lower}{effective_year}.json"
         json_path = ROOT_DIR / "data" / json_filename
         with open(json_path, 'w') as f:
             json.dump(result, f, indent=2, ensure_ascii=False)
         
-        # Also update the current reference file
-        current_path = ROOT_DIR / "data" / f"sci_residuals_{month_lower}{effective_year}.json"
-        logger.info(f"Residual guide saved: {json_path} ({len(all_vehicles)} vehicles)")
+        saved_months = [f"{month_names[effective_month]} {effective_year}"]
+        
+        # If there's an end month, also save for all covered months
+        if effective_end_month and effective_end_year:
+            m, y = effective_month, effective_year
+            while True:
+                m += 1
+                if m > 12:
+                    m = 1
+                    y += 1
+                if (y > effective_end_year) or (y == effective_end_year and m > effective_end_month):
+                    break
+                extra_month_lower = month_names[m].lower()
+                extra_filename = f"sci_residuals_{extra_month_lower}{y}.json"
+                extra_path = ROOT_DIR / "data" / extra_filename
+                extra_result = dict(result)
+                extra_result["effective_from"] = f"{y}-{m:02d}-01"
+                extra_result["source"] = f"SCI Lease Corp Stellantis Residual Guide - {month_names[m]} {y} (copié de {month_names[effective_month]} {effective_year})"
+                with open(extra_path, 'w') as f:
+                    json.dump(extra_result, f, indent=2, ensure_ascii=False)
+                saved_months.append(f"{month_names[m]} {y}")
+                # Also copy km_adjustments
+                en_abbrev = ["", "jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"]
+                extra_km_path = ROOT_DIR / "data" / f"km_adjustments_{en_abbrev[m]}{y}.json"
+                with open(extra_km_path, 'w', encoding='utf-8') as f:
+                    json.dump(km_adjustments, f, indent=2, ensure_ascii=False)
+                logger.info(f"[ResidualGuide] Also saved for {month_names[m]} {y}: {extra_path}")
+        
+        logger.info(f"Residual guide saved for: {', '.join(saved_months)} ({len(all_vehicles)} vehicles)")
         
         # Generate Excel for verification
         from openpyxl import Workbook
@@ -1755,6 +1802,7 @@ CalcAuto AiPro"""
             "detected_month": effective_month,
             "detected_year": effective_year,
             "detected_period": f"{month_names[effective_month]} {effective_year}",
+            "covered_months": saved_months,
             "km_adjustments": {
                 "source": km_adjustments.get("source", "default"),
                 "12k_60mo": km_adjustments.get("adjustments", {}).get("12000", {}).get("60", "?"),
