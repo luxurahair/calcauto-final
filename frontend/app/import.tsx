@@ -1067,10 +1067,18 @@ export default function ImportScreen() {
       
       <TouchableOpacity
         style={styles.primaryButton}
+        onPress={() => setCurrentStep('choose-type')}
+      >
+        <Ionicons name="add-circle" size={20} color="#1a1a2e" />
+        <Text style={styles.primaryButtonText}>Importer un autre document</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={[styles.secondaryButton, { marginTop: 10 }]}
         onPress={() => router.replace('/')}
       >
-        <Ionicons name="home" size={20} color="#1a1a2e" />
-        <Text style={styles.primaryButtonText}>Retour à l'accueil</Text>
+        <Ionicons name="home" size={20} color="#4ECDC4" />
+        <Text style={styles.secondaryButtonText}>Retour à l'accueil</Text>
       </TouchableOpacity>
     </View>
   );
@@ -1117,10 +1125,10 @@ export default function ImportScreen() {
       
       <TouchableOpacity
         style={[styles.primaryButton, { backgroundColor: '#2d2d44', marginTop: 12 }]}
-        onPress={() => router.replace('/')}
+        onPress={() => setCurrentStep('choose-type')}
       >
-        <Ionicons name="home" size={20} color="#fff" />
-        <Text style={[styles.primaryButtonText, { color: '#fff' }]}>Retour a l'accueil</Text>
+        <Ionicons name="add-circle" size={20} color="#fff" />
+        <Text style={[styles.primaryButtonText, { color: '#fff' }]}>Importer un autre document</Text>
       </TouchableOpacity>
     </View>
   );
