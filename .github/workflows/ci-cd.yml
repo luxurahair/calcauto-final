@@ -26,6 +26,9 @@ jobs:
       - name: Run unit tests
         run: pytest tests/test_ci_unit.py -v --tb=short
 
+      - name: Run post-import validation tests
+        run: pytest tests/test_post_import.py -v --tb=short
+
   deploy-render:
     needs: test-backend
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
