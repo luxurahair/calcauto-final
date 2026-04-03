@@ -234,16 +234,14 @@ async def delete_better_offer(submission_id: str, authorization: Optional[str] =
     """Supprimer une offre améliorée de la liste"""
     user = await get_current_user(authorization)
     
-    # Marquer l'offre comme ignorée (équivalent à suppression de la liste)
-    result = await db.submissions.update_one(
-        {"id": submission_id, "owner_id": user["id"]},
-        {"$set": {"better_offer_status": "deleted"}}
+    result = await db.better_offers.delete_one(
+        {"submission_id": submission_id, "owner_id": user["id"]}
     )
     
-    if result.modified_count == 0:
+    if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Offre non trouvée")
     
-    return {"success": True, "message": "Offre supprimée de la liste"}
+    return {"success": True, "message": "Offre supprimée"}
 
 def _calc_payment(principal: float, annual_rate: float, term_months: int) -> float:
     """Helper: calcul paiement mensuel"""
