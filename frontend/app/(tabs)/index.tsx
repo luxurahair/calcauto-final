@@ -12,7 +12,7 @@ import { AnimatedSplashScreen } from '../../components/AnimatedSplashScreen';
 import { LanguageSelector } from '../../components/LanguageSelector';
 import { LoadingBorderAnimation } from '../../components/LoadingBorderAnimation';
 import { EventBanner } from '../../components/EventBanner';
-import { styles, loadingStyles } from './styles/homeStyles';
+import { styles, loadingStyles } from '../../styles/homeStyles';
 // Calculator hook & utilities
 import {
   useCalculatorPage,
