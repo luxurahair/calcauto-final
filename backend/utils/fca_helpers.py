@@ -46,7 +46,7 @@ def merge_multiline_names(raw_names: List[Tuple[int, str]]) -> List[Tuple[int, s
         if merged and (
             name.startswith('(') or
             name.startswith(')') or
-            (len(name) < 20 and not any(kw in name for kw in ['Ram', 'Jeep', 'Dodge', 'Chrysler', 'Fiat', 'Grand', 'Wrangler', 'Compass', 'Cherokee', 'Charger', 'Durango', 'Hornet', 'Gladiator', 'Pacifica', 'Wagoneer', 'ProMaster']))
+            (len(name) < 20 and not any(kw in name for kw in ['Ram', 'Jeep', 'Dodge', 'Chrysler', 'Fiat', 'Grand', 'Wrangler', 'Compass', 'Cherokee', 'Charger', 'Durango', 'Hornet', 'Gladiator', 'Pacifica', 'Wagoneer', 'ProMaster', '500e', 'Daytona', 'Caravan']))
         ):
             prev_ri, prev_name = merged[-1]
             merged[-1] = (prev_ri, f"{prev_name} {name}")
