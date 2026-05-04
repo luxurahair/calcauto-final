@@ -5,10 +5,33 @@ services:
     buildCommand: pip install -r requirements.txt
     startCommand: uvicorn server:app --host 0.0.0.0 --port $PORT
     envVars:
+      # Database
       - key: MONGO_URL
         sync: false
       - key: DB_NAME
-        value: calcauto_prod
+        value: calcauto
+
+      # Auth
+      - key: ADMIN_PASSWORD
+        sync: false
+
+      # OCR — Google Cloud Vision (DOCUMENT_TEXT_DETECTION pour scan factures FCA)
+      - key: GOOGLE_VISION_API_KEY
+        sync: false
+
+      # LLM (OpenAI direct + Emergent universal key)
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: EMERGENT_LLM_KEY
+        sync: false
+
+      # Supabase (storage + auth secondaire)
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_KEY
+        sync: false
+
+      # SMTP (Gmail App Password — envoi emails)
       - key: SMTP_EMAIL
         sync: false
       - key: SMTP_PASSWORD
