@@ -94,6 +94,18 @@ backend/
 │   ├── email_service.py      # Service SMTP (envoi emails via Gmail)
 │   └── window_sticker.py     # Recuperation Window Sticker Stellantis
 │
+├── utils/
+│   └── fca_helpers.py        # NOUVEAU (mars 2026) - Helpers PDFs FCA
+│                             #   - get_model_key()        : cle stable pour matching
+│                             #   - normalize_model_name() : nettoyage affichage
+│                             #   - merge_multiline_names(): fusion noms split sur 2 lignes
+│                             #   - match_names_to_rates() : MATCHING INTELLIGENT
+│                             #     • zip direct si comptes egaux (cas courant)
+│                             #     • sinon matching par PROXIMITE de row_index
+│                             #       avec distance max de 15 lignes
+│                             #     -> elimine les 70% de programmes manquants
+│                             #        causes par les anciennes correspondances
+│
 ├── scripts/
 │   └── setup_trim_orders.py  # Script pour configurer l'ordre des trims
 │
@@ -129,12 +141,35 @@ C'est le fichier principal qui demarre l'application FastAPI. Il:
 - **Migration auto:** Corrige les donnees 2025/2026 au premier demarrage (bonus_cash, inversions)
 - Gere la fermeture propre de MongoDB
 
-#### `services/pdfplumber_parser.py` - Parseur PDF
+#### `services/pdfplumber_parser.py` - Parseur PDF (DETERMINISTE — suggestions Grok)
 Le coeur de l'application. Utilise `pdfplumber` pour extraire les donnees des PDF d'incitatifs mensuels :
 - **`improved_parse_toc()`** : Lit la Table des Matieres (page 2) et retourne toutes les sections avec leurs numeros de page
-- **`parse_retail_programs_content_driven()`** : Extrait les programmes de financement (taux Option 1/2, consumer cash, bonus cash)
+- **`parse_retail_programs_content_driven()`** : Extrait les programmes de financement (taux Option 1/2, consumer cash, bonus cash). **Detection des tables par CONTENU** (signature de colonnes), pas par index hardcode → resiste aux PDFs qui changent legerement de mise en page
 - **`parse_sci_lease_programs()`** : Extrait les taux de location SCI avec alignement correct des noms/taux
 - **`parse_bonus_cash_page()`** : Extrait les bonus cash depuis une page separee et les fusionne avec les programmes
+
+##### `utils/fca_helpers.py` - Matching intelligent (NOUVEAU - mars 2026)
+Helpers extraits du parseur pour eviter la perte de programmes lors d'un mismatch de tableaux :
+
+- **`get_model_key(model_text)`** : cree une cle stable par vehicule (UPPERCASE, sans annee, sans exclusions parentheses, sans prefixes "ALL-NEW" / "NEW")
+- **`normalize_model_name()`** : nettoyage leger pour affichage (preserve les details visuels)
+- **`merge_multiline_names()`** : fusionne les noms splites sur 2 lignes (ex: `Grand Cherokee L (excludes Laredo` + `(WLJH75 2*A & 2*B) and Overland (WLJS75))` → 1 seule entree)
+- **`match_names_to_rates()`** : MATCHING INTELLIGENT noms ↔ taux
+  - **Cas ideal** (memes longueurs) : zip direct, tres rapide et fiable
+  - **Cas mismatch** : matching par **proximite de row_index** dans la table avec distance maximale de 15 lignes
+  - Resultat : avant on perdait ~70% des programmes quand FCA ajoutait/retirait des trims, maintenant on les recupere
+
+#### `routers/invoice.py` - OCR avec fallback (NOUVEAU - mars 2026)
+Le scanner de factures FCA fonctionne maintenant en **mode degrade** quand `GOOGLE_VISION_API_KEY` est absente :
+
+| Etat de la cle | Comportement |
+|---|---|
+| Cle presente et valide | OCR Google Vision `DOCUMENT_TEXT_DETECTION` (precision ~95%) |
+| Cle presente mais quota epuise | Logs warning + fallback vers parser local heuristique |
+| Cle absente | Retourne `{"error": "GOOGLE_VISION_API_KEY non configuree"}` proprement, pas de crash |
+| Cle invalide | Capture l'exception, log warning, fallback OCR global |
+
+> Avantage : l'app n'est plus bloquee si la cle Google expire ou si on l'a oubliee en dev. Permet aussi de tester en local sans frais Google.
 
 #### `services/storage.py` - Supabase Storage
 Module centralise pour toutes les operations de fichiers :
@@ -200,11 +235,22 @@ frontend/
 │   ├── manage.tsx               # Page de gestion
 │   └── (tabs)/
 │       ├── _layout.tsx          # Configuration des onglets (barre de navigation)
-│       ├── index.tsx            # Onglet "Calcul" (calculateur principal ~3000+ lignes)
-│       ├── inventory.tsx        # Onglet "Inventaire"
-│       ├── clients.tsx          # Onglet "CRM" (soumissions + contacts)
-│       └── admin.tsx            # Onglet "Admin" (visible admin seulement)
-│       └── styles/              # Styles des onglets
+│       ├── index.tsx            # Onglet "Calcul" (calculateur principal ~1970 lignes)
+│       ├── inventory.tsx        # Onglet "Inventaire" (~1792 lignes)
+│       ├── clients.tsx          # Onglet "CRM" - 4 sous-onglets (~2308 lignes)
+│       └── admin.tsx            # Onglet "Admin" - visible admin seulement (~926 lignes)
+│
+├── styles/                      # DEPLACE ICI (mars 2026) - hors de (tabs)/
+│   └── ...                      #   evite l'apparition d'un onglet parasite "styles"
+│                                #   dans la barre de navigation Expo Router
+│
+├── features/
+│   └── calculator/
+│       └── hooks/               # NOUVEAU (mars 2026) - decomposition du gros hook
+│           ├── useCalculatorPage.ts  # Hook principal de la page (~71kb, orchestrateur)
+│           ├── useInventoryData.ts   # Data inventaire (selection vehicule du stock)
+│           ├── useLeaseModule.ts     # Module location SCI complet (taux + grille)
+│           └── useProgramsData.ts    # Recuperation programmes + filtres
 │
 ├── components/
 │   ├── AnimatedSplashScreen.tsx # Animation d'ecran de demarrage (comete)
@@ -224,12 +270,12 @@ frontend/
 ├── contexts/
 │   └── AuthContext.tsx           # Contexte d'authentification (login, token, user, demo)
 │
-├── hooks/
+├── hooks/                        # Hooks GLOBAUX (reutilisables hors calculateur)
 │   ├── index.ts
-│   ├── useCalculator.ts         # Hook du calculateur
+│   ├── useCalculator.ts         # Hook compatibility (delegue a useCalculatorPage)
 │   ├── useFinancingCalculation.ts # Calculs de financement
 │   ├── useNetCost.ts            # Calcul du cout net
-│   └── usePrograms.ts           # Recuperation des programmes
+│   └── usePrograms.ts           # Recuperation des programmes (legacy)
 │
 ├── utils/
 │   ├── api.ts                   # Configuration de l'URL backend
@@ -253,6 +299,18 @@ frontend/
 ```
 
 ### Fichiers cles expliques
+
+#### `features/calculator/hooks/` - Refactoring hooks (mars 2026)
+Le hook monolithique du calculateur (~3000 lignes, ingerable) a ete **decompose en 4 sous-hooks** specialises :
+
+| Hook | Role | Taille |
+|---|---|---|
+| `useCalculatorPage.ts` | Orchestrateur principal de la page | ~71 KB |
+| `useInventoryData.ts` | Selection d'un vehicule depuis le stock | 3 KB |
+| `useLeaseModule.ts` | Module location SCI (taux + grille d'analyse) | 8 KB |
+| `useProgramsData.ts` | Recuperation programmes + filtres annee/marque | 7 KB |
+
+> Avantage : chaque hook est testable independamment et la responsabilite est claire. L'ancien `hooks/useCalculator.ts` a ete conserve comme **wrapper de compatibilite** qui delegue a `useCalculatorPage`.
 
 #### `app/import.tsx` - Import PDF avec checkboxes
 Nouveau flux d'import base sur la Table des Matieres :
@@ -662,6 +720,12 @@ mongodump --uri="mongodb+srv://user:pass@cluster.mongodb.net/calcauto_prod" --ou
 
 | Date | Bug | Cause | Fix |
 |------|-----|-------|-----|
+| Mai 2026 | Migration backend vers `luxurahair/calcauto-final` (workspace Daniel sur Render) | Ancien service `calcauto-aipro` mis en pause | Nouveau service Render `srv-d7sgav50lvsc73daf5vg` cree, 12 vars d'env injectees, Vercel `EXPO_PUBLIC_BACKEND_URL` mis a jour vers `https://calcauto-aipro-xck3.onrender.com` |
+| Avril 2026 | 81 programmes Avril 2026 ajoutes a la base | Nouveau cycle Stellantis | Import via `/api/extract-pdf` (pdfplumber deterministe) |
+| Mars 2026 | ~70% des programmes manquants apres extraction | Mismatch noms vs taux quand FCA ajoute/retire des trims | Creation `utils/fca_helpers.py` + matching par proximite de row_index |
+| Mars 2026 | Onglet parasite "styles" dans la barre de navigation | Le dossier `styles/` etait dans `app/(tabs)/` (Expo Router considere chaque sous-dossier comme un onglet) | Deplacement de `styles/` au niveau parent `frontend/styles/` |
+| Mars 2026 | Hook calculateur monolithique (~3000 lignes) | Trop de responsabilites dans `useCalculator.ts` | Decomposition en 4 sous-hooks dans `features/calculator/hooks/` |
+| Mars 2026 | Crash quand `GOOGLE_VISION_API_KEY` absente | Pas de garde dans `ocr.py` | Fallback gracieux : retourne erreur propre, ne crashe plus |
 | Mars 2026 | Taux SCI assignes au mauvais vehicule | Offset de 2 rangees entre les tables PDF | Correction dans `parse_sci_lease_programs` |
 | Mars 2026 | Cherokee affiche taux du Grand Cherokee | Matching partiel de chaine ("Cherokee" dans "Grand Cherokee") | Matching strict dans `leaseCalculator.ts` |
 | Mars 2026 | JSON SCI non sauvegarde apres extraction | `import_wizard.py` n'ecrivait pas le fichier JSON | Ajout de la sauvegarde locale + upload Supabase |
@@ -671,4 +735,34 @@ mongodump --uri="mongodb+srv://user:pass@cluster.mongodb.net/calcauto_prod" --ou
 
 ---
 
-*Document mis a jour le 17 mars 2026 pour CalcAuto AiPro v4*
+## Annexe : Changements recents (mai 2026)
+
+### Migration infrastructure (mai 2026)
+- 🆕 Nouveau service Render `calcauto-aipro` sous workspace **Daniel** (id `srv-d7sgav50lvsc73daf5vg`)
+- 🆕 Repo unifie sur `luxurahair/calcauto-final` (ancien repo `Lianag2018/calcauto-aipro` deprecie)
+- 🆕 Toutes les vars d'env injectees automatiquement via API Render
+- 🆕 Surveillance automatique depuis le projet `kenebec-ai` via `scripts/calcauto_control.py` :
+  - `status` / `env-list` / `env-set` / `redeploy` / `logs` / `vercel-redeploy`
+
+### Refonte parser PDF — suggestions Grok (mars 2026)
+| Avant (IA) | Apres (Grok) |
+|---|---|
+| GPT-4 Vision sur chaque page | `pdfplumber` direct → tables natives |
+| ~70-85% precision (hallucinations) | ✅ 100% reproductible sur PDFs FCA |
+| ~$0.05 par PDF | ✅ $0 (zero IA) |
+| Index hardcodes des pages | ✅ Content-driven (signature de table) |
+| Brand infere ligne par ligne | ✅ TOC-based (extraction par section TOC) |
+
+### Fichiers nouveaux
+- `backend/utils/fca_helpers.py` (94 lignes) : matching intelligent + helpers PDFs FCA
+- `frontend/features/calculator/hooks/` : 4 sous-hooks decomposes
+- `frontend/styles/` (deplace) : evite l'onglet parasite
+
+### Fonctionnalites etendues
+- **Fallback OCR** quand `GOOGLE_VISION_API_KEY` absente
+- **Avril 2026** : 81 programmes ajoutes
+- **Matching intelligent** : par proximite de row_index quand mismatch de tableaux
+
+---
+
+*Document mis a jour le 5 mai 2026 pour CalcAuto AiPro v4.1*

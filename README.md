@@ -251,6 +251,39 @@ L'extraction des programmes mensuels Stellantis a ete **reecrite en mode determi
 2. `parse_sci_lease()` — taux SCI Lease + residuels (pages ~28-29)
 3. `parse_key_incentives()` — Go-to-Market summary + Consumer Cash + Bonus (pages 3-4)
 
+### Matching intelligent — `backend/utils/fca_helpers.py` (NOUVEAU)
+
+Module dedie pour eviter la perte de programmes lors d'un mismatch noms ↔ taux dans les tables PDF :
+
+- **`get_model_key()`** : cle stable par vehicule (UPPERCASE, sans annee, sans prefixes "ALL-NEW"/"NEW")
+- **`merge_multiline_names()`** : fusionne les noms splites sur 2 lignes du PDF
+- **`match_names_to_rates()`** : matching par **proximite de row_index** quand les comptes ne correspondent pas (distance max 15 lignes)
+
+> Avant ce fix : ~70% des programmes manquaient quand FCA modifiait les trims. Maintenant : recuperation complete.
+
+### Fallback OCR — `backend/ocr.py` (mars 2026)
+
+Le scanner de factures fonctionne en **mode degrade** quand `GOOGLE_VISION_API_KEY` est absente : retourne une erreur propre au lieu de crasher. Permet de tester en local sans frais Google.
+
+### Refactoring hooks frontend (mars 2026)
+
+Le hook monolithique du calculateur (~3000 lignes) a ete **decompose** en `frontend/features/calculator/hooks/` :
+
+| Hook | Role |
+|---|---|
+| `useCalculatorPage.ts` | Orchestrateur principal (~71 KB) |
+| `useInventoryData.ts` | Selection vehicule du stock (3 KB) |
+| `useLeaseModule.ts` | Module location SCI complet (8 KB) |
+| `useProgramsData.ts` | Programmes + filtres annee/marque (7 KB) |
+
+### Fix onglet parasite (mars 2026)
+
+Le dossier `styles/` etait dans `app/(tabs)/styles/`, ce qui cree automatiquement un onglet parasite "styles" dans la barre de navigation Expo Router. Solution : deplacer vers `frontend/styles/` au niveau parent.
+
+### Avril 2026 — 81 programmes ajoutes
+
+Nouveau cycle Stellantis importe via `/api/extract-pdf` (extraction deterministe pdfplumber).
+
 **Test de reference** : `backend/tests/test_march_2026_extraction.py` valide **93 programmes** extraits du PDF de mars 2026 (`test_extract_pdf_returns_93_programs`).
 
 **Suite de tests dediee** :
